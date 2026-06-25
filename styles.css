@@ -1,0 +1,120 @@
+/* =============================================
+   Form Builder Plugin Styles
+   ============================================= */
+
+/* ---------- 警告ブロック ---------- */
+.form-builder-warning-block {
+    margin-bottom: var(--size-4-4);
+}
+
+.form-builder-warning {
+    background-color: var(--background-modifier-warning);
+    border-left: 4px solid var(--color-orange);
+    padding: var(--size-4-2) var(--size-4-3);
+    margin-bottom: var(--size-4-2);
+    border-radius: var(--radius-s);
+    font-size: var(--font-ui-small);
+    color: var(--text-normal);
+}
+
+/* ---------- 必須フィールドのアスタリスク ---------- */
+.form-builder-required-mark {
+    color: var(--color-red);
+    font-weight: var(--font-bold);
+}
+
+/* ---------- 必須フィールドエラーハイライト ---------- */
+.form-builder-required-error input,
+.form-builder-required-error textarea,
+.form-builder-required-error select {
+    border-color: var(--color-red) !important;
+    outline: 1px solid var(--color-red);
+}
+
+.form-builder-required-error .setting-item-name {
+    color: var(--color-red);
+}
+
+/* ---------- multiselect チェックボックスグループ ---------- */
+.form-builder-multiselect {
+    margin-bottom: var(--size-4-3);
+    border-radius: var(--radius-s);
+}
+
+.form-builder-multiselect-group {
+    padding: var(--size-4-1) var(--size-4-3) var(--size-4-2);
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--size-4-1) var(--size-4-4);
+}
+
+.form-builder-multiselect-item {
+    display: flex;
+    align-items: center;
+    gap: var(--size-4-2);
+    padding: var(--size-4-1) 0;
+    cursor: pointer;
+    user-select: none;
+    font-size: var(--font-ui-medium);
+    color: var(--text-normal);
+}
+
+.form-builder-multiselect-item input[type="checkbox"] {
+    cursor: pointer;
+    width: var(--checkbox-size);
+    height: var(--checkbox-size);
+}
+
+/* ---------- テンプレート選択リスト ---------- */
+.form-builder-template-list {
+    list-style: none;
+    padding: 0;
+    margin: var(--size-4-2) 0;
+}
+
+.form-builder-template-item {
+    margin-bottom: var(--size-4-1);
+}
+
+.form-builder-template-btn {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: var(--size-4-2) var(--size-4-3);
+    border-radius: var(--radius-s);
+    border: 1px solid var(--background-modifier-border);
+    background-color: var(--background-primary);
+    color: var(--text-normal);
+    cursor: pointer;
+    font-size: var(--font-ui-medium);
+    transition: background-color 100ms ease;
+}
+
+.form-builder-template-btn:hover {
+    background-color: var(--background-modifier-hover);
+}
+
+/* ---------- テンプレート例コードブロック ---------- */
+.form-builder-example {
+    background-color: var(--background-secondary);
+    border-radius: var(--radius-s);
+    padding: var(--size-4-3);
+    margin: var(--size-4-3) 0;
+    font-family: var(--font-monospace);
+    font-size: var(--font-ui-small);
+    overflow-x: auto;
+    white-space: pre;
+}
+
+/* ---------- フォーム内 hr 区切り ---------- */
+.modal-content hr {
+    border: none;
+    border-top: 1px solid var(--background-modifier-border);
+    margin: var(--size-4-3) 0;
+}
+
+/* ---------- textarea の最小高さ確保 ---------- */
+.setting-item .setting-item-control textarea {
+    min-height: 80px;
+    resize: vertical;
+}
