@@ -659,8 +659,15 @@ function resolveSystemVariables(template) {
 
 // src/generator/NoteGenerator.ts
 var INVALID_FILENAME_CHARS = /[/\\:*?"<>|]/g;
+var WINDOWS_RESERVED_NAMES = /^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(\.|$)/i;
 function sanitizeFileName(name, sanitizedNotice) {
-  const sanitized = name.replace(INVALID_FILENAME_CHARS, "_");
+  let sanitized = name.replace(INVALID_FILENAME_CHARS, "_");
+  if (WINDOWS_RESERVED_NAMES.test(sanitized)) {
+    sanitized = "_" + sanitized;
+  }
+  sanitized = sanitized.replace(/[.\s]+$/, "");
+  if (!sanitized)
+    sanitized = "Untitled";
   if (sanitized !== name) {
     new import_obsidian3.Notice(sanitizedNotice);
   }
@@ -669,8 +676,13 @@ function sanitizeFileName(name, sanitizedNotice) {
 async function ensureFolder(app, folderPath) {
   if (!folderPath)
     return;
-  if (!app.vault.getFolderByPath(folderPath)) {
-    await app.vault.createFolder(folderPath);
+  const parts = folderPath.replace(/\\/g, "/").split("/").filter((p) => p !== "");
+  let current = "";
+  for (const part of parts) {
+    current = current ? `${current}/${part}` : part;
+    if (!app.vault.getFolderByPath(current)) {
+      await app.vault.createFolder(current);
+    }
   }
 }
 async function generateNote(app, bodyTemplate, values, fields, meta, sanitizedNotice) {
@@ -966,14 +978,14 @@ function validateMetaKey(key, line) {
 }
 
 // src/parser/TemplateParser.ts
-var FORMBUILDER_BLOCK_RE = /^```formbuilder\s*\n([\s\S]*?)\n```/m;
+var FORMBUILDER_BLOCK_RE = /^```formbuilder\s*\r?\n([\s\S]*?)\r?\n```/m;
 var FIELD_SYNTAX_RE = /^\{\{([\s\S]*?)\}\}$/;
 var KV_OPTION_RE = /^([a-zA-Z_-]+)=\[([^\]]*)\]$/;
 function trimSpaces(s) {
   return s.replace(/^[\s\u3000]+|[\s\u3000]+$/g, "");
 }
 function parseList(raw) {
-  return raw.split(";").map((item) => trimSpaces(item));
+  return raw.split(";").map((item) => trimSpaces(item)).filter((item) => item !== "");
 }
 function splitTokens(inner) {
   const tokens = [];

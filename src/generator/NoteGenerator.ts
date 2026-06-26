@@ -4,21 +4,51 @@ import { resolveUserVariables, resolveSystemVariables } from './VariableResolver
 
 const INVALID_FILENAME_CHARS = /[/\\:*?"<>|]/g;
 
+// Windows で作成できない予約デバイス名（大文字・小文字問わず）
+const WINDOWS_RESERVED_NAMES = /^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(\.|$)/i;
+
 /**
  * ファイル名サニタイズ。通知文言はロケールから渡す。
+ * - OS禁止文字を "_" に置換
+ * - Windows予約名（CON, NUL, COM1 等）を "_" でプレフィックス
+ * - 末尾の "." やスペースを除去（Windows で問題になる）
  */
 export function sanitizeFileName(name: string, sanitizedNotice: string): string {
-    const sanitized = name.replace(INVALID_FILENAME_CHARS, '_');
+    let sanitized = name.replace(INVALID_FILENAME_CHARS, '_');
+
+    // Windows予約名への対応
+    if (WINDOWS_RESERVED_NAMES.test(sanitized)) {
+        sanitized = '_' + sanitized;
+    }
+
+    // 末尾の "." とスペースを除去
+    sanitized = sanitized.replace(/[.\s]+$/, '');
+
+    // 空になった場合のフォールバック
+    if (!sanitized) sanitized = 'Untitled';
+
     if (sanitized !== name) {
         new Notice(sanitizedNotice);
     }
     return sanitized;
 }
 
+/**
+ * 多階層フォルダを順番に作成する。
+ * app.vault.createFolder() は親フォルダを自動生成しないため、
+ * パスを分割して存在しない階層を上から順に作る。
+ */
 async function ensureFolder(app: App, folderPath: string): Promise<void> {
     if (!folderPath) return;
-    if (!app.vault.getFolderByPath(folderPath)) {
-        await app.vault.createFolder(folderPath);
+
+    const parts = folderPath.replace(/\\/g, '/').split('/').filter(p => p !== '');
+    let current = '';
+
+    for (const part of parts) {
+        current = current ? `${current}/${part}` : part;
+        if (!app.vault.getFolderByPath(current)) {
+            await app.vault.createFolder(current);
+        }
     }
 }
 

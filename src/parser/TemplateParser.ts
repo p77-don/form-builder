@@ -7,7 +7,7 @@ import {
     validateField, validateMetaKey
 } from './SyntaxValidator';
 
-const FORMBUILDER_BLOCK_RE = /^```formbuilder\s*\n([\s\S]*?)\n```/m;
+const FORMBUILDER_BLOCK_RE = /^```formbuilder\s*\r?\n([\s\S]*?)\r?\n```/m;
 const FIELD_SYNTAX_RE = /^\{\{([\s\S]*?)\}\}$/;
 const KV_OPTION_RE = /^([a-zA-Z_-]+)=\[([^\]]*)\]$/;
 
@@ -16,7 +16,7 @@ function trimSpaces(s: string): string {
 }
 
 function parseList(raw: string): string[] {
-    return raw.split(';').map(item => trimSpaces(item));
+    return raw.split(';').map(item => trimSpaces(item)).filter(item => item !== '');
 }
 
 function splitTokens(inner: string): string[] {

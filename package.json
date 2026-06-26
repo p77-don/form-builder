@@ -1,6 +1,6 @@
 {
   "name": "form-builder",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Generate input forms from Markdown templates and create notes.",
   "main": "main.js",
   "license": "MIT",
