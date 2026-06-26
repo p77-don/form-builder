@@ -571,3 +571,21 @@
     color: var(--fb-text-sub);
     line-height: 1.5;
 }
+
+/* ---------- テンプレート選択 — ソートボタン行 ---------- */
+.fb-sort-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 8px;
+}
+
+.fb-sort-btn {
+    font-size: 0.75rem;
+    padding: 5px 14px;
+    color: var(--fb-text-sub);
+    letter-spacing: 0.03em;
+}
+
+.fb-sort-btn--desc {
+    color: var(--fb-accent);
+}

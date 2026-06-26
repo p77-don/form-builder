@@ -46,7 +46,7 @@ function formatValue(
     if (field.type === 'multiselect') {
         return formatMultiselect(Array.isArray(value) ? value : [], field as MultiselectField);
     }
-    if (field.type === 'list') {
+    if (field.type === 'multilist') {
         return formatList(typeof value === 'string' ? value : '', field as ListField);
     }
     if (field.type === 'checkbox') {

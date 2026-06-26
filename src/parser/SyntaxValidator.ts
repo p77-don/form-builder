@@ -1,7 +1,7 @@
 import type { FormField, ListField, ParseError, ParseWarning } from '../model/FieldModel';
 
 const KNOWN_FIELD_TYPES = new Set([
-    'text', 'textarea', 'number', 'date', 'checkbox', 'select', 'multiselect', 'list'
+    'text', 'textarea', 'number', 'date', 'checkbox', 'select', 'multiselect', 'multilist'
 ]);
 
 const KNOWN_FIELD_OPTIONS: Record<string, string[]> = {
@@ -12,7 +12,7 @@ const KNOWN_FIELD_OPTIONS: Record<string, string[]> = {
     checkbox:    ['required', 'label', 'description', 'default'],
     select:      ['required', 'label', 'description', 'default', 'list'],
     multiselect: ['required', 'label', 'description', 'default', 'list', 'rows', 'separator', 'markdownlist'],
-    list:        ['required', 'label', 'placeholder', 'description', 'default', 'rows', 'separator', 'markdownlist'],
+    multilist:   ['required', 'label', 'placeholder', 'description', 'default', 'rows', 'separator', 'markdownlist'],
 };
 
 const VALID_KEY = /^[a-zA-Z0-9_-]+$/;
@@ -124,7 +124,7 @@ export function validateField(field: FormField, line?: number): ValidationResult
     }
 
     // multiselect / list の separator と markdownlist 同時指定チェック
-    if (field.type === 'multiselect' || field.type === 'list') {
+    if (field.type === 'multiselect' || field.type === 'multilist') {
         const f = field as { separator?: string; markdownlist?: string };
         if (f.separator !== undefined && f.markdownlist !== undefined) {
             warnings.push({

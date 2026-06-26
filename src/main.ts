@@ -6,6 +6,9 @@ import { parseTemplate } from './parser/TemplateParser';
 import { showFatalError } from './ui/ErrorNotice';
 import { getLocale } from './locales';
 
+// formbuilder ブロックの存在確認（パースは不要）
+const FORMBUILDER_BLOCK_RE = /^```formbuilder\s*$/m;
+
 export default class FormBuilderPlugin extends Plugin {
     settings!: FormBuilderSettings;
 
@@ -25,10 +28,22 @@ export default class FormBuilderPlugin extends Plugin {
     private async openTemplatePicker(): Promise<void> {
         const { templateFolder, locale } = this.settings;
 
-        const templates = this.app.vault.getMarkdownFiles().filter(f =>
+        // テンプレートフォルダ内の Markdown ファイルを収集
+        const allFiles = this.app.vault.getMarkdownFiles().filter(f =>
             f.path.startsWith(templateFolder + '/') ||
             f.path.startsWith(templateFolder + '\\')
         );
+
+        // formbuilder ブロックを持つファイルのみに絞り込む
+        const templates: TFile[] = [];
+        for (const file of allFiles) {
+            try {
+                const content = await this.app.vault.read(file);
+                if (FORMBUILDER_BLOCK_RE.test(content)) templates.push(file);
+            } catch {
+                // 読み込み失敗したファイルは無視
+            }
+        }
 
         if (templates.length === 0) {
             new NoTemplateModal(this.app, this, locale).open();

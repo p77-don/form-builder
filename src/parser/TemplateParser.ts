@@ -207,11 +207,11 @@ function parseFieldLine(
             return msField;
         }
 
-        case 'list': {
+        case 'multilist': {
             const { separator, markdownlist } = resolveSeparatorAndMarkdownlist(optMap, optionOrder, key, warnings, lineNum);
             const rowsStr = optMap.get('rows');
             const rows = rowsStr ? parseInt(rowsStr, 10) : undefined;
-            const lf: ListField = { type: 'list', ...base };
+            const lf: ListField = { type: 'multilist', ...base };
             if (separator    !== undefined) lf.separator    = separator;
             if (markdownlist !== undefined) lf.markdownlist = markdownlist;
             if (rows !== undefined && !isNaN(rows)) lf.rows = rows;

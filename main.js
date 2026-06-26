@@ -52,6 +52,8 @@ var en = {
   btnSettings: "Open Settings",
   // テンプレート選択
   selectorTitle: "Select Template",
+  sortAsc: "\u25B2 A \u2192 Z",
+  sortDesc: "\u25BC Z \u2192 A",
   // テンプレート未検出
   welcomeTitle: "Welcome to Form Builder",
   noTemplateMessage: "No templates found. Please create a .md file in your template folder.",
@@ -111,6 +113,7 @@ tags:
 {{select|priority|label=[Priority]|list=[High;Medium;Low]|default=[Medium]}}
 {{textarea|summary|label=[Summary]|rows=[4]}}
 {{multiselect|tags|label=[Tags]|list=[Important;Review;Draft;Done]|separator=[, ]}}
+{{multilist|aliases|label=[Aliases]|markdownlist=[-]}}
 {{checkbox|published|label=[Published]}}
 \`\`\`
 
@@ -121,7 +124,10 @@ tags:
 ## Summary
 $summary$
 
-**Tags:** $tags$`,
+**Tags:** $tags$
+
+## Aliases
+$aliases$`,
   subMeta: "Meta Options",
   subFields: "Field Types",
   subOptions: "Common Options",
@@ -137,7 +143,8 @@ $summary$
     ["date", "Date picker"],
     ["checkbox", "Toggle (true / false)"],
     ["select", "Single selection dropdown"],
-    ["multiselect", "Multiple selection checkboxes"]
+    ["multiselect", "Multiple selection checkboxes"],
+    ["multilist", "Free text input, one item per line, output as list or joined string"]
   ],
   optionRows: [
     ["label=[Display Name]", "Label shown on the form"],
@@ -146,10 +153,10 @@ $summary$
     ["description=[...]", "Field description shown below the label"],
     ["default=[Value]", "Default value"],
     ["list=[A;B;C]", "Options for select / multiselect (semicolon-separated)"],
-    ["separator=[, ]", "Separator for multiselect output"],
-    ["markdownlist=[-]", "Output multiselect as Markdown list (- / * / 1.)"],
+    ["separator=[, ]", "Separator for multiselect / list output (default for list: newline)"],
+    ["markdownlist=[-]", "Output multiselect / list as Markdown list (- / * / 1.)"],
     ["min=[0]|max=[100]", "Min / Max value for number fields"],
-    ["rows=[5]", "Visible rows for textarea / multiselect"]
+    ["rows=[5]", "Visible rows for textarea / multiselect / list"]
   ],
   variableRows: [
     ["$key$", "Replaced with the form input value for that key"],
@@ -178,6 +185,8 @@ var ja = {
   btnSettings: "\u8A2D\u5B9A\u3092\u958B\u304F",
   // テンプレート選択
   selectorTitle: "\u30C6\u30F3\u30D7\u30EC\u30FC\u30C8\u3092\u9078\u629E",
+  sortAsc: "\u25B2 \u6607\u9806",
+  sortDesc: "\u25BC \u964D\u9806",
   // テンプレート未検出
   welcomeTitle: "Form Builder \u3078\u3088\u3046\u3053\u305D",
   noTemplateMessage: "\u30C6\u30F3\u30D7\u30EC\u30FC\u30C8\u304C\u898B\u3064\u304B\u308A\u307E\u305B\u3093\u3067\u3057\u305F\u3002\u30C6\u30F3\u30D7\u30EC\u30FC\u30C8\u30D5\u30A9\u30EB\u30C0\u306B .md \u30D5\u30A1\u30A4\u30EB\u3092\u4F5C\u6210\u3057\u3066\u304F\u3060\u3055\u3044\u3002",
@@ -237,6 +246,7 @@ tags:
 {{select|priority|label=[\u512A\u5148\u5EA6]|list=[\u9AD8;\u4E2D;\u4F4E]|default=[\u4E2D]}}
 {{textarea|summary|label=[\u6982\u8981]|rows=[4]}}
 {{multiselect|tags|label=[\u30BF\u30B0]|list=[\u91CD\u8981;\u30EC\u30D3\u30E5\u30FC;\u4E0B\u66F8\u304D;\u5B8C\u4E86]|separator=[, ]}}
+{{multilist|aliases|label=[\u30A8\u30A4\u30EA\u30A2\u30B9]|markdownlist=[-]}}
 {{checkbox|published|label=[\u516C\u958B]}}
 \`\`\`
 
@@ -247,7 +257,10 @@ tags:
 ## \u6982\u8981
 $summary$
 
-**\u30BF\u30B0:** $tags$`,
+**\u30BF\u30B0:** $tags$
+
+## \u30A8\u30A4\u30EA\u30A2\u30B9
+$aliases$`,
   subMeta: "meta \u30AA\u30D7\u30B7\u30E7\u30F3",
   subFields: "\u30D5\u30A3\u30FC\u30EB\u30C9\u30BF\u30A4\u30D7",
   subOptions: "\u4E3B\u306A\u30AA\u30D7\u30B7\u30E7\u30F3",
@@ -263,7 +276,8 @@ $summary$
     ["date", "\u65E5\u4ED8\u5165\u529B"],
     ["checkbox", "\u30C8\u30B0\u30EB\uFF08true / false\uFF09"],
     ["select", "\u5358\u4E00\u9078\u629E\u30C9\u30ED\u30C3\u30D7\u30C0\u30A6\u30F3"],
-    ["multiselect", "\u8907\u6570\u9078\u629E\u30C1\u30A7\u30C3\u30AF\u30DC\u30C3\u30AF\u30B9"]
+    ["multiselect", "\u8907\u6570\u9078\u629E\u30C1\u30A7\u30C3\u30AF\u30DC\u30C3\u30AF\u30B9"],
+    ["multilist", "\u81EA\u7531\u30C6\u30AD\u30B9\u30C8\u5165\u529B\uFF081\u884C1\u9805\u76EE\uFF09\u3002\u30EA\u30B9\u30C8\u5F62\u5F0F\u307E\u305F\u306F\u9023\u7D50\u6587\u5B57\u5217\u3067\u51FA\u529B"]
   ],
   optionRows: [
     ["label=[\u8868\u793A\u540D]", "\u30D5\u30A9\u30FC\u30E0\u4E0A\u306E\u8868\u793A\u30E9\u30D9\u30EB"],
@@ -272,10 +286,10 @@ $summary$
     ["description=[...]", "\u30E9\u30D9\u30EB\u4E0B\u306B\u8868\u793A\u3059\u308B\u30D5\u30A3\u30FC\u30EB\u30C9\u8AAC\u660E"],
     ["default=[\u65E2\u5B9A\u5024]", "\u30C7\u30D5\u30A9\u30EB\u30C8\u5024"],
     ["list=[A;B;C]", "\u9078\u629E\u80A2\uFF08\u30BB\u30DF\u30B3\u30ED\u30F3\u533A\u5207\u308A\uFF09"],
-    ["separator=[, ]", "multiselect \u306E\u51FA\u529B\u533A\u5207\u308A\u6587\u5B57"],
-    ["markdownlist=[-]", "multiselect \u3092\u30EA\u30B9\u30C8\u5F62\u5F0F\u3067\u51FA\u529B\uFF08- / * / 1.\uFF09"],
+    ["separator=[, ]", "multiselect / list \u306E\u51FA\u529B\u533A\u5207\u308A\u6587\u5B57\uFF08list \u306E\u30C7\u30D5\u30A9\u30EB\u30C8\u306F\u6539\u884C\uFF09"],
+    ["markdownlist=[-]", "multiselect / list \u3092\u30EA\u30B9\u30C8\u5F62\u5F0F\u3067\u51FA\u529B\uFF08- / * / 1.\uFF09"],
     ["min=[0]|max=[100]", "number \u30D5\u30A3\u30FC\u30EB\u30C9\u306E\u6700\u5C0F\u30FB\u6700\u5927\u5024"],
-    ["rows=[5]", "textarea / multiselect \u306E\u8868\u793A\u884C\u6570"]
+    ["rows=[5]", "textarea / multiselect / list \u306E\u8868\u793A\u884C\u6570"]
   ],
   variableRows: [
     ["$\u30AD\u30FC\u540D$", "\u305D\u306E\u30AD\u30FC\u306E\u30D5\u30A9\u30FC\u30E0\u5165\u529B\u5024\u306B\u7F6E\u304D\u63DB\u308F\u308B"],
@@ -405,7 +419,7 @@ function renderField(containerEl, field, values) {
     case "multiselect":
       renderMultiselect(containerEl, field, values);
       break;
-    case "list":
+    case "multilist":
       renderList(containerEl, field, values);
       break;
   }
@@ -564,7 +578,7 @@ function highlightRequiredErrors(containerEl, fields, values) {
     if (!field.required)
       continue;
     const value = values.get(field.key);
-    const isEmpty = field.type === "list" ? typeof value !== "string" || value.split("\n").map((l) => l.trim()).filter(Boolean).length === 0 : value === void 0 || value === "" || Array.isArray(value) && value.length === 0 || value === false;
+    const isEmpty = field.type === "multilist" ? typeof value !== "string" || value.split("\n").map((l) => l.trim()).filter(Boolean).length === 0 : value === void 0 || value === "" || Array.isArray(value) && value.length === 0 || value === false;
     if (isEmpty) {
       missing.push(field.key);
       const el = containerEl.querySelector(`[data-form-key="${field.key}"]`);
@@ -620,7 +634,7 @@ function formatValue(value, field) {
   if (field.type === "multiselect") {
     return formatMultiselect(Array.isArray(value) ? value : [], field);
   }
-  if (field.type === "list") {
+  if (field.type === "multilist") {
     return formatList(typeof value === "string" ? value : "", field);
   }
   if (field.type === "checkbox") {
@@ -746,8 +760,10 @@ ${message}`, 8e3);
   }
 };
 var TemplateSelectorModal = class extends import_obsidian4.Modal {
+  // 起動時は昇順
   constructor(app, templates, locale, onSelect) {
     super(app);
+    this.ascending = true;
     this.templates = templates;
     this.locale = locale;
     this.onSelect = onSelect;
@@ -758,19 +774,38 @@ var TemplateSelectorModal = class extends import_obsidian4.Modal {
     const L = getLocale(this.locale);
     this.setTitle(L.selectorTitle);
     const root = contentEl.createDiv({ cls: "fb-modal" });
-    const list = root.createEl("ul", { cls: "fb-template-list" });
-    for (const file of this.templates) {
-      const li = list.createEl("li");
-      const btn = li.createEl("button", { cls: "fb-template-btn" });
-      btn.appendText(file.basename);
-      btn.addEventListener("click", () => {
-        this.close();
-        this.onSelect(file);
-      });
-    }
+    const sortRow = root.createDiv({ cls: "fb-sort-row" });
+    const sortBtn = sortRow.createEl("button", {
+      cls: "fb-btn fb-sort-btn",
+      text: L.sortAsc
+    });
+    const listWrap = root.createDiv();
+    const renderList2 = () => {
+      listWrap.empty();
+      const sorted = [...this.templates].sort(
+        (a, b) => this.ascending ? a.basename.localeCompare(b.basename) : b.basename.localeCompare(a.basename)
+      );
+      const ul = listWrap.createEl("ul", { cls: "fb-template-list" });
+      for (const file of sorted) {
+        const btn = ul.createEl("li").createEl("button", {
+          cls: "fb-template-btn"
+        });
+        btn.appendText(file.basename);
+        btn.addEventListener("click", () => {
+          this.close();
+          this.onSelect(file);
+        });
+      }
+    };
+    sortBtn.addEventListener("click", () => {
+      this.ascending = !this.ascending;
+      sortBtn.textContent = this.ascending ? L.sortAsc : L.sortDesc;
+      sortBtn.toggleClass("fb-sort-btn--desc", !this.ascending);
+      renderList2();
+    });
+    renderList2();
     const btnRow = root.createDiv({ cls: "fb-btn-row" });
-    const helpBtn = btnRow.createEl("button", { cls: "fb-btn", text: L.btnHelp });
-    helpBtn.addEventListener("click", () => new HelpModal(this.app, this.locale).open());
+    btnRow.createEl("button", { cls: "fb-btn", text: L.btnHelp }).addEventListener("click", () => new HelpModal(this.app, this.locale).open());
   }
   onClose() {
     this.contentEl.empty();
@@ -812,7 +847,7 @@ var KNOWN_FIELD_TYPES = /* @__PURE__ */ new Set([
   "checkbox",
   "select",
   "multiselect",
-  "list"
+  "multilist"
 ]);
 var KNOWN_FIELD_OPTIONS = {
   text: ["required", "label", "placeholder", "description", "default"],
@@ -822,7 +857,7 @@ var KNOWN_FIELD_OPTIONS = {
   checkbox: ["required", "label", "description", "default"],
   select: ["required", "label", "description", "default", "list"],
   multiselect: ["required", "label", "description", "default", "list", "rows", "separator", "markdownlist"],
-  list: ["required", "label", "placeholder", "description", "default", "rows", "separator", "markdownlist"]
+  multilist: ["required", "label", "placeholder", "description", "default", "rows", "separator", "markdownlist"]
 };
 var VALID_KEY = /^[a-zA-Z0-9_-]+$/;
 function levenshtein(a, b) {
@@ -911,7 +946,7 @@ function validateField(field, line) {
       });
     }
   }
-  if (field.type === "multiselect" || field.type === "list") {
+  if (field.type === "multiselect" || field.type === "multilist") {
     const f = field;
     if (f.separator !== void 0 && f.markdownlist !== void 0) {
       warnings.push({
@@ -1115,11 +1150,11 @@ function parseFieldLine(tokens, errors, warnings, lineNum) {
         msField.rows = parseInt(rowsStr, 10);
       return msField;
     }
-    case "list": {
+    case "multilist": {
       const { separator, markdownlist } = resolveSeparatorAndMarkdownlist(optMap, optionOrder, key, warnings, lineNum);
       const rowsStr = optMap.get("rows");
       const rows = rowsStr ? parseInt(rowsStr, 10) : void 0;
-      const lf = { type: "list", ...base };
+      const lf = { type: "multilist", ...base };
       if (separator !== void 0)
         lf.separator = separator;
       if (markdownlist !== void 0)
@@ -1191,6 +1226,7 @@ ${messages}`, 8e3);
 }
 
 // src/main.ts
+var FORMBUILDER_BLOCK_RE2 = /^```formbuilder\s*$/m;
 var FormBuilderPlugin = class extends import_obsidian6.Plugin {
   async onload() {
     await this.loadSettings();
@@ -1205,9 +1241,18 @@ var FormBuilderPlugin = class extends import_obsidian6.Plugin {
   }
   async openTemplatePicker() {
     const { templateFolder, locale } = this.settings;
-    const templates = this.app.vault.getMarkdownFiles().filter(
+    const allFiles = this.app.vault.getMarkdownFiles().filter(
       (f) => f.path.startsWith(templateFolder + "/") || f.path.startsWith(templateFolder + "\\")
     );
+    const templates = [];
+    for (const file of allFiles) {
+      try {
+        const content = await this.app.vault.read(file);
+        if (FORMBUILDER_BLOCK_RE2.test(content))
+          templates.push(file);
+      } catch (e) {
+      }
+    }
     if (templates.length === 0) {
       new NoTemplateModal(this.app, this, locale).open();
       return;

@@ -89,13 +89,14 @@ export class FormModal extends Modal {
 }
 
 // ============================================================
-// テンプレート選択モーダル（下部に Help ボタン）
+// テンプレート選択モーダル（ソート切替・下部に Help ボタン）
 // ============================================================
 
 export class TemplateSelectorModal extends Modal {
     private templates: TFile[];
     private onSelect: (file: TFile) => void;
     private locale: SupportedLocale;
+    private ascending = true;  // 起動時は昇順
 
     constructor(app: App, templates: TFile[], locale: SupportedLocale, onSelect: (file: TFile) => void) {
         super(app);
@@ -112,20 +113,49 @@ export class TemplateSelectorModal extends Modal {
 
         const root = contentEl.createDiv({ cls: 'fb-modal' });
 
-        const list = root.createEl('ul', { cls: 'fb-template-list' });
-        for (const file of this.templates) {
-            const li = list.createEl('li');
-            const btn = li.createEl('button', { cls: 'fb-template-btn' });
-            btn.appendText(file.basename);
-            btn.addEventListener('click', () => {
-                this.close();
-                this.onSelect(file);
-            });
-        }
+        // ソートボタン（リスト上部）
+        const sortRow = root.createDiv({ cls: 'fb-sort-row' });
+        const sortBtn = sortRow.createEl('button', {
+            cls: 'fb-btn fb-sort-btn',
+            text: L.sortAsc,
+        });
 
+        // テンプレートリスト（ソート状態に応じて再描画）
+        const listWrap = root.createDiv();
+        const renderList = () => {
+            listWrap.empty();
+            const sorted = [...this.templates].sort((a, b) =>
+                this.ascending
+                    ? a.basename.localeCompare(b.basename)
+                    : b.basename.localeCompare(a.basename)
+            );
+            const ul = listWrap.createEl('ul', { cls: 'fb-template-list' });
+            for (const file of sorted) {
+                const btn = ul.createEl('li').createEl('button', {
+                    cls: 'fb-template-btn',
+                });
+                btn.appendText(file.basename);
+                btn.addEventListener('click', () => {
+                    this.close();
+                    this.onSelect(file);
+                });
+            }
+        };
+
+        // ソートボタンの動作
+        sortBtn.addEventListener('click', () => {
+            this.ascending = !this.ascending;
+            sortBtn.textContent = this.ascending ? L.sortAsc : L.sortDesc;
+            sortBtn.toggleClass('fb-sort-btn--desc', !this.ascending);
+            renderList();
+        });
+
+        renderList();  // 初期描画（昇順）
+
+        // 下部ボタン行
         const btnRow = root.createDiv({ cls: 'fb-btn-row' });
-        const helpBtn = btnRow.createEl('button', { cls: 'fb-btn', text: L.btnHelp });
-        helpBtn.addEventListener('click', () => new HelpModal(this.app, this.locale).open());
+        btnRow.createEl('button', { cls: 'fb-btn', text: L.btnHelp })
+            .addEventListener('click', () => new HelpModal(this.app, this.locale).open());
     }
 
     onClose(): void {

@@ -46,6 +46,8 @@ export interface Locale {
     // テンプレート選択モーダル
     // ----------------------------------------
     selectorTitle: string;
+    sortAsc:       string;
+    sortDesc:      string;
 
     // ----------------------------------------
     // テンプレート未検出モーダル
@@ -114,6 +116,8 @@ const en: Locale = {
 
     // テンプレート選択
     selectorTitle: 'Select Template',
+    sortAsc:       '▲ A → Z',
+    sortDesc:      '▼ Z → A',
 
     // テンプレート未検出
     welcomeTitle:      'Welcome to Form Builder',
@@ -181,6 +185,7 @@ tags:
 {{select|priority|label=[Priority]|list=[High;Medium;Low]|default=[Medium]}}
 {{textarea|summary|label=[Summary]|rows=[4]}}
 {{multiselect|tags|label=[Tags]|list=[Important;Review;Draft;Done]|separator=[, ]}}
+{{multilist|aliases|label=[Aliases]|markdownlist=[-]}}
 {{checkbox|published|label=[Published]}}
 \`\`\`
 
@@ -191,7 +196,10 @@ tags:
 ## Summary
 $summary$
 
-**Tags:** $tags$`,
+**Tags:** $tags$
+
+## Aliases
+$aliases$`,
 
     subMeta:      'Meta Options',
     subFields:    'Field Types',
@@ -210,6 +218,7 @@ $summary$
         ['checkbox',    'Toggle (true / false)'],
         ['select',      'Single selection dropdown'],
         ['multiselect', 'Multiple selection checkboxes'],
+        ['multilist',   'Free text input, one item per line, output as list or joined string'],
     ],
     optionRows: [
         ['label=[Display Name]', 'Label shown on the form'],
@@ -218,10 +227,10 @@ $summary$
         ['description=[...]',    'Field description shown below the label'],
         ['default=[Value]',      'Default value'],
         ['list=[A;B;C]',         'Options for select / multiselect (semicolon-separated)'],
-        ['separator=[, ]',       'Separator for multiselect output'],
-        ['markdownlist=[-]',     'Output multiselect as Markdown list (- / * / 1.)'],
+        ['separator=[, ]',       'Separator for multiselect / list output (default for list: newline)'],
+        ['markdownlist=[-]',     'Output multiselect / list as Markdown list (- / * / 1.)'],
         ['min=[0]|max=[100]',    'Min / Max value for number fields'],
-        ['rows=[5]',             'Visible rows for textarea / multiselect'],
+        ['rows=[5]',             'Visible rows for textarea / multiselect / list'],
     ],
     variableRows: [
         ['$key$',       'Replaced with the form input value for that key'],
@@ -257,6 +266,8 @@ const ja: Locale = {
 
     // テンプレート選択
     selectorTitle: 'テンプレートを選択',
+    sortAsc:       '▲ 昇順',
+    sortDesc:      '▼ 降順',
 
     // テンプレート未検出
     welcomeTitle:      'Form Builder へようこそ',
@@ -324,6 +335,7 @@ tags:
 {{select|priority|label=[優先度]|list=[高;中;低]|default=[中]}}
 {{textarea|summary|label=[概要]|rows=[4]}}
 {{multiselect|tags|label=[タグ]|list=[重要;レビュー;下書き;完了]|separator=[, ]}}
+{{multilist|aliases|label=[エイリアス]|markdownlist=[-]}}
 {{checkbox|published|label=[公開]}}
 \`\`\`
 
@@ -334,7 +346,10 @@ tags:
 ## 概要
 $summary$
 
-**タグ:** $tags$`,
+**タグ:** $tags$
+
+## エイリアス
+$aliases$`,
 
     subMeta:      'meta オプション',
     subFields:    'フィールドタイプ',
@@ -353,6 +368,7 @@ $summary$
         ['checkbox',    'トグル（true / false）'],
         ['select',      '単一選択ドロップダウン'],
         ['multiselect', '複数選択チェックボックス'],
+        ['multilist',   '自由テキスト入力（1行1項目）。リスト形式または連結文字列で出力'],
     ],
     optionRows: [
         ['label=[表示名]',       'フォーム上の表示ラベル'],
@@ -361,10 +377,10 @@ $summary$
         ['description=[...]',    'ラベル下に表示するフィールド説明'],
         ['default=[既定値]',     'デフォルト値'],
         ['list=[A;B;C]',         '選択肢（セミコロン区切り）'],
-        ['separator=[, ]',       'multiselect の出力区切り文字'],
-        ['markdownlist=[-]',     'multiselect をリスト形式で出力（- / * / 1.）'],
+        ['separator=[, ]',       'multiselect / list の出力区切り文字（list のデフォルトは改行）'],
+        ['markdownlist=[-]',     'multiselect / list をリスト形式で出力（- / * / 1.）'],
         ['min=[0]|max=[100]',    'number フィールドの最小・最大値'],
-        ['rows=[5]',             'textarea / multiselect の表示行数'],
+        ['rows=[5]',             'textarea / multiselect / list の表示行数'],
     ],
     variableRows: [
         ['$キー名$',     'そのキーのフォーム入力値に置き換わる'],

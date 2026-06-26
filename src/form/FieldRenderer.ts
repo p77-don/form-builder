@@ -15,7 +15,7 @@ export function renderField(
         case 'checkbox':    renderCheckbox(containerEl, field, values); break;
         case 'select':      renderSelect(containerEl, field, values); break;
         case 'multiselect': renderMultiselect(containerEl, field as MultiselectField, values); break;
-        case 'list':        renderList(containerEl, field as ListField, values); break;
+        case 'multilist':    renderList(containerEl, field as ListField, values); break;
     }
 }
 
@@ -208,7 +208,7 @@ export function highlightRequiredErrors(
         const value = values.get(field.key);
 
         // list フィールドは空行除去後に1行以上あれば有効
-        const isEmpty = field.type === 'list'
+        const isEmpty = field.type === 'multilist'
             ? (typeof value !== 'string' || value.split('\n').map(l => l.trim()).filter(Boolean).length === 0)
             : (value === undefined || value === '' ||
                (Array.isArray(value) && value.length === 0) || value === false);

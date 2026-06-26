@@ -1,6 +1,6 @@
 export type FieldType =
     | 'text' | 'textarea' | 'number' | 'date'
-    | 'checkbox' | 'select' | 'multiselect' | 'list';
+    | 'checkbox' | 'select' | 'multiselect' | 'multilist';
 
 export type MarkdownListStyle = '-' | '*' | '1.';
 
@@ -56,7 +56,7 @@ export interface MultiselectField extends BaseField {
  * markdownlist 指定時は Markdown リスト形式で展開する。
  */
 export interface ListField extends BaseField {
-    type: 'list';
+    type: 'multilist';
     rows?: number;
     separator?: string;
     markdownlist?: MarkdownListStyle;
