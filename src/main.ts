@@ -4,6 +4,7 @@ import type { FormBuilderSettings } from './settings';
 import { FormModal, NoTemplateModal, TemplateSelectorModal } from './form/FormModal';
 import { parseTemplate } from './parser/TemplateParser';
 import { showFatalError } from './ui/ErrorNotice';
+import { getLocale } from './locales';
 
 export default class FormBuilderPlugin extends Plugin {
     settings!: FormBuilderSettings;
@@ -19,59 +20,50 @@ export default class FormBuilderPlugin extends Plugin {
         });
     }
 
-    async onunload(): Promise<void> {
-        // registerEvent 等は自動解放されるため追加処理なし
-    }
+    async onunload(): Promise<void> {}
 
-    /**
-     * テンプレートフォルダから Markdown ファイルを取得し、
-     * テンプレート選択 → フォーム表示 の流れを起動する
-     */
     private async openTemplatePicker(): Promise<void> {
-        const folderPath = this.settings.templateFolder;
+        const { templateFolder, locale } = this.settings;
 
-        // テンプレートフォルダ内の Markdown ファイルを収集
         const templates = this.app.vault.getMarkdownFiles().filter(f =>
-            f.path.startsWith(folderPath + '/') || f.path.startsWith(folderPath + '\\')
+            f.path.startsWith(templateFolder + '/') ||
+            f.path.startsWith(templateFolder + '\\')
         );
 
         if (templates.length === 0) {
-            new NoTemplateModal(this.app, this).open();
+            new NoTemplateModal(this.app, this, locale).open();
             return;
         }
 
         if (templates.length === 1) {
-            // 1つしかなければ直接開く
             await this.openFormForTemplate(templates[0]);
         } else {
-            // 複数あればセレクターを表示
-            new TemplateSelectorModal(this.app, templates, async (file: TFile) => {
+            new TemplateSelectorModal(this.app, templates, locale, async (file: TFile) => {
                 await this.openFormForTemplate(file);
             }).open();
         }
     }
 
-    /**
-     * 指定テンプレートファイルを読み込んでフォームを表示する
-     */
     private async openFormForTemplate(file: TFile): Promise<void> {
+        const { locale } = this.settings;
+        const L = getLocale(locale);
+
         let content: string;
         try {
             content = await this.app.vault.read(file);
         } catch (e) {
-            new Notice(`Form Builder: Failed to read template file "${file.path}".`);
+            new Notice(`${L.noticeReadError}\n"${file.path}"`);
             return;
         }
 
         const parseResult = parseTemplate(content);
 
-        // 致命的エラーがある場合はフォーム生成を中止
         if (parseResult.errors.length > 0) {
-            showFatalError(parseResult.errors);
+            showFatalError(parseResult.errors, L.noticeFatalHeader);
             return;
         }
 
-        new FormModal(this.app, parseResult).open();
+        new FormModal(this.app, parseResult, locale).open();
     }
 
     async loadSettings(): Promise<void> {

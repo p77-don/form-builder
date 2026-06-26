@@ -1,123 +1,74 @@
-import { App, Modal, Notice, Setting, TFile } from 'obsidian';
-import type { ParseResult, FormField } from '../model/FieldModel';
+import { App, Modal, Notice, TFile } from 'obsidian';
+import type { ParseResult } from '../model/FieldModel';
+import type { SupportedLocale } from '../locales';
+import { getLocale } from '../locales';
+import { HelpModal } from './help';
 import { renderField, highlightRequiredErrors } from './FieldRenderer';
 import { generateNote } from '../generator/NoteGenerator';
-import { resolveFilenamePreview, resolveSystemVariables } from '../generator/VariableResolver';
 import type FormBuilderPlugin from '../main';
 
 type ValueStore = Map<string, string | string[] | boolean>;
 
-/**
- * フォームモーダル本体
- */
+// ============================================================
+// フォームモーダル（Help ボタンなし）
+// ============================================================
+
 export class FormModal extends Modal {
     private parseResult: ParseResult;
     private values: ValueStore = new Map();
-    private outputFolder: string;
-    private fileName: string;
+    private locale: SupportedLocale;
 
-    constructor(app: App, parseResult: ParseResult) {
+    constructor(app: App, parseResult: ParseResult, locale: SupportedLocale) {
         super(app);
         this.parseResult = parseResult;
-        this.outputFolder = parseResult.meta.folder ?? '';
-        // filename テンプレートをプレビュー展開
-        this.fileName = parseResult.meta.filename
-            ? resolveFilenamePreview(parseResult.meta.filename, parseResult.fields)
-            : 'Untitled';
+        this.locale = locale;
     }
 
     onOpen(): void {
         const { contentEl } = this;
         contentEl.empty();
-        this.setTitle('Form Builder');
+        const L = getLocale(this.locale);
+        this.setTitle(L.formTitle);
 
-        this.renderWarnings();
-        this.renderMetaSection();
-        this.renderFields();
-        this.renderSubmitButton();
+        const root = contentEl.createDiv({ cls: 'fb-modal' });
+        this.renderWarnings(root);
+        this.renderFields(root);
+        this.renderSubmitButton(root, L.btnCreateNote);
     }
 
     onClose(): void {
         this.contentEl.empty();
     }
 
-    // ---------- 警告ブロック ----------
-
-    private renderWarnings(): void {
+    private renderWarnings(root: HTMLElement): void {
         if (this.parseResult.warnings.length === 0) return;
-        const warningBlock = this.contentEl.createDiv({ cls: 'form-builder-warning-block' });
+        const block = root.createDiv({ cls: 'fb-warning-block' });
         for (const w of this.parseResult.warnings) {
-            const div = warningBlock.createDiv({ cls: 'form-builder-warning' });
-            div.createSpan({ text: `⚠ ${w.message}` });
+            block.createDiv({ cls: 'fb-warning', text: `⚠ ${w.message}` });
         }
     }
 
-    // ---------- 出力フォルダ・ファイル名 ----------
-
-    private renderMetaSection(): void {
-        const { contentEl } = this;
-
-        // Output Folder
-        new Setting(contentEl)
-            .setName('Output folder')
-            .setDesc('Folder where the note will be saved.')
-            .addText(text => text
-                .setPlaceholder('e.g. Notes/Characters')
-                .setValue(this.outputFolder)
-                .onChange(value => { this.outputFolder = value; }));
-
-        // File Name
-        new Setting(contentEl)
-            .setName('File name')
-            .setDesc('Name of the note to create (without .md extension).')
-            .addText(text => text
-                .setValue(this.fileName)
-                .onChange(value => { this.fileName = value; }));
-    }
-
-    // ---------- フィールド群 ----------
-
-    private renderFields(): void {
-        const { contentEl } = this;
-
-        if (this.parseResult.fields.length > 0) {
-            contentEl.createEl('hr');
-        }
-
+    private renderFields(root: HTMLElement): void {
         for (const field of this.parseResult.fields) {
-            renderField(contentEl, field, this.values);
+            renderField(root, field, this.values);
         }
     }
 
-    // ---------- 送信ボタン ----------
-
-    private renderSubmitButton(): void {
-        const { contentEl } = this;
-        contentEl.createEl('hr');
-
-        new Setting(contentEl)
-            .addButton(btn => btn
-                .setButtonText('Create Note')
-                .setCta()
-                .onClick(() => this.onSubmit()));
+    private renderSubmitButton(root: HTMLElement, label: string): void {
+        const wrap = root.createDiv({ cls: 'fb-submit-wrap' });
+        const btn = wrap.createEl('button', { cls: 'fb-submit-btn', text: label });
+        btn.addEventListener('click', () => this.onSubmit());
     }
-
-    // ---------- 送信処理 ----------
 
     private async onSubmit(): Promise<void> {
-        const missing = highlightRequiredErrors(
-            this.contentEl,
-            this.parseResult.fields,
-            this.values
-        );
+        const L = getLocale(this.locale);
+        const root = this.contentEl.querySelector('.fb-modal') as HTMLElement;
+        const missing = highlightRequiredErrors(root, this.parseResult.fields, this.values);
 
         if (missing.length > 0) {
-            new Notice(`Form Builder: Please fill in all required fields.`);
+            new Notice(L.noticeRequired);
             return;
         }
-
-        // ファイル名の最終確認
-        const rawFileName = this.fileName.trim() || 'Untitled';
 
         try {
             await generateNote(
@@ -126,47 +77,55 @@ export class FormModal extends Modal {
                 this.values,
                 this.parseResult.fields,
                 this.parseResult.meta,
-                this.outputFolder.trim(),
-                rawFileName
+                L.noticeSanitized
             );
             this.close();
         } catch (e) {
             console.error('Form Builder: Failed to create note', e);
             const message = e instanceof Error ? e.message : String(e);
-            new Notice(`Form Builder: Failed to create note.\n${message}`, 8000);
+            new Notice(`${L.noticeCreateError}\n${message}`, 8000);
         }
     }
 }
 
 // ============================================================
-// テンプレート選択モーダル
+// テンプレート選択モーダル（下部に Help ボタン）
 // ============================================================
 
 export class TemplateSelectorModal extends Modal {
     private templates: TFile[];
     private onSelect: (file: TFile) => void;
+    private locale: SupportedLocale;
 
-    constructor(app: App, templates: TFile[], onSelect: (file: TFile) => void) {
+    constructor(app: App, templates: TFile[], locale: SupportedLocale, onSelect: (file: TFile) => void) {
         super(app);
         this.templates = templates;
+        this.locale = locale;
         this.onSelect = onSelect;
     }
 
     onOpen(): void {
         const { contentEl } = this;
         contentEl.empty();
-        this.setTitle('Select Template');
+        const L = getLocale(this.locale);
+        this.setTitle(L.selectorTitle);
 
-        const listEl = contentEl.createEl('ul', { cls: 'form-builder-template-list' });
+        const root = contentEl.createDiv({ cls: 'fb-modal' });
+
+        const list = root.createEl('ul', { cls: 'fb-template-list' });
         for (const file of this.templates) {
-            const li = listEl.createEl('li', { cls: 'form-builder-template-item' });
-            const btn = li.createEl('button', { cls: 'form-builder-template-btn' });
-            btn.textContent = file.basename;
+            const li = list.createEl('li');
+            const btn = li.createEl('button', { cls: 'fb-template-btn' });
+            btn.appendText(file.basename);
             btn.addEventListener('click', () => {
                 this.close();
                 this.onSelect(file);
             });
         }
+
+        const btnRow = root.createDiv({ cls: 'fb-btn-row' });
+        const helpBtn = btnRow.createEl('button', { cls: 'fb-btn', text: L.btnHelp });
+        helpBtn.addEventListener('click', () => new HelpModal(this.app, this.locale).open());
     }
 
     onClose(): void {
@@ -180,47 +139,40 @@ export class TemplateSelectorModal extends Modal {
 
 export class NoTemplateModal extends Modal {
     private plugin: FormBuilderPlugin;
+    private locale: SupportedLocale;
 
-    constructor(app: App, plugin: FormBuilderPlugin) {
+    constructor(app: App, plugin: FormBuilderPlugin, locale: SupportedLocale) {
         super(app);
         this.plugin = plugin;
+        this.locale = locale;
     }
 
     onOpen(): void {
         const { contentEl } = this;
         contentEl.empty();
-        this.setTitle('Welcome to Form Builder');
+        const L = getLocale(this.locale);
+        this.setTitle(L.welcomeTitle);
 
-        contentEl.createEl('p', {
-            text: 'No templates found. Please create a template file and place it in your template folder.'
-        });
+        const root = contentEl.createDiv({ cls: 'fb-modal' });
 
-        const exampleBlock = contentEl.createEl('pre', { cls: 'form-builder-example' });
-        exampleBlock.createEl('code', {
-            text: [
-                '```formbuilder',
-                '{{text|name|label=[名前]}}',
-                '{{textarea|description|label=[説明]}}',
-                '```',
-            ].join('\n')
-        });
+        root.createDiv({ cls: 'fb-no-template-msg', text: L.noTemplateMessage });
+        root.createEl('pre', { cls: 'fb-example-block' })
+            .createEl('code', { text: L.noTemplateSample });
 
-        new Setting(contentEl)
-            .addButton(btn => btn
-                .setButtonText('Open Settings')
-                .onClick(() => {
-                    this.close();
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    (this.app as any).setting.open();
-                }))
-            .addButton(btn => btn
-                .setButtonText('Documentation')
-                .onClick(() => {
-                    window.open('https://github.com/your-repo/form-builder#readme');
-                }))
-            .addButton(btn => btn
-                .setButtonText('Close')
-                .onClick(() => this.close()));
+        const btnRow = root.createDiv({ cls: 'fb-btn-row' });
+
+        btnRow.createEl('button', { cls: 'fb-btn', text: L.btnHelp })
+            .addEventListener('click', () => new HelpModal(this.app, this.locale).open());
+
+        btnRow.createEl('button', { cls: 'fb-btn', text: L.btnSettings })
+            .addEventListener('click', () => {
+                this.close();
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                (this.app as any).setting.open();
+            });
+
+        btnRow.createEl('button', { cls: 'fb-btn', text: L.btnClose })
+            .addEventListener('click', () => this.close());
     }
 
     onClose(): void {

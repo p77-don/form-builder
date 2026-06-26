@@ -2,20 +2,15 @@ import { Notice } from 'obsidian';
 import type { ParseError } from '../model/FieldModel';
 
 /**
- * 致命的エラーを Notice で表示する
+ * 致命的エラーを Notice で表示する。
+ * ヘッダー文言はロケールから渡す。
+ * エラーメッセージ本文はパーサーが生成する技術的情報のため英語固定。
  */
-export function showFatalError(errors: ParseError[]): void {
+export function showFatalError(errors: ParseError[], header: string): void {
     const messages = errors.map(e => {
         const lineInfo = e.line ? ` (line ${e.line})` : '';
         return `• ${e.message}${lineInfo}`;
     }).join('\n');
 
-    new Notice(`Form Builder Error:\n${messages}`, 8000);
-}
-
-/**
- * 汎用エラー通知
- */
-export function showError(message: string): void {
-    new Notice(`Form Builder: ${message}`, 6000);
+    new Notice(`${header}\n${messages}`, 8000);
 }

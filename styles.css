@@ -1,120 +1,573 @@
 /* =============================================
-   Form Builder Plugin Styles
+   Form Builder — Neumorphism Style
+   ライト・ダーク両テーマ対応
+   ベース面 = --background-primary
+   凸影: 右下に暗色、左上に明色
+   凹影（input focus / pressed）: 逆向き inset shadow
    ============================================= */
 
-/* ---------- 警告ブロック ---------- */
-.form-builder-warning-block {
-    margin-bottom: var(--size-4-4);
+/* ---------- CSS 変数（ライトテーマ） ---------- */
+.theme-light .modal:has(.fb-modal) {
+    --fb-bg:         #e8e8ec;
+    --fb-shadow-dark:  #b8b8bc;
+    --fb-shadow-light: #ffffff;
+    --fb-text:       #3a3a4a;
+    --fb-text-sub:   #7a7a8a;
+    --fb-accent:     #7c6af7;
+    --fb-accent-dark:#5a49d6;
+    --fb-danger:     #e05c6a;
+    --fb-warn-bg:    #fff8e6;
+    --fb-warn-border:#f0a832;
+    --fb-radius:     14px;
+    --fb-radius-sm:  8px;
+    --fb-radius-pill:999px;
 }
 
-.form-builder-warning {
-    background-color: var(--background-modifier-warning);
-    border-left: 4px solid var(--color-orange);
-    padding: var(--size-4-2) var(--size-4-3);
-    margin-bottom: var(--size-4-2);
-    border-radius: var(--radius-s);
-    font-size: var(--font-ui-small);
-    color: var(--text-normal);
+/* ---------- CSS 変数（ダークテーマ） ---------- */
+.theme-dark .modal:has(.fb-modal) {
+    --fb-bg:          #1e1e24;
+    --fb-shadow-dark:  #111116;
+    --fb-shadow-light: #2e2e38;
+    --fb-text:        #d4d4e0;
+    --fb-text-sub:    #7a7a90;
+    --fb-accent:      #9b8dff;
+    --fb-accent-dark: #7c6af7;
+    --fb-danger:      #ff6b78;
+    --fb-warn-bg:     #2a2410;
+    --fb-warn-border: #c8900a;
+    --fb-radius:      14px;
+    --fb-radius-sm:   8px;
+    --fb-radius-pill: 999px;
 }
 
-/* ---------- 必須フィールドのアスタリスク ---------- */
-.form-builder-required-mark {
-    color: var(--color-red);
-    font-weight: var(--font-bold);
+/* ---------- モーダル自体の背景 ---------- */
+.modal:has(.fb-modal) {
+    background: var(--fb-bg);
+    border: none;
+    border-radius: 20px;
+    box-shadow:
+        8px 8px 20px var(--fb-shadow-dark),
+        -8px -8px 20px var(--fb-shadow-light);
 }
 
-/* ---------- 必須フィールドエラーハイライト ---------- */
-.form-builder-required-error input,
-.form-builder-required-error textarea,
-.form-builder-required-error select {
-    border-color: var(--color-red) !important;
-    outline: 1px solid var(--color-red);
+.modal:has(.fb-modal) .modal-title {
+    color: var(--fb-text);
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
 }
 
-.form-builder-required-error .setting-item-name {
-    color: var(--color-red);
+.modal:has(.fb-modal) .modal-close-button {
+    color: var(--fb-text-sub);
 }
 
-/* ---------- multiselect チェックボックスグループ ---------- */
-.form-builder-multiselect {
-    margin-bottom: var(--size-4-3);
-    border-radius: var(--radius-s);
-}
-
-.form-builder-multiselect-group {
-    padding: var(--size-4-1) var(--size-4-3) var(--size-4-2);
+/* ---------- コンテンツ全体 ---------- */
+.fb-modal {
+    background: var(--fb-bg);
+    padding: 4px 2px 12px;
     display: flex;
-    flex-wrap: wrap;
-    gap: var(--size-4-1) var(--size-4-4);
+    flex-direction: column;
+    gap: 14px;
 }
 
-.form-builder-multiselect-item {
+/* ---------- 警告ブロック ---------- */
+.fb-warning-block {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 4px;
+}
+
+.fb-warning {
+    background: var(--fb-warn-bg);
+    border-left: 3px solid var(--fb-warn-border);
+    border-radius: var(--fb-radius-sm);
+    padding: 8px 12px;
+    font-size: 0.78rem;
+    color: var(--fb-text);
+    box-shadow:
+        3px 3px 8px var(--fb-shadow-dark),
+        -2px -2px 6px var(--fb-shadow-light);
+}
+
+/* ---------- フィールドカード ---------- */
+.fb-field {
+    background: var(--fb-bg);
+    border-radius: var(--fb-radius);
+    padding: 14px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    box-shadow:
+        5px 5px 12px var(--fb-shadow-dark),
+        -5px -5px 12px var(--fb-shadow-light);
+    transition: box-shadow 150ms ease;
+    overflow: visible;
+}
+
+.fb-field:focus-within {
+    box-shadow:
+        6px 6px 16px var(--fb-shadow-dark),
+        -6px -6px 16px var(--fb-shadow-light);
+}
+
+/* エラー状態のカード */
+.fb-field.fb-error {
+    box-shadow:
+        5px 5px 12px var(--fb-shadow-dark),
+        -5px -5px 12px var(--fb-shadow-light),
+        0 0 0 2px var(--fb-danger);
+}
+
+/* ---------- ラベル行 ---------- */
+.fb-label-row {
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
+}
+
+.fb-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--fb-text);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.fb-required-mark {
+    font-size: 0.75rem;
+    color: var(--fb-danger);
+    font-weight: 700;
+}
+
+.fb-desc {
+    font-size: 0.75rem;
+    color: var(--fb-text-sub);
+    line-height: 1.4;
+    margin-top: -2px;
+}
+
+/* ---------- 凹み型インプット共通 ---------- */
+.fb-input,
+.fb-textarea,
+.fb-select {
+    width: 100%;
+    background: var(--fb-bg);
+    border: none;
+    border-radius: var(--fb-radius-sm);
+    padding: 10px 13px;
+    font-size: 0.88rem;
+    line-height: 1.5;
+    color: var(--fb-text);
+    outline: none;
+    box-shadow:
+        inset 3px 3px 7px var(--fb-shadow-dark),
+        inset -3px -3px 7px var(--fb-shadow-light);
+    transition: box-shadow 150ms ease;
+    box-sizing: border-box;
+}
+
+.fb-input::placeholder,
+.fb-textarea::placeholder {
+    color: var(--fb-text-sub);
+    opacity: 0.7;
+}
+
+.fb-input:focus,
+.fb-textarea:focus,
+.fb-select:focus {
+    box-shadow:
+        inset 4px 4px 10px var(--fb-shadow-dark),
+        inset -4px -4px 10px var(--fb-shadow-light),
+        0 0 0 2px var(--fb-accent);
+}
+
+/* ---------- textarea ---------- */
+.fb-textarea {
+    resize: vertical;
+    min-height: 90px;
+    line-height: 1.55;
+}
+
+/* ---------- select ---------- */
+.fb-select {
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237a7a8a' stroke-width='1.8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 40px;
+    min-height: 38px;
+    cursor: pointer;
+    overflow: visible;
+}
+
+/* ---------- checkbox (toggle) ---------- */
+.fb-toggle-wrap {
     display: flex;
     align-items: center;
-    gap: var(--size-4-2);
-    padding: var(--size-4-1) 0;
+    gap: 12px;
+}
+
+.fb-toggle {
+    position: relative;
+    width: 44px;
+    height: 24px;
+    flex-shrink: 0;
+}
+
+.fb-toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+    position: absolute;
+}
+
+.fb-toggle-track {
+    position: absolute;
+    inset: 0;
+    border-radius: var(--fb-radius-pill);
+    background: var(--fb-bg);
+    box-shadow:
+        inset 3px 3px 7px var(--fb-shadow-dark),
+        inset -3px -3px 7px var(--fb-shadow-light);
+    transition: background 200ms ease, box-shadow 200ms ease;
+    cursor: pointer;
+}
+
+.fb-toggle input:checked + .fb-toggle-track {
+    background: var(--fb-accent);
+    box-shadow:
+        inset 2px 2px 5px var(--fb-accent-dark),
+        inset -2px -2px 5px color-mix(in srgb, var(--fb-accent) 60%, white);
+}
+
+.fb-toggle-thumb {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--fb-bg);
+    box-shadow:
+        2px 2px 5px var(--fb-shadow-dark),
+        -1px -1px 4px var(--fb-shadow-light);
+    transition: transform 200ms ease, background 200ms ease;
+    pointer-events: none;
+}
+
+.fb-toggle input:checked ~ .fb-toggle-thumb {
+    transform: translateX(20px);
+    background: #ffffff;
+}
+
+.fb-toggle input:focus-visible + .fb-toggle-track {
+    outline: 2px solid var(--fb-accent);
+    outline-offset: 2px;
+}
+
+/* ---------- multiselect チップ群 ---------- */
+.fb-chip-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding-top: 2px;
+}
+
+.fb-chip {
+    position: relative;
+}
+
+.fb-chip input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.fb-chip-label {
+    display: inline-block;
+    padding: 5px 13px;
+    border-radius: var(--fb-radius-pill);
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--fb-text-sub);
+    background: var(--fb-bg);
     cursor: pointer;
     user-select: none;
-    font-size: var(--font-ui-medium);
-    color: var(--text-normal);
+    box-shadow:
+        3px 3px 7px var(--fb-shadow-dark),
+        -3px -3px 7px var(--fb-shadow-light);
+    transition: box-shadow 150ms ease, color 150ms ease;
 }
 
-.form-builder-multiselect-item input[type="checkbox"] {
+.fb-chip input:checked + .fb-chip-label {
+    color: var(--fb-accent);
+    font-weight: 700;
+    box-shadow:
+        inset 2px 2px 5px var(--fb-shadow-dark),
+        inset -2px -2px 5px var(--fb-shadow-light);
+}
+
+.fb-chip input:focus-visible + .fb-chip-label {
+    outline: 2px solid var(--fb-accent);
+    outline-offset: 2px;
+}
+
+/* ---------- 送信ボタン ---------- */
+.fb-submit-wrap {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 4px;
+}
+
+.fb-submit-btn {
+    background: var(--fb-bg);
+    border: none;
+    border-radius: var(--fb-radius-pill);
+    padding: 10px 28px;
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--fb-accent);
+    letter-spacing: 0.05em;
     cursor: pointer;
-    width: var(--checkbox-size);
-    height: var(--checkbox-size);
+    box-shadow:
+        5px 5px 12px var(--fb-shadow-dark),
+        -5px -5px 12px var(--fb-shadow-light);
+    transition: box-shadow 120ms ease, transform 120ms ease;
 }
 
-/* ---------- テンプレート選択リスト ---------- */
-.form-builder-template-list {
+.fb-submit-btn:hover {
+    box-shadow:
+        7px 7px 16px var(--fb-shadow-dark),
+        -7px -7px 16px var(--fb-shadow-light);
+}
+
+.fb-submit-btn:active {
+    box-shadow:
+        inset 3px 3px 7px var(--fb-shadow-dark),
+        inset -3px -3px 7px var(--fb-shadow-light);
+    transform: scale(0.98);
+}
+
+.fb-submit-btn:focus-visible {
+    outline: 2px solid var(--fb-accent);
+    outline-offset: 3px;
+}
+
+/* ---------- テンプレート選択画面 ---------- */
+.fb-template-list {
     list-style: none;
     padding: 0;
-    margin: var(--size-4-2) 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
-.form-builder-template-item {
-    margin-bottom: var(--size-4-1);
-}
-
-.form-builder-template-btn {
-    display: block;
+.fb-template-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
     width: 100%;
     text-align: left;
-    padding: var(--size-4-2) var(--size-4-3);
-    border-radius: var(--radius-s);
-    border: 1px solid var(--background-modifier-border);
-    background-color: var(--background-primary);
-    color: var(--text-normal);
-    cursor: pointer;
-    font-size: var(--font-ui-medium);
-    transition: background-color 100ms ease;
-}
-
-.form-builder-template-btn:hover {
-    background-color: var(--background-modifier-hover);
-}
-
-/* ---------- テンプレート例コードブロック ---------- */
-.form-builder-example {
-    background-color: var(--background-secondary);
-    border-radius: var(--radius-s);
-    padding: var(--size-4-3);
-    margin: var(--size-4-3) 0;
-    font-family: var(--font-monospace);
-    font-size: var(--font-ui-small);
-    overflow-x: auto;
-    white-space: pre;
-}
-
-/* ---------- フォーム内 hr 区切り ---------- */
-.modal-content hr {
+    background: var(--fb-bg);
     border: none;
-    border-top: 1px solid var(--background-modifier-border);
-    margin: var(--size-4-3) 0;
+    border-radius: var(--fb-radius);
+    padding: 13px 18px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--fb-text);
+    cursor: pointer;
+    box-shadow:
+        5px 5px 12px var(--fb-shadow-dark),
+        -5px -5px 12px var(--fb-shadow-light);
+    transition: box-shadow 150ms ease, color 150ms ease;
 }
 
-/* ---------- textarea の最小高さ確保 ---------- */
-.setting-item .setting-item-control textarea {
-    min-height: 80px;
-    resize: vertical;
+.fb-template-btn::before {
+    content: '◆';
+    font-size: 0.55rem;
+    color: var(--fb-accent);
+    flex-shrink: 0;
+    opacity: 0.7;
+}
+
+.fb-template-btn:hover {
+    color: var(--fb-accent);
+    box-shadow:
+        7px 7px 16px var(--fb-shadow-dark),
+        -7px -7px 16px var(--fb-shadow-light);
+}
+
+.fb-template-btn:active {
+    box-shadow:
+        inset 3px 3px 7px var(--fb-shadow-dark),
+        inset -3px -3px 7px var(--fb-shadow-light);
+}
+
+.fb-template-btn:focus-visible {
+    outline: 2px solid var(--fb-accent);
+    outline-offset: 2px;
+}
+
+/* ---------- No Template 画面 ---------- */
+.fb-no-template-msg {
+    font-size: 0.88rem;
+    color: var(--fb-text-sub);
+    line-height: 1.6;
+    padding: 4px 0;
+}
+
+.fb-example-block {
+    background: var(--fb-bg);
+    border-radius: var(--fb-radius-sm);
+    padding: 14px 16px;
+    font-family: var(--font-monospace, monospace);
+    font-size: 0.78rem;
+    color: var(--fb-text-sub);
+    line-height: 1.6;
+    white-space: pre;
+    overflow-x: auto;
+    box-shadow:
+        inset 3px 3px 7px var(--fb-shadow-dark),
+        inset -3px -3px 7px var(--fb-shadow-light);
+}
+
+.fb-btn-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    padding-top: 4px;
+}
+
+.fb-btn {
+    background: var(--fb-bg);
+    border: none;
+    border-radius: var(--fb-radius-pill);
+    padding: 8px 20px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--fb-text-sub);
+    cursor: pointer;
+    box-shadow:
+        4px 4px 10px var(--fb-shadow-dark),
+        -4px -4px 10px var(--fb-shadow-light);
+    transition: box-shadow 120ms ease, color 120ms ease;
+}
+
+.fb-btn:hover {
+    color: var(--fb-accent);
+}
+
+.fb-btn:active {
+    box-shadow:
+        inset 2px 2px 5px var(--fb-shadow-dark),
+        inset -2px -2px 5px var(--fb-shadow-light);
+}
+
+.fb-btn:focus-visible {
+    outline: 2px solid var(--fb-accent);
+    outline-offset: 2px;
+}
+
+/* ---------- フォームフッター（Help + Create Note を横並び） ---------- */
+.fb-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 4px;
+    gap: 10px;
+}
+
+/* アクセントカラーボタン */
+.fb-btn-accent {
+    color: var(--fb-accent);
+}
+
+/* ---------- Help モーダル ---------- */
+.fb-help {
+    gap: 0;
+}
+
+.fb-help-section {
+    background: var(--fb-bg);
+    border-radius: var(--fb-radius);
+    padding: 14px 18px;
+    margin-bottom: 12px;
+    box-shadow:
+        5px 5px 12px var(--fb-shadow-dark),
+        -5px -5px 12px var(--fb-shadow-light);
+}
+
+.fb-help-section-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--fb-accent);
+    letter-spacing: 0.03em;
+    margin-bottom: 8px;
+}
+
+.fb-help-para {
+    font-size: 0.82rem;
+    color: var(--fb-text);
+    line-height: 1.65;
+    margin-bottom: 4px;
+}
+
+.fb-help-sub-title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--fb-text-sub);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin: 10px 2px 5px;
+}
+
+.fb-help-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 12px;
+    background: var(--fb-bg);
+    border-radius: var(--fb-radius-sm);
+    overflow: hidden;
+    box-shadow:
+        inset 2px 2px 5px var(--fb-shadow-dark),
+        inset -2px -2px 5px var(--fb-shadow-light);
+}
+
+.fb-help-table tr {
+    border-bottom: 1px solid color-mix(in srgb, var(--fb-shadow-dark) 40%, transparent);
+}
+
+.fb-help-table tr:last-child {
+    border-bottom: none;
+}
+
+.fb-help-td-key,
+.fb-help-td-desc {
+    padding: 7px 12px;
+    font-size: 0.78rem;
+    vertical-align: top;
+}
+
+.fb-help-td-key {
+    width: 45%;
+    white-space: nowrap;
+}
+
+.fb-help-td-key code {
+    background: color-mix(in srgb, var(--fb-accent) 12%, transparent);
+    color: var(--fb-accent);
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-family: var(--font-monospace, monospace);
+    font-size: 0.75rem;
+}
+
+.fb-help-td-desc {
+    color: var(--fb-text-sub);
+    line-height: 1.5;
 }

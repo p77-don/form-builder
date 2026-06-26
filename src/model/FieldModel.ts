@@ -1,6 +1,6 @@
 export type FieldType =
     | 'text' | 'textarea' | 'number' | 'date'
-    | 'checkbox' | 'select' | 'multiselect';
+    | 'checkbox' | 'select' | 'multiselect' | 'list';
 
 export type MarkdownListStyle = '-' | '*' | '1.';
 
@@ -49,9 +49,22 @@ export interface MultiselectField extends BaseField {
     markdownlist?: MarkdownListStyle;
 }
 
+/**
+ * list フィールド
+ * textarea に1行1項目で自由入力し、保存時に指定形式で展開する。
+ * separator 省略時のデフォルトは "\n"（改行）。
+ * markdownlist 指定時は Markdown リスト形式で展開する。
+ */
+export interface ListField extends BaseField {
+    type: 'list';
+    rows?: number;
+    separator?: string;
+    markdownlist?: MarkdownListStyle;
+}
+
 export type FormField =
     | TextField | TextareaField | NumberField | DateField
-    | CheckboxField | SelectField | MultiselectField;
+    | CheckboxField | SelectField | MultiselectField | ListField;
 
 export interface MetaConfig {
     folder?: string;

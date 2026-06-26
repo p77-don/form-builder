@@ -1,222 +1,164 @@
-import { Setting } from 'obsidian';
-import type { FormField, MultiselectField } from '../model/FieldModel';
+import type { FormField, ListField, MultiselectField } from '../model/FieldModel';
 
 type ValueStore = Map<string, string | string[] | boolean>;
 
-/**
- * フィールドタイプに応じた UI を containerEl に追加する
- */
 export function renderField(
     containerEl: HTMLElement,
     field: FormField,
     values: ValueStore
 ): void {
     switch (field.type) {
-        case 'text':      renderText(containerEl, field, values); break;
-        case 'textarea':  renderTextarea(containerEl, field, values); break;
-        case 'number':    renderNumber(containerEl, field, values); break;
-        case 'date':      renderDate(containerEl, field, values); break;
-        case 'checkbox':  renderCheckbox(containerEl, field, values); break;
-        case 'select':    renderSelect(containerEl, field, values); break;
+        case 'text':        renderText(containerEl, field, values); break;
+        case 'textarea':    renderTextarea(containerEl, field, values); break;
+        case 'number':      renderNumber(containerEl, field, values); break;
+        case 'date':        renderDate(containerEl, field, values); break;
+        case 'checkbox':    renderCheckbox(containerEl, field, values); break;
+        case 'select':      renderSelect(containerEl, field, values); break;
         case 'multiselect': renderMultiselect(containerEl, field as MultiselectField, values); break;
+        case 'list':        renderList(containerEl, field as ListField, values); break;
     }
 }
 
-// ---------- helpers ----------
+// ---------- 共通ヘルパー ----------
 
-function labelOf(field: FormField): string {
-    return field.label ?? field.key;
+function createCard(containerEl: HTMLElement, field: FormField): HTMLElement {
+    const card = containerEl.createDiv({ cls: 'fb-field' });
+    card.dataset.formKey = field.key;
+    return card;
 }
 
-function descOf(field: FormField): string {
-    return field.description ?? '';
-}
-
-/** required フラグ付きのフィールド名を生成（* マーカー付き） */
-function createNameEl(containerEl: HTMLElement, field: FormField): HTMLElement {
-    const el = containerEl.createSpan();
-    el.textContent = labelOf(field);
+function appendLabelRow(card: HTMLElement, field: FormField): void {
+    const labelRow = card.createDiv({ cls: 'fb-label-row' });
+    labelRow.createSpan({ cls: 'fb-label', text: field.label ?? field.key });
     if (field.required) {
-        const mark = el.createSpan({ cls: 'form-builder-required-mark' });
-        mark.textContent = ' *';
+        labelRow.createSpan({ cls: 'fb-required-mark', text: '*' });
     }
-    return el;
+    if (field.description) {
+        card.createDiv({ cls: 'fb-desc', text: field.description });
+    }
 }
 
-// ---------- 各フィールドレンダラー ----------
+// ---------- text ----------
 
 function renderText(containerEl: HTMLElement, field: FormField, values: ValueStore): void {
-    // 初期値をセット
     values.set(field.key, field.default ?? '');
-
-    const setting = new Setting(containerEl)
-        .setDesc(descOf(field));
-    setting.nameEl.empty();
-    setting.nameEl.appendChild(createNameEl(containerEl, field));
-
-    setting.addText(text => text
-        .setPlaceholder(field.placeholder ?? '')
-        .setValue(field.default ?? '')
-        .onChange(value => values.set(field.key, value)));
-
-    if (field.required) {
-        setting.settingEl.dataset.formKey = field.key;
-        setting.settingEl.addClass('form-builder-field');
-    }
+    const card = createCard(containerEl, field);
+    appendLabelRow(card, field);
+    const input = card.createEl('input', { cls: 'fb-input' });
+    input.type = 'text';
+    input.value = field.default ?? '';
+    if (field.placeholder) input.placeholder = field.placeholder;
+    input.addEventListener('input', () => values.set(field.key, input.value));
 }
+
+// ---------- textarea ----------
 
 function renderTextarea(containerEl: HTMLElement, field: FormField, values: ValueStore): void {
     values.set(field.key, field.default ?? '');
-
-    const setting = new Setting(containerEl)
-        .setDesc(descOf(field));
-    setting.nameEl.empty();
-    setting.nameEl.appendChild(createNameEl(containerEl, field));
-
-    setting.addTextArea(area => {
-        area.setPlaceholder(field.placeholder ?? '')
-            .setValue(field.default ?? '')
-            .onChange(value => values.set(field.key, value));
-
-        const rows = (field as { rows?: number }).rows;
-        if (rows && rows > 0) {
-            area.inputEl.rows = rows;
-        } else {
-            area.inputEl.rows = 5;
-        }
-    });
-
-    if (field.required) {
-        setting.settingEl.dataset.formKey = field.key;
-        setting.settingEl.addClass('form-builder-field');
-    }
+    const card = createCard(containerEl, field);
+    appendLabelRow(card, field);
+    const textarea = card.createEl('textarea', { cls: 'fb-textarea' });
+    textarea.value = field.default ?? '';
+    if (field.placeholder) textarea.placeholder = field.placeholder;
+    const rows = (field as { rows?: number }).rows;
+    textarea.rows = (rows && rows > 0) ? rows : 5;
+    textarea.addEventListener('input', () => values.set(field.key, textarea.value));
 }
+
+// ---------- number ----------
 
 function renderNumber(containerEl: HTMLElement, field: FormField, values: ValueStore): void {
     values.set(field.key, field.default ?? '');
-
-    const setting = new Setting(containerEl)
-        .setDesc(descOf(field));
-    setting.nameEl.empty();
-    setting.nameEl.appendChild(createNameEl(containerEl, field));
-
-    setting.addText(text => {
-        text.inputEl.type = 'number';
-
-        const nf = field as { min?: number; max?: number };
-        if (nf.min !== undefined) text.inputEl.min = String(nf.min);
-        if (nf.max !== undefined) text.inputEl.max = String(nf.max);
-        if (field.placeholder) text.inputEl.placeholder = field.placeholder;
-
-        text.setValue(field.default ?? '')
-            .onChange(value => values.set(field.key, value));
-    });
-
-    if (field.required) {
-        setting.settingEl.dataset.formKey = field.key;
-        setting.settingEl.addClass('form-builder-field');
-    }
+    const card = createCard(containerEl, field);
+    appendLabelRow(card, field);
+    const input = card.createEl('input', { cls: 'fb-input' });
+    input.type = 'number';
+    const nf = field as { min?: number; max?: number };
+    if (nf.min !== undefined) input.min = String(nf.min);
+    if (nf.max !== undefined) input.max = String(nf.max);
+    if (field.placeholder) input.placeholder = field.placeholder;
+    input.value = field.default ?? '';
+    input.addEventListener('input', () => values.set(field.key, input.value));
 }
+
+// ---------- date ----------
 
 function renderDate(containerEl: HTMLElement, field: FormField, values: ValueStore): void {
     values.set(field.key, field.default ?? '');
-
-    const setting = new Setting(containerEl)
-        .setDesc(descOf(field));
-    setting.nameEl.empty();
-    setting.nameEl.appendChild(createNameEl(containerEl, field));
-
-    setting.addText(text => {
-        text.inputEl.type = 'date';
-        text.setValue(field.default ?? '')
-            .onChange(value => values.set(field.key, value));
-    });
-
-    if (field.required) {
-        setting.settingEl.dataset.formKey = field.key;
-        setting.settingEl.addClass('form-builder-field');
-    }
+    const card = createCard(containerEl, field);
+    appendLabelRow(card, field);
+    const input = card.createEl('input', { cls: 'fb-input' });
+    input.type = 'date';
+    input.value = field.default ?? '';
+    input.addEventListener('change', () => values.set(field.key, input.value));
 }
+
+// ---------- checkbox (toggle) ----------
 
 function renderCheckbox(containerEl: HTMLElement, field: FormField, values: ValueStore): void {
     const initVal = field.default === 'true';
     values.set(field.key, initVal);
-
-    const setting = new Setting(containerEl)
-        .setDesc(descOf(field));
-    setting.nameEl.empty();
-    setting.nameEl.appendChild(createNameEl(containerEl, field));
-
-    setting.addToggle(toggle => toggle
-        .setValue(initVal)
-        .onChange(value => values.set(field.key, value)));
+    const card = createCard(containerEl, field);
+    appendLabelRow(card, field);
+    const wrap = card.createDiv({ cls: 'fb-toggle-wrap' });
+    const toggleLabel = wrap.createEl('label', { cls: 'fb-toggle' });
+    const input = toggleLabel.createEl('input');
+    input.type = 'checkbox';
+    input.checked = initVal;
+    toggleLabel.createDiv({ cls: 'fb-toggle-track' });
+    toggleLabel.createDiv({ cls: 'fb-toggle-thumb' });
+    input.addEventListener('change', () => values.set(field.key, input.checked));
 }
+
+// ---------- select ----------
 
 function renderSelect(containerEl: HTMLElement, field: FormField, values: ValueStore): void {
     const sf = field as { list: string[] };
     values.set(field.key, field.default ?? '');
-
-    const setting = new Setting(containerEl)
-        .setDesc(descOf(field));
-    setting.nameEl.empty();
-    setting.nameEl.appendChild(createNameEl(containerEl, field));
-
-    setting.addDropdown(drop => {
-        drop.addOption('', '---');
-        for (const item of sf.list) drop.addOption(item, item);
-
-        // default 値が list に存在する場合のみセット
-        const defaultVal = field.default ?? '';
-        if (defaultVal && sf.list.includes(defaultVal)) {
-            drop.setValue(defaultVal);
-        } else {
-            drop.setValue('');
-        }
-
-        drop.onChange(value => values.set(field.key, value));
-    });
-
-    if (field.required) {
-        setting.settingEl.dataset.formKey = field.key;
-        setting.settingEl.addClass('form-builder-field');
+    const card = createCard(containerEl, field);
+    appendLabelRow(card, field);
+    const select = card.createEl('select', { cls: 'fb-select' });
+    const emptyOpt = select.createEl('option');
+    emptyOpt.value = '';
+    emptyOpt.textContent = '---';
+    for (const item of sf.list) {
+        const opt = select.createEl('option');
+        opt.value = item;
+        opt.textContent = item;
     }
+    const defaultVal = field.default ?? '';
+    select.value = (defaultVal && sf.list.includes(defaultVal)) ? defaultVal : '';
+    select.addEventListener('change', () => values.set(field.key, select.value));
 }
+
+// ---------- multiselect (チップ UI) ----------
 
 function renderMultiselect(
     containerEl: HTMLElement,
     field: MultiselectField,
     values: ValueStore
 ): void {
-    // デフォルト選択状態の計算
-    const defaultRaw = field.default ?? '';
+    const defaultRaw   = field.default ?? '';
     const defaultItems = defaultRaw
         ? defaultRaw.split(';').map(s => s.trim()).filter(s => field.list.includes(s))
         : [];
     const selected = new Set<string>(defaultItems);
     values.set(field.key, [...selected]);
 
-    // ラッパー div
-    const wrapper = containerEl.createDiv({ cls: 'form-builder-multiselect' });
-    if (field.required) {
-        wrapper.dataset.formKey = field.key;
-        wrapper.addClass('form-builder-field');
-    }
+    const card = createCard(containerEl, field);
+    appendLabelRow(card, field);
 
-    // タイトル行
-    const titleSetting = new Setting(wrapper)
-        .setDesc(descOf(field));
-    titleSetting.nameEl.empty();
-    titleSetting.nameEl.appendChild(createNameEl(wrapper, field));
-
-    // チェックボックスグループ
-    const checkGroup = wrapper.createDiv({ cls: 'form-builder-multiselect-group' });
+    const chipGroup = card.createDiv({ cls: 'fb-chip-group' });
     for (const item of field.list) {
-        const label = checkGroup.createEl('label', { cls: 'form-builder-multiselect-item' });
-        const checkbox = label.createEl('input');
+        const chipWrap = chipGroup.createDiv({ cls: 'fb-chip' });
+        const id = `fb-chip-${field.key}-${item}`;
+        const checkbox = chipWrap.createEl('input');
         checkbox.type = 'checkbox';
+        checkbox.id = id;
         checkbox.checked = selected.has(item);
-        label.createSpan({ text: item });
-
+        const label = chipWrap.createEl('label', { cls: 'fb-chip-label' });
+        label.htmlFor = id;
+        label.textContent = item;
         checkbox.addEventListener('change', () => {
             if (checkbox.checked) selected.add(item);
             else selected.delete(item);
@@ -225,38 +167,57 @@ function renderMultiselect(
     }
 }
 
-/**
- * required フィールドが未入力のものをハイライトする
- * @returns 未入力のキー一覧
- */
+// ---------- list（自由入力・1行1項目） ----------
+
+function renderList(
+    containerEl: HTMLElement,
+    field: ListField,
+    values: ValueStore
+): void {
+    values.set(field.key, field.default ?? '');
+    const card = createCard(containerEl, field);
+    appendLabelRow(card, field);
+
+    // ヒントテキスト（説明がない場合のみ表示）
+    if (!field.description) {
+        card.createDiv({
+            cls: 'fb-desc',
+            text: '1行につき1項目を入力してください。空行は無視されます。',
+        });
+    }
+
+    const textarea = card.createEl('textarea', { cls: 'fb-textarea fb-list-input' });
+    textarea.value = field.default ?? '';
+    if (field.placeholder) textarea.placeholder = field.placeholder;
+    textarea.rows = (field.rows && field.rows > 0) ? field.rows : 4;
+    textarea.addEventListener('input', () => values.set(field.key, textarea.value));
+}
+
+// ---------- required バリデーション ----------
+
 export function highlightRequiredErrors(
     containerEl: HTMLElement,
     fields: FormField[],
     values: ValueStore
 ): string[] {
-    // まず既存のエラークラスをリセット
-    containerEl.querySelectorAll('.form-builder-required-error').forEach(el => {
-        el.removeClass('form-builder-required-error');
-    });
+    containerEl.querySelectorAll('.fb-error').forEach(el => el.removeClass('fb-error'));
 
     const missing: string[] = [];
-
     for (const field of fields) {
         if (!field.required) continue;
         const value = values.get(field.key);
-        const isEmpty =
-            value === undefined ||
-            value === '' ||
-            (Array.isArray(value) && value.length === 0) ||
-            value === false;
+
+        // list フィールドは空行除去後に1行以上あれば有効
+        const isEmpty = field.type === 'list'
+            ? (typeof value !== 'string' || value.split('\n').map(l => l.trim()).filter(Boolean).length === 0)
+            : (value === undefined || value === '' ||
+               (Array.isArray(value) && value.length === 0) || value === false);
 
         if (isEmpty) {
             missing.push(field.key);
-            // data-form-key 属性でフィールド要素を特定してハイライト
             const el = containerEl.querySelector(`[data-form-key="${field.key}"]`);
-            if (el) el.addClass('form-builder-required-error');
+            if (el) el.addClass('fb-error');
         }
     }
-
     return missing;
 }

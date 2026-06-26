@@ -26,8 +26,274 @@ var import_obsidian6 = require("obsidian");
 
 // src/settings.ts
 var import_obsidian = require("obsidian");
+
+// src/locales.ts
+var LOCALE_LABELS = {
+  en: "English",
+  ja: "\u65E5\u672C\u8A9E"
+};
+var en = {
+  // 設定画面
+  settingHeading: "Form Builder Settings",
+  settingFolderName: "Template folder",
+  settingFolderDesc: "Folder to look for template files. Markdown files in this folder will be treated as templates.",
+  settingFolderPlaceholder: "Templates",
+  settingLanguageName: "Language",
+  settingLanguageDesc: "Language used in the settings, help screen, and all UI messages.",
+  // Notice
+  noticeReadError: "Form Builder: Failed to read template file.",
+  noticeRequired: "Form Builder: Please fill in all required fields.",
+  noticeCreateError: "Form Builder: Failed to create note.",
+  noticeSanitized: 'Form Builder: Some invalid characters in the file name were replaced with "_".',
+  noticeFatalHeader: "Form Builder Error:",
+  // モーダル共通
+  btnClose: "Close",
+  btnHelp: "? Help",
+  btnSettings: "Open Settings",
+  // テンプレート選択
+  selectorTitle: "Select Template",
+  // テンプレート未検出
+  welcomeTitle: "Welcome to Form Builder",
+  noTemplateMessage: "No templates found. Please create a .md file in your template folder.",
+  noTemplateSample: `\`\`\`formbuilder
+{{meta|folder=[Notes]}}
+{{meta|filename=[$title$-%date%]}}
+
+{{text|title|label=[Title]|required}}
+{{textarea|body|label=[Content]}}
+\`\`\`
+
+# $title$
+
+$body$`,
+  // フォーム
+  formTitle: "Form Builder",
+  btnCreateNote: "Create Note",
+  // ヘルプ
+  helpTitle: "Form Builder \u2014 Help",
+  sec1Title: "\u2460 Template Folder Setup",
+  sec2Title: "\u2461 How to Write a Template",
+  sec3Title: "\u2462 How to Run",
+  sec4Title: "\u2463 Creating a Note",
+  sec1Paragraphs: [
+    'Open Obsidian Settings and go to Form Builder. Enter the folder name where your template files are stored in the "Template folder" field.',
+    'The default is "Templates". Any .md file placed in that folder will be recognized as a template.'
+  ],
+  sec2Paragraphs: [
+    "Add a ```formbuilder code block to your template file.",
+    "Use meta to specify the output folder and file name, then define fields below it.",
+    "Write $key$ in the body text \u2014 it will be replaced with the value entered in the form."
+  ],
+  sec3Paragraphs: [
+    'Open the Command Palette (Ctrl / Cmd + P) and run "Create Note From Template".',
+    "If multiple templates exist, a list will appear \u2014 select the one you want to use."
+  ],
+  sec4Paragraphs: [
+    "Selecting a template opens the input form. Fill in each field.",
+    'Fields marked with * are required. If you press "Create Note" with them empty, they will be highlighted.',
+    'After filling in the form, press "Create Note" to save the note to the folder specified by meta and open it automatically.',
+    "The folder and file name can be fixed in meta, or use $key$ to substitute form input values."
+  ],
+  sampleCode: `---
+title: "$title$"
+created: "%date%"
+tags:
+  - "$category$"
+---
+
+\`\`\`formbuilder
+{{meta|folder=[Notes]}}
+{{meta|filename=[$title$-%timestamp%]}}
+
+{{text|title|label=[Title]|required}}
+{{date|date|label=[Date]}}
+{{select|category|label=[Category]|list=[Work;Personal;Study;Other]}}
+{{select|priority|label=[Priority]|list=[High;Medium;Low]|default=[Medium]}}
+{{textarea|summary|label=[Summary]|rows=[4]}}
+{{multiselect|tags|label=[Tags]|list=[Important;Review;Draft;Done]|separator=[, ]}}
+{{checkbox|published|label=[Published]}}
+\`\`\`
+
+# $title$
+
+**Date:** $date$  **Category:** $category$  **Priority:** $priority$
+
+## Summary
+$summary$
+
+**Tags:** $tags$`,
+  subMeta: "Meta Options",
+  subFields: "Field Types",
+  subOptions: "Common Options",
+  subVariables: "Variables",
+  metaRows: [
+    ["meta|folder=[FolderName]", "Output folder for the note"],
+    ["meta|filename=[FileName]", "File name of the note (variables allowed)"]
+  ],
+  fieldRows: [
+    ["text", "Single-line text input"],
+    ["textarea", "Multi-line text input"],
+    ["number", "Numeric input"],
+    ["date", "Date picker"],
+    ["checkbox", "Toggle (true / false)"],
+    ["select", "Single selection dropdown"],
+    ["multiselect", "Multiple selection checkboxes"]
+  ],
+  optionRows: [
+    ["label=[Display Name]", "Label shown on the form"],
+    ["required", "Mark field as required"],
+    ["placeholder=[...]", "Placeholder text"],
+    ["description=[...]", "Field description shown below the label"],
+    ["default=[Value]", "Default value"],
+    ["list=[A;B;C]", "Options for select / multiselect (semicolon-separated)"],
+    ["separator=[, ]", "Separator for multiselect output"],
+    ["markdownlist=[-]", "Output multiselect as Markdown list (- / * / 1.)"],
+    ["min=[0]|max=[100]", "Min / Max value for number fields"],
+    ["rows=[5]", "Visible rows for textarea / multiselect"]
+  ],
+  variableRows: [
+    ["$key$", "Replaced with the form input value for that key"],
+    ["%timestamp%", "Save timestamp (e.g. 20260626153000)"],
+    ["%date%", "Save date (e.g. 2026-06-26)"],
+    ["%time%", "Save time (e.g. 15:30:00)"]
+  ]
+};
+var ja = {
+  // 設定画面
+  settingHeading: "Form Builder \u8A2D\u5B9A",
+  settingFolderName: "\u30C6\u30F3\u30D7\u30EC\u30FC\u30C8\u30D5\u30A9\u30EB\u30C0",
+  settingFolderDesc: "\u30C6\u30F3\u30D7\u30EC\u30FC\u30C8\u30D5\u30A1\u30A4\u30EB\u3092\u7F6E\u304F\u30D5\u30A9\u30EB\u30C0\u3092\u6307\u5B9A\u3057\u307E\u3059\u3002\u3053\u306E\u30D5\u30A9\u30EB\u30C0\u5185\u306E Markdown \u30D5\u30A1\u30A4\u30EB\u304C\u30C6\u30F3\u30D7\u30EC\u30FC\u30C8\u3068\u3057\u3066\u8A8D\u8B58\u3055\u308C\u307E\u3059\u3002",
+  settingFolderPlaceholder: "Templates",
+  settingLanguageName: "\u8A00\u8A9E",
+  settingLanguageDesc: "\u8A2D\u5B9A\u753B\u9762\u30FB\u30D8\u30EB\u30D7\u30FB\u3059\u3079\u3066\u306E UI \u30E1\u30C3\u30BB\u30FC\u30B8\u306B\u4F7F\u7528\u3059\u308B\u8A00\u8A9E\u3067\u3059\u3002",
+  // Notice
+  noticeReadError: "Form Builder: \u30C6\u30F3\u30D7\u30EC\u30FC\u30C8\u30D5\u30A1\u30A4\u30EB\u306E\u8AAD\u307F\u8FBC\u307F\u306B\u5931\u6557\u3057\u307E\u3057\u305F\u3002",
+  noticeRequired: "Form Builder: \u5FC5\u9808\u30D5\u30A3\u30FC\u30EB\u30C9\u3092\u3059\u3079\u3066\u5165\u529B\u3057\u3066\u304F\u3060\u3055\u3044\u3002",
+  noticeCreateError: "Form Builder: \u30CE\u30FC\u30C8\u306E\u4F5C\u6210\u306B\u5931\u6557\u3057\u307E\u3057\u305F\u3002",
+  noticeSanitized: 'Form Builder: \u30D5\u30A1\u30A4\u30EB\u540D\u306B\u4F7F\u7528\u3067\u304D\u306A\u3044\u6587\u5B57\u304C\u542B\u307E\u308C\u3066\u3044\u305F\u305F\u3081 "_" \u306B\u7F6E\u304D\u63DB\u3048\u307E\u3057\u305F\u3002',
+  noticeFatalHeader: "Form Builder \u30A8\u30E9\u30FC:",
+  // モーダル共通
+  btnClose: "\u9589\u3058\u308B",
+  btnHelp: "? \u30D8\u30EB\u30D7",
+  btnSettings: "\u8A2D\u5B9A\u3092\u958B\u304F",
+  // テンプレート選択
+  selectorTitle: "\u30C6\u30F3\u30D7\u30EC\u30FC\u30C8\u3092\u9078\u629E",
+  // テンプレート未検出
+  welcomeTitle: "Form Builder \u3078\u3088\u3046\u3053\u305D",
+  noTemplateMessage: "\u30C6\u30F3\u30D7\u30EC\u30FC\u30C8\u304C\u898B\u3064\u304B\u308A\u307E\u305B\u3093\u3067\u3057\u305F\u3002\u30C6\u30F3\u30D7\u30EC\u30FC\u30C8\u30D5\u30A9\u30EB\u30C0\u306B .md \u30D5\u30A1\u30A4\u30EB\u3092\u4F5C\u6210\u3057\u3066\u304F\u3060\u3055\u3044\u3002",
+  noTemplateSample: `\`\`\`formbuilder
+{{meta|folder=[Notes]}}
+{{meta|filename=[$title$-%date%]}}
+
+{{text|title|label=[\u30BF\u30A4\u30C8\u30EB]|required}}
+{{textarea|body|label=[\u5185\u5BB9]}}
+\`\`\`
+
+# $title$
+
+$body$`,
+  // フォーム
+  formTitle: "Form Builder",
+  btnCreateNote: "\u30CE\u30FC\u30C8\u3092\u4F5C\u6210",
+  // ヘルプ
+  helpTitle: "Form Builder \u2014 \u30D8\u30EB\u30D7",
+  sec1Title: "\u2460 \u30C6\u30F3\u30D7\u30EC\u30FC\u30C8\u30D5\u30A9\u30EB\u30C0\u306E\u8A2D\u5B9A",
+  sec2Title: "\u2461 \u30C6\u30F3\u30D7\u30EC\u30FC\u30C8\u306E\u66F8\u304D\u65B9",
+  sec3Title: "\u2462 \u5B9F\u884C\u65B9\u6CD5",
+  sec4Title: "\u2463 \u30CE\u30FC\u30C8\u306E\u4F5C\u6210",
+  sec1Paragraphs: [
+    "Obsidian \u306E\u8A2D\u5B9A\u753B\u9762\u3092\u958B\u304D\u3001Form Builder \u306E\u300C\u30C6\u30F3\u30D7\u30EC\u30FC\u30C8\u30D5\u30A9\u30EB\u30C0\u300D\u306B\u30C6\u30F3\u30D7\u30EC\u30FC\u30C8\u30D5\u30A1\u30A4\u30EB\u3092\u7F6E\u304F\u30D5\u30A9\u30EB\u30C0\u540D\u3092\u5165\u529B\u3057\u307E\u3059\u3002",
+    "\u30C7\u30D5\u30A9\u30EB\u30C8\u306F\u300CTemplates\u300D\u3067\u3059\u3002\u6307\u5B9A\u3057\u305F\u30D5\u30A9\u30EB\u30C0\u306B .md \u30D5\u30A1\u30A4\u30EB\u3092\u7F6E\u304F\u3068\u30C6\u30F3\u30D7\u30EC\u30FC\u30C8\u3068\u3057\u3066\u8A8D\u8B58\u3055\u308C\u307E\u3059\u3002"
+  ],
+  sec2Paragraphs: [
+    "\u30C6\u30F3\u30D7\u30EC\u30FC\u30C8\u30D5\u30A1\u30A4\u30EB\u306B ```formbuilder \u30B3\u30FC\u30C9\u30D6\u30ED\u30C3\u30AF\u3092\u8A18\u8FF0\u3057\u307E\u3059\u3002",
+    "meta \u3067\u30D5\u30A9\u30EB\u30C0\u30FB\u30D5\u30A1\u30A4\u30EB\u540D\u3092\u6307\u5B9A\u3057\u3001\u305D\u306E\u4E0B\u306B\u30D5\u30A3\u30FC\u30EB\u30C9\u3092\u5B9A\u7FA9\u3057\u307E\u3059\u3002",
+    "\u672C\u6587\u4E2D\u306B $\u30AD\u30FC\u540D$ \u3068\u66F8\u304F\u3068\u3001\u30D5\u30A9\u30FC\u30E0\u306E\u5165\u529B\u5024\u306B\u7F6E\u304D\u63DB\u308F\u308A\u307E\u3059\u3002"
+  ],
+  sec3Paragraphs: [
+    "\u30B3\u30DE\u30F3\u30C9\u30D1\u30EC\u30C3\u30C8\uFF08Ctrl / Cmd + P\uFF09\u3092\u958B\u304D\u3001\u300CCreate Note From Template\u300D\u3092\u5B9F\u884C\u3057\u307E\u3059\u3002",
+    "\u30C6\u30F3\u30D7\u30EC\u30FC\u30C8\u304C\u8907\u6570\u3042\u308B\u5834\u5408\u306F\u4E00\u89A7\u304C\u8868\u793A\u3055\u308C\u308B\u306E\u3067\u3001\u4F7F\u7528\u3059\u308B\u30C6\u30F3\u30D7\u30EC\u30FC\u30C8\u3092\u9078\u3093\u3067\u304F\u3060\u3055\u3044\u3002"
+  ],
+  sec4Paragraphs: [
+    "\u30C6\u30F3\u30D7\u30EC\u30FC\u30C8\u3092\u9078\u3076\u3068\u30D5\u30A9\u30FC\u30E0\u304C\u8868\u793A\u3055\u308C\u307E\u3059\u3002\u5404\u30D5\u30A3\u30FC\u30EB\u30C9\u306B\u5165\u529B\u3057\u3066\u304F\u3060\u3055\u3044\u3002",
+    "* \u30DE\u30FC\u30AF\u306E\u4ED8\u3044\u305F\u30D5\u30A3\u30FC\u30EB\u30C9\u306F\u5FC5\u9808\u3067\u3059\u3002\u672A\u5165\u529B\u306E\u307E\u307E\u300C\u30CE\u30FC\u30C8\u3092\u4F5C\u6210\u300D\u3092\u62BC\u3059\u3068\u30CF\u30A4\u30E9\u30A4\u30C8\u3055\u308C\u307E\u3059\u3002",
+    "\u5165\u529B\u5B8C\u4E86\u5F8C\u300C\u30CE\u30FC\u30C8\u3092\u4F5C\u6210\u300D\u3092\u62BC\u3059\u3068\u3001meta \u3067\u6307\u5B9A\u3057\u305F\u30D5\u30A9\u30EB\u30C0\u306B\u30CE\u30FC\u30C8\u304C\u751F\u6210\u3055\u308C\u3001\u81EA\u52D5\u7684\u306B\u958B\u304D\u307E\u3059\u3002",
+    "\u30D5\u30A9\u30EB\u30C0\u30FB\u30D5\u30A1\u30A4\u30EB\u540D\u306F meta \u3067\u56FA\u5B9A\u3059\u308B\u304B\u3001$\u30AD\u30FC\u540D$ \u3067\u30D5\u30A9\u30FC\u30E0\u5165\u529B\u5024\u3092\u4F7F\u3046\u3053\u3068\u304C\u3067\u304D\u307E\u3059\u3002"
+  ],
+  sampleCode: `---
+title: "$title$"
+created: "%date%"
+tags:
+  - "$category$"
+---
+
+\`\`\`formbuilder
+{{meta|folder=[Notes]}}
+{{meta|filename=[$title$-%timestamp%]}}
+
+{{text|title|label=[\u30BF\u30A4\u30C8\u30EB]|required}}
+{{date|date|label=[\u65E5\u4ED8]}}
+{{select|category|label=[\u30AB\u30C6\u30B4\u30EA]|list=[\u4ED5\u4E8B;\u500B\u4EBA;\u5B66\u7FD2;\u305D\u306E\u4ED6]}}
+{{select|priority|label=[\u512A\u5148\u5EA6]|list=[\u9AD8;\u4E2D;\u4F4E]|default=[\u4E2D]}}
+{{textarea|summary|label=[\u6982\u8981]|rows=[4]}}
+{{multiselect|tags|label=[\u30BF\u30B0]|list=[\u91CD\u8981;\u30EC\u30D3\u30E5\u30FC;\u4E0B\u66F8\u304D;\u5B8C\u4E86]|separator=[, ]}}
+{{checkbox|published|label=[\u516C\u958B]}}
+\`\`\`
+
+# $title$
+
+**\u65E5\u4ED8:** $date$  **\u30AB\u30C6\u30B4\u30EA:** $category$  **\u512A\u5148\u5EA6:** $priority$
+
+## \u6982\u8981
+$summary$
+
+**\u30BF\u30B0:** $tags$`,
+  subMeta: "meta \u30AA\u30D7\u30B7\u30E7\u30F3",
+  subFields: "\u30D5\u30A3\u30FC\u30EB\u30C9\u30BF\u30A4\u30D7",
+  subOptions: "\u4E3B\u306A\u30AA\u30D7\u30B7\u30E7\u30F3",
+  subVariables: "\u5909\u6570",
+  metaRows: [
+    ["meta|folder=[\u30D5\u30A9\u30EB\u30C0\u540D]", "\u30CE\u30FC\u30C8\u306E\u4FDD\u5B58\u5148\u30D5\u30A9\u30EB\u30C0"],
+    ["meta|filename=[\u30D5\u30A1\u30A4\u30EB\u540D]", "\u30CE\u30FC\u30C8\u306E\u30D5\u30A1\u30A4\u30EB\u540D\uFF08\u5909\u6570\u4F7F\u7528\u53EF\uFF09"]
+  ],
+  fieldRows: [
+    ["text", "1\u884C\u30C6\u30AD\u30B9\u30C8\u5165\u529B"],
+    ["textarea", "\u8907\u6570\u884C\u30C6\u30AD\u30B9\u30C8\u5165\u529B"],
+    ["number", "\u6570\u5024\u5165\u529B"],
+    ["date", "\u65E5\u4ED8\u5165\u529B"],
+    ["checkbox", "\u30C8\u30B0\u30EB\uFF08true / false\uFF09"],
+    ["select", "\u5358\u4E00\u9078\u629E\u30C9\u30ED\u30C3\u30D7\u30C0\u30A6\u30F3"],
+    ["multiselect", "\u8907\u6570\u9078\u629E\u30C1\u30A7\u30C3\u30AF\u30DC\u30C3\u30AF\u30B9"]
+  ],
+  optionRows: [
+    ["label=[\u8868\u793A\u540D]", "\u30D5\u30A9\u30FC\u30E0\u4E0A\u306E\u8868\u793A\u30E9\u30D9\u30EB"],
+    ["required", "\u5FC5\u9808\u5165\u529B\u30D5\u30E9\u30B0"],
+    ["placeholder=[...]", "\u30D7\u30EC\u30FC\u30B9\u30DB\u30EB\u30C0\u30FC\u30C6\u30AD\u30B9\u30C8"],
+    ["description=[...]", "\u30E9\u30D9\u30EB\u4E0B\u306B\u8868\u793A\u3059\u308B\u30D5\u30A3\u30FC\u30EB\u30C9\u8AAC\u660E"],
+    ["default=[\u65E2\u5B9A\u5024]", "\u30C7\u30D5\u30A9\u30EB\u30C8\u5024"],
+    ["list=[A;B;C]", "\u9078\u629E\u80A2\uFF08\u30BB\u30DF\u30B3\u30ED\u30F3\u533A\u5207\u308A\uFF09"],
+    ["separator=[, ]", "multiselect \u306E\u51FA\u529B\u533A\u5207\u308A\u6587\u5B57"],
+    ["markdownlist=[-]", "multiselect \u3092\u30EA\u30B9\u30C8\u5F62\u5F0F\u3067\u51FA\u529B\uFF08- / * / 1.\uFF09"],
+    ["min=[0]|max=[100]", "number \u30D5\u30A3\u30FC\u30EB\u30C9\u306E\u6700\u5C0F\u30FB\u6700\u5927\u5024"],
+    ["rows=[5]", "textarea / multiselect \u306E\u8868\u793A\u884C\u6570"]
+  ],
+  variableRows: [
+    ["$\u30AD\u30FC\u540D$", "\u305D\u306E\u30AD\u30FC\u306E\u30D5\u30A9\u30FC\u30E0\u5165\u529B\u5024\u306B\u7F6E\u304D\u63DB\u308F\u308B"],
+    ["%timestamp%", "\u4FDD\u5B58\u6642\u523B\uFF08\u4F8B: 20260626153000\uFF09"],
+    ["%date%", "\u4FDD\u5B58\u65E5\u4ED8\uFF08\u4F8B: 2026-06-26\uFF09"],
+    ["%time%", "\u4FDD\u5B58\u6642\u523B\uFF08\u4F8B: 15:30:00\uFF09"]
+  ]
+};
+var LOCALES = { en, ja };
+function getLocale(lang) {
+  var _a;
+  return (_a = LOCALES[lang]) != null ? _a : LOCALES["en"];
+}
+
+// src/settings.ts
 var DEFAULT_SETTINGS = {
-  templateFolder: "Templates"
+  templateFolder: "Templates",
+  locale: "en"
 };
 var FormBuilderSettingTab = class extends import_obsidian.PluginSettingTab {
   constructor(app, plugin) {
@@ -37,19 +303,85 @@ var FormBuilderSettingTab = class extends import_obsidian.PluginSettingTab {
   display() {
     const { containerEl } = this;
     containerEl.empty();
-    new import_obsidian.Setting(containerEl).setHeading().setName("Form Builder Settings");
-    new import_obsidian.Setting(containerEl).setName("Template folder").setDesc("Folder to look for template files. Markdown files in this folder will be treated as templates.").addText((text) => text.setPlaceholder("Templates").setValue(this.plugin.settings.templateFolder).onChange(async (value) => {
+    const L = getLocale(this.plugin.settings.locale);
+    new import_obsidian.Setting(containerEl).setHeading().setName(L.settingHeading);
+    new import_obsidian.Setting(containerEl).setName(L.settingFolderName).setDesc(L.settingFolderDesc).addText((text) => text.setPlaceholder(L.settingFolderPlaceholder).setValue(this.plugin.settings.templateFolder).onChange(async (value) => {
       this.plugin.settings.templateFolder = value.trim();
       await this.plugin.saveSettings();
     }));
+    new import_obsidian.Setting(containerEl).setName(L.settingLanguageName).setDesc(L.settingLanguageDesc).addDropdown((drop) => {
+      for (const [key, label] of Object.entries(LOCALE_LABELS)) {
+        drop.addOption(key, label);
+      }
+      drop.setValue(this.plugin.settings.locale);
+      drop.onChange(async (value) => {
+        this.plugin.settings.locale = value;
+        await this.plugin.saveSettings();
+        this.display();
+      });
+    });
   }
 };
 
 // src/form/FormModal.ts
 var import_obsidian4 = require("obsidian");
 
-// src/form/FieldRenderer.ts
+// src/form/help.ts
 var import_obsidian2 = require("obsidian");
+var HelpModal = class extends import_obsidian2.Modal {
+  constructor(app, locale) {
+    super(app);
+    this.locale = locale;
+  }
+  onOpen() {
+    const { contentEl } = this;
+    contentEl.empty();
+    const L = getLocale(this.locale);
+    this.setTitle(L.helpTitle);
+    const root = contentEl.createDiv({ cls: "fb-modal fb-help" });
+    this.section(root, L.sec1Title, L.sec1Paragraphs);
+    this.section(root, L.sec2Title, L.sec2Paragraphs);
+    this.codeBlock(root, L.sampleCode);
+    this.subSection(root, L.subMeta);
+    this.table(root, L.metaRows);
+    this.subSection(root, L.subFields);
+    this.table(root, L.fieldRows);
+    this.subSection(root, L.subOptions);
+    this.table(root, L.optionRows);
+    this.subSection(root, L.subVariables);
+    this.table(root, L.variableRows);
+    this.section(root, L.sec3Title, L.sec3Paragraphs);
+    this.section(root, L.sec4Title, L.sec4Paragraphs);
+    const btnRow = root.createDiv({ cls: "fb-btn-row" });
+    btnRow.createEl("button", { cls: "fb-btn fb-btn-accent", text: L.btnClose }).addEventListener("click", () => this.close());
+  }
+  onClose() {
+    this.contentEl.empty();
+  }
+  section(root, title, paragraphs) {
+    const sec = root.createDiv({ cls: "fb-help-section" });
+    sec.createDiv({ cls: "fb-help-section-title", text: title });
+    for (const p of paragraphs) {
+      sec.createDiv({ cls: "fb-help-para", text: p });
+    }
+  }
+  subSection(root, title) {
+    root.createDiv({ cls: "fb-help-sub-title", text: title });
+  }
+  codeBlock(root, text) {
+    root.createEl("pre", { cls: "fb-example-block" }).createEl("code", { text });
+  }
+  table(root, rows) {
+    const tbody = root.createEl("table", { cls: "fb-help-table" }).createEl("tbody");
+    for (const [key, desc] of rows) {
+      const tr = tbody.createEl("tr");
+      tr.createEl("td", { cls: "fb-help-td-key" }).createEl("code", { text: key });
+      tr.createEl("td", { cls: "fb-help-td-desc", text: desc });
+    }
+  }
+};
+
+// src/form/FieldRenderer.ts
 function renderField(containerEl, field, values) {
   switch (field.type) {
     case "text":
@@ -73,132 +405,111 @@ function renderField(containerEl, field, values) {
     case "multiselect":
       renderMultiselect(containerEl, field, values);
       break;
+    case "list":
+      renderList(containerEl, field, values);
+      break;
   }
 }
-function labelOf(field) {
-  var _a;
-  return (_a = field.label) != null ? _a : field.key;
+function createCard(containerEl, field) {
+  const card = containerEl.createDiv({ cls: "fb-field" });
+  card.dataset.formKey = field.key;
+  return card;
 }
-function descOf(field) {
+function appendLabelRow(card, field) {
   var _a;
-  return (_a = field.description) != null ? _a : "";
-}
-function createNameEl(containerEl, field) {
-  const el = containerEl.createSpan();
-  el.textContent = labelOf(field);
+  const labelRow = card.createDiv({ cls: "fb-label-row" });
+  labelRow.createSpan({ cls: "fb-label", text: (_a = field.label) != null ? _a : field.key });
   if (field.required) {
-    const mark = el.createSpan({ cls: "form-builder-required-mark" });
-    mark.textContent = " *";
+    labelRow.createSpan({ cls: "fb-required-mark", text: "*" });
   }
-  return el;
+  if (field.description) {
+    card.createDiv({ cls: "fb-desc", text: field.description });
+  }
 }
 function renderText(containerEl, field, values) {
-  var _a;
+  var _a, _b;
   values.set(field.key, (_a = field.default) != null ? _a : "");
-  const setting = new import_obsidian2.Setting(containerEl).setDesc(descOf(field));
-  setting.nameEl.empty();
-  setting.nameEl.appendChild(createNameEl(containerEl, field));
-  setting.addText((text) => {
-    var _a2, _b;
-    return text.setPlaceholder((_a2 = field.placeholder) != null ? _a2 : "").setValue((_b = field.default) != null ? _b : "").onChange((value) => values.set(field.key, value));
-  });
-  if (field.required) {
-    setting.settingEl.dataset.formKey = field.key;
-    setting.settingEl.addClass("form-builder-field");
-  }
+  const card = createCard(containerEl, field);
+  appendLabelRow(card, field);
+  const input = card.createEl("input", { cls: "fb-input" });
+  input.type = "text";
+  input.value = (_b = field.default) != null ? _b : "";
+  if (field.placeholder)
+    input.placeholder = field.placeholder;
+  input.addEventListener("input", () => values.set(field.key, input.value));
 }
 function renderTextarea(containerEl, field, values) {
-  var _a;
+  var _a, _b;
   values.set(field.key, (_a = field.default) != null ? _a : "");
-  const setting = new import_obsidian2.Setting(containerEl).setDesc(descOf(field));
-  setting.nameEl.empty();
-  setting.nameEl.appendChild(createNameEl(containerEl, field));
-  setting.addTextArea((area) => {
-    var _a2, _b;
-    area.setPlaceholder((_a2 = field.placeholder) != null ? _a2 : "").setValue((_b = field.default) != null ? _b : "").onChange((value) => values.set(field.key, value));
-    const rows = field.rows;
-    if (rows && rows > 0) {
-      area.inputEl.rows = rows;
-    } else {
-      area.inputEl.rows = 5;
-    }
-  });
-  if (field.required) {
-    setting.settingEl.dataset.formKey = field.key;
-    setting.settingEl.addClass("form-builder-field");
-  }
+  const card = createCard(containerEl, field);
+  appendLabelRow(card, field);
+  const textarea = card.createEl("textarea", { cls: "fb-textarea" });
+  textarea.value = (_b = field.default) != null ? _b : "";
+  if (field.placeholder)
+    textarea.placeholder = field.placeholder;
+  const rows = field.rows;
+  textarea.rows = rows && rows > 0 ? rows : 5;
+  textarea.addEventListener("input", () => values.set(field.key, textarea.value));
 }
 function renderNumber(containerEl, field, values) {
-  var _a;
+  var _a, _b;
   values.set(field.key, (_a = field.default) != null ? _a : "");
-  const setting = new import_obsidian2.Setting(containerEl).setDesc(descOf(field));
-  setting.nameEl.empty();
-  setting.nameEl.appendChild(createNameEl(containerEl, field));
-  setting.addText((text) => {
-    var _a2;
-    text.inputEl.type = "number";
-    const nf = field;
-    if (nf.min !== void 0)
-      text.inputEl.min = String(nf.min);
-    if (nf.max !== void 0)
-      text.inputEl.max = String(nf.max);
-    if (field.placeholder)
-      text.inputEl.placeholder = field.placeholder;
-    text.setValue((_a2 = field.default) != null ? _a2 : "").onChange((value) => values.set(field.key, value));
-  });
-  if (field.required) {
-    setting.settingEl.dataset.formKey = field.key;
-    setting.settingEl.addClass("form-builder-field");
-  }
+  const card = createCard(containerEl, field);
+  appendLabelRow(card, field);
+  const input = card.createEl("input", { cls: "fb-input" });
+  input.type = "number";
+  const nf = field;
+  if (nf.min !== void 0)
+    input.min = String(nf.min);
+  if (nf.max !== void 0)
+    input.max = String(nf.max);
+  if (field.placeholder)
+    input.placeholder = field.placeholder;
+  input.value = (_b = field.default) != null ? _b : "";
+  input.addEventListener("input", () => values.set(field.key, input.value));
 }
 function renderDate(containerEl, field, values) {
-  var _a;
+  var _a, _b;
   values.set(field.key, (_a = field.default) != null ? _a : "");
-  const setting = new import_obsidian2.Setting(containerEl).setDesc(descOf(field));
-  setting.nameEl.empty();
-  setting.nameEl.appendChild(createNameEl(containerEl, field));
-  setting.addText((text) => {
-    var _a2;
-    text.inputEl.type = "date";
-    text.setValue((_a2 = field.default) != null ? _a2 : "").onChange((value) => values.set(field.key, value));
-  });
-  if (field.required) {
-    setting.settingEl.dataset.formKey = field.key;
-    setting.settingEl.addClass("form-builder-field");
-  }
+  const card = createCard(containerEl, field);
+  appendLabelRow(card, field);
+  const input = card.createEl("input", { cls: "fb-input" });
+  input.type = "date";
+  input.value = (_b = field.default) != null ? _b : "";
+  input.addEventListener("change", () => values.set(field.key, input.value));
 }
 function renderCheckbox(containerEl, field, values) {
   const initVal = field.default === "true";
   values.set(field.key, initVal);
-  const setting = new import_obsidian2.Setting(containerEl).setDesc(descOf(field));
-  setting.nameEl.empty();
-  setting.nameEl.appendChild(createNameEl(containerEl, field));
-  setting.addToggle((toggle) => toggle.setValue(initVal).onChange((value) => values.set(field.key, value)));
+  const card = createCard(containerEl, field);
+  appendLabelRow(card, field);
+  const wrap = card.createDiv({ cls: "fb-toggle-wrap" });
+  const toggleLabel = wrap.createEl("label", { cls: "fb-toggle" });
+  const input = toggleLabel.createEl("input");
+  input.type = "checkbox";
+  input.checked = initVal;
+  toggleLabel.createDiv({ cls: "fb-toggle-track" });
+  toggleLabel.createDiv({ cls: "fb-toggle-thumb" });
+  input.addEventListener("change", () => values.set(field.key, input.checked));
 }
 function renderSelect(containerEl, field, values) {
-  var _a;
+  var _a, _b;
   const sf = field;
   values.set(field.key, (_a = field.default) != null ? _a : "");
-  const setting = new import_obsidian2.Setting(containerEl).setDesc(descOf(field));
-  setting.nameEl.empty();
-  setting.nameEl.appendChild(createNameEl(containerEl, field));
-  setting.addDropdown((drop) => {
-    var _a2;
-    drop.addOption("", "---");
-    for (const item of sf.list)
-      drop.addOption(item, item);
-    const defaultVal = (_a2 = field.default) != null ? _a2 : "";
-    if (defaultVal && sf.list.includes(defaultVal)) {
-      drop.setValue(defaultVal);
-    } else {
-      drop.setValue("");
-    }
-    drop.onChange((value) => values.set(field.key, value));
-  });
-  if (field.required) {
-    setting.settingEl.dataset.formKey = field.key;
-    setting.settingEl.addClass("form-builder-field");
+  const card = createCard(containerEl, field);
+  appendLabelRow(card, field);
+  const select = card.createEl("select", { cls: "fb-select" });
+  const emptyOpt = select.createEl("option");
+  emptyOpt.value = "";
+  emptyOpt.textContent = "---";
+  for (const item of sf.list) {
+    const opt = select.createEl("option");
+    opt.value = item;
+    opt.textContent = item;
   }
+  const defaultVal = (_b = field.default) != null ? _b : "";
+  select.value = defaultVal && sf.list.includes(defaultVal) ? defaultVal : "";
+  select.addEventListener("change", () => values.set(field.key, select.value));
 }
 function renderMultiselect(containerEl, field, values) {
   var _a;
@@ -206,21 +517,19 @@ function renderMultiselect(containerEl, field, values) {
   const defaultItems = defaultRaw ? defaultRaw.split(";").map((s) => s.trim()).filter((s) => field.list.includes(s)) : [];
   const selected = new Set(defaultItems);
   values.set(field.key, [...selected]);
-  const wrapper = containerEl.createDiv({ cls: "form-builder-multiselect" });
-  if (field.required) {
-    wrapper.dataset.formKey = field.key;
-    wrapper.addClass("form-builder-field");
-  }
-  const titleSetting = new import_obsidian2.Setting(wrapper).setDesc(descOf(field));
-  titleSetting.nameEl.empty();
-  titleSetting.nameEl.appendChild(createNameEl(wrapper, field));
-  const checkGroup = wrapper.createDiv({ cls: "form-builder-multiselect-group" });
+  const card = createCard(containerEl, field);
+  appendLabelRow(card, field);
+  const chipGroup = card.createDiv({ cls: "fb-chip-group" });
   for (const item of field.list) {
-    const label = checkGroup.createEl("label", { cls: "form-builder-multiselect-item" });
-    const checkbox = label.createEl("input");
+    const chipWrap = chipGroup.createDiv({ cls: "fb-chip" });
+    const id = `fb-chip-${field.key}-${item}`;
+    const checkbox = chipWrap.createEl("input");
     checkbox.type = "checkbox";
+    checkbox.id = id;
     checkbox.checked = selected.has(item);
-    label.createSpan({ text: item });
+    const label = chipWrap.createEl("label", { cls: "fb-chip-label" });
+    label.htmlFor = id;
+    label.textContent = item;
     checkbox.addEventListener("change", () => {
       if (checkbox.checked)
         selected.add(item);
@@ -230,21 +539,37 @@ function renderMultiselect(containerEl, field, values) {
     });
   }
 }
+function renderList(containerEl, field, values) {
+  var _a, _b;
+  values.set(field.key, (_a = field.default) != null ? _a : "");
+  const card = createCard(containerEl, field);
+  appendLabelRow(card, field);
+  if (!field.description) {
+    card.createDiv({
+      cls: "fb-desc",
+      text: "1\u884C\u306B\u3064\u304D1\u9805\u76EE\u3092\u5165\u529B\u3057\u3066\u304F\u3060\u3055\u3044\u3002\u7A7A\u884C\u306F\u7121\u8996\u3055\u308C\u307E\u3059\u3002"
+    });
+  }
+  const textarea = card.createEl("textarea", { cls: "fb-textarea fb-list-input" });
+  textarea.value = (_b = field.default) != null ? _b : "";
+  if (field.placeholder)
+    textarea.placeholder = field.placeholder;
+  textarea.rows = field.rows && field.rows > 0 ? field.rows : 4;
+  textarea.addEventListener("input", () => values.set(field.key, textarea.value));
+}
 function highlightRequiredErrors(containerEl, fields, values) {
-  containerEl.querySelectorAll(".form-builder-required-error").forEach((el) => {
-    el.removeClass("form-builder-required-error");
-  });
+  containerEl.querySelectorAll(".fb-error").forEach((el) => el.removeClass("fb-error"));
   const missing = [];
   for (const field of fields) {
     if (!field.required)
       continue;
     const value = values.get(field.key);
-    const isEmpty = value === void 0 || value === "" || Array.isArray(value) && value.length === 0 || value === false;
+    const isEmpty = field.type === "list" ? typeof value !== "string" || value.split("\n").map((l) => l.trim()).filter(Boolean).length === 0 : value === void 0 || value === "" || Array.isArray(value) && value.length === 0 || value === false;
     if (isEmpty) {
       missing.push(field.key);
       const el = containerEl.querySelector(`[data-form-key="${field.key}"]`);
       if (el)
-        el.addClass("form-builder-required-error");
+        el.addClass("fb-error");
     }
   }
   return missing;
@@ -270,25 +595,33 @@ function formatTime(d) {
   return `${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
 }
 function formatMarkdownList(values, style) {
-  if (style === "1.") {
+  if (style === "1.")
     return values.map((v, i) => `${i + 1}. ${v}`).join("\n");
-  }
   return values.map((v) => `${style} ${v}`).join("\n");
 }
 function formatMultiselect(selected, field) {
   var _a;
-  if (field.markdownlist) {
+  if (field.markdownlist)
     return formatMarkdownList(selected, field.markdownlist);
-  }
-  const sep = (_a = field.separator) != null ? _a : ", ";
-  return selected.join(sep);
+  return selected.join((_a = field.separator) != null ? _a : ", ");
+}
+function formatList(rawText, field) {
+  var _a;
+  const lines = rawText.split("\n").map((l) => l.trim()).filter((l) => l !== "");
+  if (lines.length === 0)
+    return "";
+  if (field.markdownlist)
+    return formatMarkdownList(lines, field.markdownlist);
+  return lines.join((_a = field.separator) != null ? _a : "\n");
 }
 function formatValue(value, field) {
   if (value === void 0 || value === null)
     return "";
   if (field.type === "multiselect") {
-    const selected = Array.isArray(value) ? value : [];
-    return formatMultiselect(selected, field);
+    return formatMultiselect(Array.isArray(value) ? value : [], field);
+  }
+  if (field.type === "list") {
+    return formatList(typeof value === "string" ? value : "", field);
   }
   if (field.type === "checkbox") {
     return value === true || value === "true" ? "true" : "false";
@@ -300,8 +633,7 @@ function formatValue(value, field) {
 function resolveUserVariables(template, values, fields) {
   let result = template;
   for (const field of fields) {
-    const value = values.get(field.key);
-    const expanded = formatValue(value, field);
+    const expanded = formatValue(values.get(field.key), field);
     result = result.split(`$${field.key}$`).join(expanded);
   }
   return result;
@@ -310,119 +642,91 @@ function resolveSystemVariables(template) {
   const now = new Date();
   return template.split("%timestamp%").join(formatTimestamp(now)).split("%date%").join(formatDate(now)).split("%time%").join(formatTime(now));
 }
-function resolveFilenamePreview(filenameTemplate, fields) {
-  let result = filenameTemplate;
-  for (const field of fields) {
-    result = result.split(`$${field.key}$`).join("");
-  }
-  result = resolveSystemVariables(result);
-  return result;
-}
 
 // src/generator/NoteGenerator.ts
 var INVALID_FILENAME_CHARS = /[/\\:*?"<>|]/g;
-function sanitizeFileName(name) {
+function sanitizeFileName(name, sanitizedNotice) {
   const sanitized = name.replace(INVALID_FILENAME_CHARS, "_");
   if (sanitized !== name) {
-    new import_obsidian3.Notice(`Form Builder: Some invalid characters in the file name were replaced with "_".`);
+    new import_obsidian3.Notice(sanitizedNotice);
   }
   return sanitized;
 }
 async function ensureFolder(app, folderPath) {
   if (!folderPath)
     return;
-  const folder = app.vault.getFolderByPath(folderPath);
-  if (!folder) {
+  if (!app.vault.getFolderByPath(folderPath)) {
     await app.vault.createFolder(folderPath);
   }
 }
-async function generateNote(app, bodyTemplate, values, fields, meta, outputFolder, fileName) {
+async function generateNote(app, bodyTemplate, values, fields, meta, sanitizedNotice) {
+  var _a, _b;
   let content = resolveUserVariables(bodyTemplate, values, fields);
   content = resolveSystemVariables(content);
-  let resolvedFileName = resolveSystemVariables(fileName);
-  resolvedFileName = sanitizeFileName(resolvedFileName);
-  if (!resolvedFileName.endsWith(".md")) {
-    resolvedFileName += ".md";
-  }
-  await ensureFolder(app, outputFolder);
-  const filePath = outputFolder ? (0, import_obsidian3.normalizePath)(`${outputFolder}/${resolvedFileName}`) : (0, import_obsidian3.normalizePath)(resolvedFileName);
+  const rawFilename = (_a = meta.filename) != null ? _a : "Untitled";
+  let resolvedFilename = resolveUserVariables(rawFilename, values, fields);
+  resolvedFilename = resolveSystemVariables(resolvedFilename);
+  resolvedFilename = sanitizeFileName(resolvedFilename, sanitizedNotice);
+  if (!resolvedFilename.endsWith(".md"))
+    resolvedFilename += ".md";
+  const rawFolder = (_b = meta.folder) != null ? _b : "";
+  let resolvedFolder = resolveUserVariables(rawFolder, values, fields);
+  resolvedFolder = resolveSystemVariables(resolvedFolder);
+  await ensureFolder(app, resolvedFolder);
+  const filePath = resolvedFolder ? (0, import_obsidian3.normalizePath)(`${resolvedFolder}/${resolvedFilename}`) : (0, import_obsidian3.normalizePath)(resolvedFilename);
   await app.vault.create(filePath, content);
   const file = app.vault.getFileByPath(filePath);
-  if (file) {
+  if (file)
     await app.workspace.getLeaf().openFile(file);
-  }
 }
 
 // src/form/FormModal.ts
 var FormModal = class extends import_obsidian4.Modal {
-  constructor(app, parseResult) {
-    var _a;
+  constructor(app, parseResult, locale) {
     super(app);
     this.values = /* @__PURE__ */ new Map();
     this.parseResult = parseResult;
-    this.outputFolder = (_a = parseResult.meta.folder) != null ? _a : "";
-    this.fileName = parseResult.meta.filename ? resolveFilenamePreview(parseResult.meta.filename, parseResult.fields) : "Untitled";
+    this.locale = locale;
   }
   onOpen() {
     const { contentEl } = this;
     contentEl.empty();
-    this.setTitle("Form Builder");
-    this.renderWarnings();
-    this.renderMetaSection();
-    this.renderFields();
-    this.renderSubmitButton();
+    const L = getLocale(this.locale);
+    this.setTitle(L.formTitle);
+    const root = contentEl.createDiv({ cls: "fb-modal" });
+    this.renderWarnings(root);
+    this.renderFields(root);
+    this.renderSubmitButton(root, L.btnCreateNote);
   }
   onClose() {
     this.contentEl.empty();
   }
-  // ---------- 警告ブロック ----------
-  renderWarnings() {
+  renderWarnings(root) {
     if (this.parseResult.warnings.length === 0)
       return;
-    const warningBlock = this.contentEl.createDiv({ cls: "form-builder-warning-block" });
+    const block = root.createDiv({ cls: "fb-warning-block" });
     for (const w of this.parseResult.warnings) {
-      const div = warningBlock.createDiv({ cls: "form-builder-warning" });
-      div.createSpan({ text: `\u26A0 ${w.message}` });
+      block.createDiv({ cls: "fb-warning", text: `\u26A0 ${w.message}` });
     }
   }
-  // ---------- 出力フォルダ・ファイル名 ----------
-  renderMetaSection() {
-    const { contentEl } = this;
-    new import_obsidian4.Setting(contentEl).setName("Output folder").setDesc("Folder where the note will be saved.").addText((text) => text.setPlaceholder("e.g. Notes/Characters").setValue(this.outputFolder).onChange((value) => {
-      this.outputFolder = value;
-    }));
-    new import_obsidian4.Setting(contentEl).setName("File name").setDesc("Name of the note to create (without .md extension).").addText((text) => text.setValue(this.fileName).onChange((value) => {
-      this.fileName = value;
-    }));
-  }
-  // ---------- フィールド群 ----------
-  renderFields() {
-    const { contentEl } = this;
-    if (this.parseResult.fields.length > 0) {
-      contentEl.createEl("hr");
-    }
+  renderFields(root) {
     for (const field of this.parseResult.fields) {
-      renderField(contentEl, field, this.values);
+      renderField(root, field, this.values);
     }
   }
-  // ---------- 送信ボタン ----------
-  renderSubmitButton() {
-    const { contentEl } = this;
-    contentEl.createEl("hr");
-    new import_obsidian4.Setting(contentEl).addButton((btn) => btn.setButtonText("Create Note").setCta().onClick(() => this.onSubmit()));
+  renderSubmitButton(root, label) {
+    const wrap = root.createDiv({ cls: "fb-submit-wrap" });
+    const btn = wrap.createEl("button", { cls: "fb-submit-btn", text: label });
+    btn.addEventListener("click", () => this.onSubmit());
   }
-  // ---------- 送信処理 ----------
   async onSubmit() {
-    const missing = highlightRequiredErrors(
-      this.contentEl,
-      this.parseResult.fields,
-      this.values
-    );
+    const L = getLocale(this.locale);
+    const root = this.contentEl.querySelector(".fb-modal");
+    const missing = highlightRequiredErrors(root, this.parseResult.fields, this.values);
     if (missing.length > 0) {
-      new import_obsidian4.Notice(`Form Builder: Please fill in all required fields.`);
+      new import_obsidian4.Notice(L.noticeRequired);
       return;
     }
-    const rawFileName = this.fileName.trim() || "Untitled";
     try {
       await generateNote(
         this.app,
@@ -430,70 +734,69 @@ var FormModal = class extends import_obsidian4.Modal {
         this.values,
         this.parseResult.fields,
         this.parseResult.meta,
-        this.outputFolder.trim(),
-        rawFileName
+        L.noticeSanitized
       );
       this.close();
     } catch (e) {
       console.error("Form Builder: Failed to create note", e);
       const message = e instanceof Error ? e.message : String(e);
-      new import_obsidian4.Notice(`Form Builder: Failed to create note.
+      new import_obsidian4.Notice(`${L.noticeCreateError}
 ${message}`, 8e3);
     }
   }
 };
 var TemplateSelectorModal = class extends import_obsidian4.Modal {
-  constructor(app, templates, onSelect) {
+  constructor(app, templates, locale, onSelect) {
     super(app);
     this.templates = templates;
+    this.locale = locale;
     this.onSelect = onSelect;
   }
   onOpen() {
     const { contentEl } = this;
     contentEl.empty();
-    this.setTitle("Select Template");
-    const listEl = contentEl.createEl("ul", { cls: "form-builder-template-list" });
+    const L = getLocale(this.locale);
+    this.setTitle(L.selectorTitle);
+    const root = contentEl.createDiv({ cls: "fb-modal" });
+    const list = root.createEl("ul", { cls: "fb-template-list" });
     for (const file of this.templates) {
-      const li = listEl.createEl("li", { cls: "form-builder-template-item" });
-      const btn = li.createEl("button", { cls: "form-builder-template-btn" });
-      btn.textContent = file.basename;
+      const li = list.createEl("li");
+      const btn = li.createEl("button", { cls: "fb-template-btn" });
+      btn.appendText(file.basename);
       btn.addEventListener("click", () => {
         this.close();
         this.onSelect(file);
       });
     }
+    const btnRow = root.createDiv({ cls: "fb-btn-row" });
+    const helpBtn = btnRow.createEl("button", { cls: "fb-btn", text: L.btnHelp });
+    helpBtn.addEventListener("click", () => new HelpModal(this.app, this.locale).open());
   }
   onClose() {
     this.contentEl.empty();
   }
 };
 var NoTemplateModal = class extends import_obsidian4.Modal {
-  constructor(app, plugin) {
+  constructor(app, plugin, locale) {
     super(app);
     this.plugin = plugin;
+    this.locale = locale;
   }
   onOpen() {
     const { contentEl } = this;
     contentEl.empty();
-    this.setTitle("Welcome to Form Builder");
-    contentEl.createEl("p", {
-      text: "No templates found. Please create a template file and place it in your template folder."
-    });
-    const exampleBlock = contentEl.createEl("pre", { cls: "form-builder-example" });
-    exampleBlock.createEl("code", {
-      text: [
-        "```formbuilder",
-        "{{text|name|label=[\u540D\u524D]}}",
-        "{{textarea|description|label=[\u8AAC\u660E]}}",
-        "```"
-      ].join("\n")
-    });
-    new import_obsidian4.Setting(contentEl).addButton((btn) => btn.setButtonText("Open Settings").onClick(() => {
+    const L = getLocale(this.locale);
+    this.setTitle(L.welcomeTitle);
+    const root = contentEl.createDiv({ cls: "fb-modal" });
+    root.createDiv({ cls: "fb-no-template-msg", text: L.noTemplateMessage });
+    root.createEl("pre", { cls: "fb-example-block" }).createEl("code", { text: L.noTemplateSample });
+    const btnRow = root.createDiv({ cls: "fb-btn-row" });
+    btnRow.createEl("button", { cls: "fb-btn", text: L.btnHelp }).addEventListener("click", () => new HelpModal(this.app, this.locale).open());
+    btnRow.createEl("button", { cls: "fb-btn", text: L.btnSettings }).addEventListener("click", () => {
       this.close();
       this.app.setting.open();
-    })).addButton((btn) => btn.setButtonText("Documentation").onClick(() => {
-      window.open("https://github.com/your-repo/form-builder#readme");
-    })).addButton((btn) => btn.setButtonText("Close").onClick(() => this.close()));
+    });
+    btnRow.createEl("button", { cls: "fb-btn", text: L.btnClose }).addEventListener("click", () => this.close());
   }
   onClose() {
     this.contentEl.empty();
@@ -508,7 +811,8 @@ var KNOWN_FIELD_TYPES = /* @__PURE__ */ new Set([
   "date",
   "checkbox",
   "select",
-  "multiselect"
+  "multiselect",
+  "list"
 ]);
 var KNOWN_FIELD_OPTIONS = {
   text: ["required", "label", "placeholder", "description", "default"],
@@ -517,7 +821,8 @@ var KNOWN_FIELD_OPTIONS = {
   date: ["required", "label", "placeholder", "description", "default"],
   checkbox: ["required", "label", "description", "default"],
   select: ["required", "label", "description", "default", "list"],
-  multiselect: ["required", "label", "description", "default", "list", "rows", "separator", "markdownlist"]
+  multiselect: ["required", "label", "description", "default", "list", "rows", "separator", "markdownlist"],
+  list: ["required", "label", "placeholder", "description", "default", "rows", "separator", "markdownlist"]
 };
 var VALID_KEY = /^[a-zA-Z0-9_-]+$/;
 function levenshtein(a, b) {
@@ -553,10 +858,7 @@ function validateFieldType(type, line) {
 }
 function validateKey(key, line) {
   if (!VALID_KEY.test(key)) {
-    return {
-      message: `Invalid key: "${key}". Keys must match [a-zA-Z0-9_-]`,
-      line
-    };
+    return { message: `Invalid key: "${key}". Keys must match [a-zA-Z0-9_-]`, line };
   }
   return null;
 }
@@ -579,10 +881,7 @@ function validateField(field, line) {
   if (field.type === "select" || field.type === "multiselect") {
     const f = field;
     if (!f.list || f.list.length === 0) {
-      errors.push({
-        message: `"${field.type}" requires the "list" option`,
-        line
-      });
+      errors.push({ message: `"${field.type}" requires the "list" option`, line });
     }
   }
   if (field.type === "number") {
@@ -595,8 +894,7 @@ function validateField(field, line) {
     }
   }
   if (field.type === "multiselect" && field.default && field.list) {
-    const defaultValues = field.default.split(";").map((s) => s.trim());
-    for (const dv of defaultValues) {
+    for (const dv of field.default.split(";").map((s) => s.trim())) {
       if (!field.list.includes(dv)) {
         warnings.push({
           message: `Default value "${dv}" is not in the list of field "${field.key}"`,
@@ -613,8 +911,9 @@ function validateField(field, line) {
       });
     }
   }
-  if (field.type === "multiselect") {
-    if (field.separator !== void 0 && field.markdownlist !== void 0) {
+  if (field.type === "multiselect" || field.type === "list") {
+    const f = field;
+    if (f.separator !== void 0 && f.markdownlist !== void 0) {
       warnings.push({
         message: `Both "separator" and "markdownlist" are set in field "${field.key}". The first-defined one takes priority.`,
         line
@@ -665,12 +964,10 @@ function splitTokens(inner) {
 }
 function parseOptionToken(token) {
   const kvMatch = KV_OPTION_RE.exec(token);
-  if (kvMatch) {
+  if (kvMatch)
     return { key: kvMatch[1], value: kvMatch[2] };
-  }
-  if (/^[a-zA-Z_-]+$/.test(token)) {
+  if (/^[a-zA-Z_-]+$/.test(token))
     return { key: token, value: null };
-  }
   return null;
 }
 function parseMetaLine(tokens, meta, warnings, lineNum) {
@@ -683,15 +980,49 @@ function parseMetaLine(tokens, meta, warnings, lineNum) {
       warnings.push(metaWarning);
       continue;
     }
-    if (opt.key === "folder" && opt.value !== null) {
+    if (opt.key === "folder" && opt.value !== null)
       meta.folder = opt.value;
-    } else if (opt.key === "filename" && opt.value !== null) {
+    else if (opt.key === "filename" && opt.value !== null)
       meta.filename = opt.value;
-    }
   }
 }
+function resolveSeparatorAndMarkdownlist(optMap, optionOrder, key, warnings, lineNum) {
+  var _a, _b;
+  const separatorIdx = optionOrder.indexOf("separator");
+  const markdownlistIdx = optionOrder.indexOf("markdownlist");
+  let separator = void 0;
+  let markdownlist = void 0;
+  if (separatorIdx !== -1 && markdownlistIdx !== -1) {
+    warnings.push({
+      message: `Both "separator" and "markdownlist" are set in field "${key}". "${optionOrder[Math.min(separatorIdx, markdownlistIdx)]}" takes priority.`,
+      line: lineNum
+    });
+    if (separatorIdx < markdownlistIdx) {
+      separator = (_a = optMap.get("separator")) != null ? _a : void 0;
+    } else {
+      const ml = optMap.get("markdownlist");
+      if (ml === "-" || ml === "*" || ml === "1.")
+        markdownlist = ml;
+    }
+  } else {
+    if (separatorIdx !== -1)
+      separator = (_b = optMap.get("separator")) != null ? _b : void 0;
+    if (markdownlistIdx !== -1) {
+      const ml = optMap.get("markdownlist");
+      if (ml === "-" || ml === "*" || ml === "1.")
+        markdownlist = ml;
+      else if (ml !== void 0) {
+        warnings.push({
+          message: `Invalid markdownlist value "${ml}" in field "${key}". Must be "-", "*", or "1."`,
+          line: lineNum
+        });
+      }
+    }
+  }
+  return { separator, markdownlist };
+}
 function parseFieldLine(tokens, errors, warnings, lineNum) {
-  var _a, _b, _c, _d, _e, _f;
+  var _a, _b, _c, _d;
   if (tokens.length < 2) {
     errors.push({ message: "Field syntax requires at least type and key", line: lineNum });
     return null;
@@ -745,8 +1076,8 @@ function parseFieldLine(tokens, errors, warnings, lineNum) {
     case "number": {
       const minStr = optMap.get("min");
       const maxStr = optMap.get("max");
-      const min = minStr !== void 0 && minStr !== null ? parseFloat(minStr) : void 0;
-      const max = maxStr !== void 0 && maxStr !== null ? parseFloat(maxStr) : void 0;
+      const min = minStr != null ? parseFloat(minStr) : void 0;
+      const max = maxStr != null ? parseFloat(maxStr) : void 0;
       return {
         type: "number",
         ...base,
@@ -760,7 +1091,7 @@ function parseFieldLine(tokens, errors, warnings, lineNum) {
       return { type: "checkbox", ...base };
     case "select": {
       const listRaw = optMap.get("list");
-      if (listRaw === void 0 || listRaw === null) {
+      if (listRaw == null) {
         errors.push({ message: `"select" requires the "list" option in field "${key}"`, line: lineNum });
         return null;
       }
@@ -768,52 +1099,34 @@ function parseFieldLine(tokens, errors, warnings, lineNum) {
     }
     case "multiselect": {
       const listRaw = optMap.get("list");
-      if (listRaw === void 0 || listRaw === null) {
+      if (listRaw == null) {
         errors.push({ message: `"multiselect" requires the "list" option in field "${key}"`, line: lineNum });
         return null;
       }
       const list = parseList(listRaw);
-      const separatorIdx = optionOrder.indexOf("separator");
-      const markdownlistIdx = optionOrder.indexOf("markdownlist");
-      let separator = void 0;
-      let markdownlist = void 0;
-      if (separatorIdx !== -1 && markdownlistIdx !== -1) {
-        warnings.push({
-          message: `Both "separator" and "markdownlist" are set in field "${key}". "${optionOrder[Math.min(separatorIdx, markdownlistIdx)]}" takes priority.`,
-          line: lineNum
-        });
-        if (separatorIdx < markdownlistIdx) {
-          separator = (_e = optMap.get("separator")) != null ? _e : void 0;
-        } else {
-          const ml = optMap.get("markdownlist");
-          if (ml === "-" || ml === "*" || ml === "1.")
-            markdownlist = ml;
-        }
-      } else {
-        if (separatorIdx !== -1)
-          separator = (_f = optMap.get("separator")) != null ? _f : void 0;
-        if (markdownlistIdx !== -1) {
-          const ml = optMap.get("markdownlist");
-          if (ml === "-" || ml === "*" || ml === "1.")
-            markdownlist = ml;
-          else if (ml !== void 0) {
-            warnings.push({
-              message: `Invalid markdownlist value "${ml}" in field "${key}". Must be "-", "*", or "1."`,
-              line: lineNum
-            });
-          }
-        }
-      }
+      const { separator, markdownlist } = resolveSeparatorAndMarkdownlist(optMap, optionOrder, key, warnings, lineNum);
+      const rowsStr = optMap.get("rows");
       const msField = { type: "multiselect", ...base, list };
       if (separator !== void 0)
         msField.separator = separator;
       if (markdownlist !== void 0)
         msField.markdownlist = markdownlist;
-      const rowsStr = optMap.get("rows");
-      if (rowsStr) {
+      if (rowsStr)
         msField.rows = parseInt(rowsStr, 10);
-      }
       return msField;
+    }
+    case "list": {
+      const { separator, markdownlist } = resolveSeparatorAndMarkdownlist(optMap, optionOrder, key, warnings, lineNum);
+      const rowsStr = optMap.get("rows");
+      const rows = rowsStr ? parseInt(rowsStr, 10) : void 0;
+      const lf = { type: "list", ...base };
+      if (separator !== void 0)
+        lf.separator = separator;
+      if (markdownlist !== void 0)
+        lf.markdownlist = markdownlist;
+      if (rows !== void 0 && !isNaN(rows))
+        lf.rows = rows;
+      return lf;
     }
     default:
       errors.push({ message: `Unknown field type: "${type}"`, line: lineNum });
@@ -828,13 +1141,7 @@ function parseTemplate(templateContent) {
   const fields = [];
   const blockMatch = FORMBUILDER_BLOCK_RE.exec(templateContent);
   if (!blockMatch) {
-    return {
-      meta,
-      fields,
-      bodyTemplate: templateContent,
-      errors,
-      warnings
-    };
+    return { meta, fields, bodyTemplate: templateContent, errors, warnings };
   }
   const blockContent = blockMatch[1];
   const bodyTemplate = templateContent.replace(blockMatch[0], "").replace(/^\n/, "");
@@ -851,15 +1158,12 @@ function parseTemplate(templateContent) {
       continue;
     }
     const syntaxMatch = FIELD_SYNTAX_RE.exec(line);
-    if (!syntaxMatch) {
+    if (!syntaxMatch)
       continue;
-    }
-    const inner = syntaxMatch[1];
-    const tokens = splitTokens(inner);
+    const tokens = splitTokens(syntaxMatch[1]);
     if (tokens.length === 0 || tokens[0] === "")
       continue;
-    const firstToken = tokens[0];
-    if (firstToken === "meta") {
+    if (tokens[0] === "meta") {
       parseMetaLine(tokens, meta, warnings, lineNum);
     } else {
       const field = parseFieldLine(tokens, errors, warnings, lineNum);
@@ -867,9 +1171,8 @@ function parseTemplate(templateContent) {
         const vr = validateField(field, lineNum);
         errors.push(...vr.errors);
         warnings.push(...vr.warnings);
-        if (vr.errors.length === 0) {
+        if (vr.errors.length === 0)
           fields.push(field);
-        }
       }
     }
   }
@@ -878,12 +1181,12 @@ function parseTemplate(templateContent) {
 
 // src/ui/ErrorNotice.ts
 var import_obsidian5 = require("obsidian");
-function showFatalError(errors) {
+function showFatalError(errors, header) {
   const messages = errors.map((e) => {
     const lineInfo = e.line ? ` (line ${e.line})` : "";
     return `\u2022 ${e.message}${lineInfo}`;
   }).join("\n");
-  new import_obsidian5.Notice(`Form Builder Error:
+  new import_obsidian5.Notice(`${header}
 ${messages}`, 8e3);
 }
 
@@ -900,44 +1203,40 @@ var FormBuilderPlugin = class extends import_obsidian6.Plugin {
   }
   async onunload() {
   }
-  /**
-   * テンプレートフォルダから Markdown ファイルを取得し、
-   * テンプレート選択 → フォーム表示 の流れを起動する
-   */
   async openTemplatePicker() {
-    const folderPath = this.settings.templateFolder;
+    const { templateFolder, locale } = this.settings;
     const templates = this.app.vault.getMarkdownFiles().filter(
-      (f) => f.path.startsWith(folderPath + "/") || f.path.startsWith(folderPath + "\\")
+      (f) => f.path.startsWith(templateFolder + "/") || f.path.startsWith(templateFolder + "\\")
     );
     if (templates.length === 0) {
-      new NoTemplateModal(this.app, this).open();
+      new NoTemplateModal(this.app, this, locale).open();
       return;
     }
     if (templates.length === 1) {
       await this.openFormForTemplate(templates[0]);
     } else {
-      new TemplateSelectorModal(this.app, templates, async (file) => {
+      new TemplateSelectorModal(this.app, templates, locale, async (file) => {
         await this.openFormForTemplate(file);
       }).open();
     }
   }
-  /**
-   * 指定テンプレートファイルを読み込んでフォームを表示する
-   */
   async openFormForTemplate(file) {
+    const { locale } = this.settings;
+    const L = getLocale(locale);
     let content;
     try {
       content = await this.app.vault.read(file);
     } catch (e) {
-      new import_obsidian6.Notice(`Form Builder: Failed to read template file "${file.path}".`);
+      new import_obsidian6.Notice(`${L.noticeReadError}
+"${file.path}"`);
       return;
     }
     const parseResult = parseTemplate(content);
     if (parseResult.errors.length > 0) {
-      showFatalError(parseResult.errors);
+      showFatalError(parseResult.errors, L.noticeFatalHeader);
       return;
     }
-    new FormModal(this.app, parseResult).open();
+    new FormModal(this.app, parseResult, locale).open();
   }
   async loadSettings() {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
