@@ -5,7 +5,8 @@ type ValueStore = Map<string, string | string[] | boolean>;
 export function renderField(
     containerEl: HTMLElement,
     field: FormField,
-    values: ValueStore
+    values: ValueStore,
+    multilistHint: string
 ): void {
     switch (field.type) {
         case 'text':        renderText(containerEl, field, values); break;
@@ -15,7 +16,7 @@ export function renderField(
         case 'checkbox':    renderCheckbox(containerEl, field, values); break;
         case 'select':      renderSelect(containerEl, field, values); break;
         case 'multiselect': renderMultiselect(containerEl, field as MultiselectField, values); break;
-        case 'multilist':    renderList(containerEl, field as ListField, values); break;
+        case 'multilist':   renderList(containerEl, field as ListField, values, multilistHint); break;
     }
 }
 
@@ -172,18 +173,16 @@ function renderMultiselect(
 function renderList(
     containerEl: HTMLElement,
     field: ListField,
-    values: ValueStore
+    values: ValueStore,
+    multilistHint: string
 ): void {
     values.set(field.key, field.default ?? '');
     const card = createCard(containerEl, field);
     appendLabelRow(card, field);
 
-    // ヒントテキスト（説明がない場合のみ表示）
+    // ヒントテキスト（description が指定されていない場合のみ表示）
     if (!field.description) {
-        card.createDiv({
-            cls: 'fb-desc',
-            text: '1行につき1項目を入力してください。空行は無視されます。',
-        });
+        card.createDiv({ cls: 'fb-desc', text: multilistHint });
     }
 
     const textarea = card.createEl('textarea', { cls: 'fb-textarea fb-list-input' });

@@ -49,8 +49,9 @@ export class FormModal extends Modal {
     }
 
     private renderFields(root: HTMLElement): void {
+        const L = getLocale(this.locale);
         for (const field of this.parseResult.fields) {
-            renderField(root, field, this.values);
+            renderField(root, field, this.values, L.multilistHint);
         }
     }
 

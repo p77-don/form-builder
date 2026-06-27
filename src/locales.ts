@@ -83,11 +83,14 @@ export interface Locale {
     subFields:    string;
     subOptions:   string;
     subVariables: string;
+    subModifiers: string;
+    multilistHint: string;
 
     metaRows:     [string, string][];
     fieldRows:    [string, string][];
     optionRows:   [string, string][];
     variableRows: [string, string][];
+    modifierRows: [string, string][];
 }
 
 // ============================================================
@@ -154,7 +157,8 @@ $body$`,
     sec2Paragraphs: [
         'Add a ```formbuilder code block to your template file.',
         'Use meta to specify the output folder and file name, then define fields below it.',
-        'Write $key$ in the body text — it will be replaced with the value entered in the form.',
+        'User variables use $key$ (dollar signs). System variables use %variable% (percent signs). These are two different notations — the difference is intentional.',
+        'Write $key$ in the body text to output a value as-is. For multiselect / multilist fields, you can control the output format with a modifier: $key:separator[,]$ or $key:list[- ]$.',
     ],
     sec3Paragraphs: [
         'Open the Command Palette (Ctrl / Cmd + P) and run "Create Note From Template".',
@@ -172,7 +176,9 @@ $body$`,
 title: "$title$"
 created: "%date%"
 tags:
-  - "$category$"
+$tags:list[  - ]$
+aliases:
+$aliases:list[  - ]$
 ---
 
 \`\`\`formbuilder
@@ -184,8 +190,8 @@ tags:
 {{select|category|label=[Category]|list=[Work;Personal;Study;Other]}}
 {{select|priority|label=[Priority]|list=[High;Medium;Low]|default=[Medium]}}
 {{textarea|summary|label=[Summary]|rows=[4]}}
-{{multiselect|tags|label=[Tags]|list=[Important;Review;Draft;Done]|separator=[, ]}}
-{{multilist|aliases|label=[Aliases]|markdownlist=[-]}}
+{{multiselect|tags|label=[Tags]|list=[Important;Review;Draft;Done]}}
+{{multilist|aliases|label=[Aliases]}}
 {{checkbox|published|label=[Published]}}
 \`\`\`
 
@@ -196,19 +202,22 @@ tags:
 ## Summary
 $summary$
 
-**Tags:** $tags$
+**Tags:** $tags:separator[, ]$
 
 ## Aliases
-$aliases$`,
+$aliases:separator[, ]$`,
 
+    multilistHint: 'Enter one item per line. Blank lines are ignored.',
     subMeta:      'Meta Options',
     subFields:    'Field Types',
     subOptions:   'Common Options',
     subVariables: 'Variables',
+    subModifiers: 'Variable Modifiers (multiselect / multilist only)',
 
     metaRows: [
-        ['meta|folder=[FolderName]',  'Output folder for the note'],
-        ['meta|filename=[FileName]',  'File name of the note (variables allowed)'],
+        ['meta|folder=[FolderName]',          'Fixed output folder. The note is always saved here.'],
+        ['meta|folder=[$export$]',             'Dynamic folder. Use a text field to let the user specify the folder at runtime. Pair with: {{text|export|label=[Output Folder]|default=[Notes]}}'],
+        ['meta|filename=[FileName]',           'File name of the note. Variables ($key$, %date%, etc.) are allowed.'],
     ],
     fieldRows: [
         ['text',        'Single-line text input'],
@@ -218,7 +227,7 @@ $aliases$`,
         ['checkbox',    'Toggle (true / false)'],
         ['select',      'Single selection dropdown'],
         ['multiselect', 'Multiple selection checkboxes'],
-        ['multilist',   'Free text input, one item per line, output as list or joined string'],
+        ['multilist',   'Free text input, one item per line'],
     ],
     optionRows: [
         ['label=[Display Name]', 'Label shown on the form'],
@@ -227,16 +236,22 @@ $aliases$`,
         ['description=[...]',    'Field description shown below the label'],
         ['default=[Value]',      'Default value'],
         ['list=[A;B;C]',         'Options for select / multiselect (semicolon-separated)'],
-        ['separator=[, ]',       'Separator for multiselect / list output (default for list: newline)'],
-        ['markdownlist=[-]',     'Output multiselect / list as Markdown list (- / * / 1.)'],
         ['min=[0]|max=[100]',    'Min / Max value for number fields'],
-        ['rows=[5]',             'Visible rows for textarea / multiselect / list'],
+        ['rows=[5]',             'Visible rows for textarea / multiselect / multilist'],
     ],
     variableRows: [
-        ['$key$',       'Replaced with the form input value for that key'],
-        ['%timestamp%', 'Save timestamp (e.g. 20260626153000)'],
-        ['%date%',      'Save date (e.g. 2026-06-26)'],
-        ['%time%',      'Save time (e.g. 15:30:00)'],
+        ['$key$',       'User variable — replaced with the form input value. Surrounded by dollar signs $...$. For multiselect / multilist, values are joined with "," (no space) by default.'],
+        ['%timestamp%', 'System variable — save timestamp (e.g. 20260626153000). Surrounded by percent signs %...%.'],
+        ['%date%',      'System variable — save date (e.g. 2026-06-26). Evaluated at the moment "Create Note" is pressed.'],
+        ['%time%',      'System variable — save time (e.g. 15:30:00). Evaluated at the moment "Create Note" is pressed.'],
+    ],
+    modifierRows: [
+        ['$key:separator[, ]$',   'Join values with the specified separator. Any string allowed inside [].'],
+        ['$key:separator[・]$',   'Example: joined with "・"'],
+        ['$key:list[- ]$',        'Output as a Markdown list. The content of [] is prepended to each line as-is.'],
+        ['$key:list[  - ]$',      'Example: 2-space indented list (useful for Frontmatter aliases / tags)'],
+        ['$key:list[* ]$',        'Example: unordered list with *'],
+        ['$key:list[1. ]$',       'Example: numbered list (auto-numbered only when [] starts with "1.")'],
     ],
 };
 
@@ -304,7 +319,8 @@ $body$`,
     sec2Paragraphs: [
         'テンプレートファイルに ```formbuilder コードブロックを記述します。',
         'meta でフォルダ・ファイル名を指定し、その下にフィールドを定義します。',
-        '本文中に $キー名$ と書くと、フォームの入力値に置き換わります。',
+        'ユーザー変数はドル記号で囲む $キー名$、システム変数はパーセント記号で囲む %変数名% です。囲み方が異なります。',
+        '本文に $キー名$ と書くとフォームの入力値がそのまま展開されます。multiselect / multilist フィールドは、モディファイアで展開形式を指定できます: $キー名:separator[,]$ や $キー名:list[- ]$。',
     ],
     sec3Paragraphs: [
         'コマンドパレット（Ctrl / Cmd + P）を開き、「Create Note From Template」を実行します。',
@@ -322,7 +338,9 @@ $body$`,
 title: "$title$"
 created: "%date%"
 tags:
-  - "$category$"
+$tags:list[  - ]$
+aliases:
+$aliases:list[  - ]$
 ---
 
 \`\`\`formbuilder
@@ -334,8 +352,8 @@ tags:
 {{select|category|label=[カテゴリ]|list=[仕事;個人;学習;その他]}}
 {{select|priority|label=[優先度]|list=[高;中;低]|default=[中]}}
 {{textarea|summary|label=[概要]|rows=[4]}}
-{{multiselect|tags|label=[タグ]|list=[重要;レビュー;下書き;完了]|separator=[, ]}}
-{{multilist|aliases|label=[エイリアス]|markdownlist=[-]}}
+{{multiselect|tags|label=[タグ]|list=[重要;レビュー;下書き;完了]}}
+{{multilist|aliases|label=[エイリアス]}}
 {{checkbox|published|label=[公開]}}
 \`\`\`
 
@@ -346,19 +364,22 @@ tags:
 ## 概要
 $summary$
 
-**タグ:** $tags$
+**タグ:** $tags:separator[、]$
 
 ## エイリアス
-$aliases$`,
+$aliases:separator[、]$`,
 
+    multilistHint: '1行につき1項目を入力してください。空行は無視されます。',
     subMeta:      'meta オプション',
     subFields:    'フィールドタイプ',
     subOptions:   '主なオプション',
     subVariables: '変数',
+    subModifiers: '変数モディファイア（multiselect / multilist 専用）',
 
     metaRows: [
-        ['meta|folder=[フォルダ名]',   'ノートの保存先フォルダ'],
-        ['meta|filename=[ファイル名]', 'ノートのファイル名（変数使用可）'],
+        ['meta|folder=[フォルダ名]',            '固定の保存先フォルダ。常にここに保存されます。'],
+        ['meta|folder=[$export$]',              '動的フォルダ。フォームで保存先を入力させる場合はこのように記述します。対になるフィールド例: {{text|export|label=[出力先フォルダ]|default=[Notes]}}'],
+        ['meta|filename=[ファイル名]',           'ノートのファイル名。変数（$キー名$・%date% 等）使用可。'],
     ],
     fieldRows: [
         ['text',        '1行テキスト入力'],
@@ -368,7 +389,7 @@ $aliases$`,
         ['checkbox',    'トグル（true / false）'],
         ['select',      '単一選択ドロップダウン'],
         ['multiselect', '複数選択チェックボックス'],
-        ['multilist',   '自由テキスト入力（1行1項目）。リスト形式または連結文字列で出力'],
+        ['multilist',   '自由テキスト入力（1行1項目）'],
     ],
     optionRows: [
         ['label=[表示名]',       'フォーム上の表示ラベル'],
@@ -377,16 +398,22 @@ $aliases$`,
         ['description=[...]',    'ラベル下に表示するフィールド説明'],
         ['default=[既定値]',     'デフォルト値'],
         ['list=[A;B;C]',         '選択肢（セミコロン区切り）'],
-        ['separator=[, ]',       'multiselect / list の出力区切り文字（list のデフォルトは改行）'],
-        ['markdownlist=[-]',     'multiselect / list をリスト形式で出力（- / * / 1.）'],
         ['min=[0]|max=[100]',    'number フィールドの最小・最大値'],
-        ['rows=[5]',             'textarea / multiselect / list の表示行数'],
+        ['rows=[5]',             'textarea / multiselect / multilist の表示行数'],
     ],
     variableRows: [
-        ['$キー名$',     'そのキーのフォーム入力値に置き換わる'],
-        ['%timestamp%', '保存時刻（例: 20260626153000）'],
-        ['%date%',      '保存日付（例: 2026-06-26）'],
-        ['%time%',      '保存時刻（例: 15:30:00）'],
+        ['$キー名$',     'ユーザー変数。ドル記号 $...$ で囲みます。フォームの入力値に置き換わります。multiselect / multilist はデフォルトでカンマのみで結合（スペースなし）。'],
+        ['%timestamp%', 'システム変数。パーセント記号 %...% で囲みます。保存時刻（例: 20260626153000）。'],
+        ['%date%',      'システム変数。保存日付（例: 2026-06-26）。「ノートを作成」ボタンを押した瞬間に評価されます。'],
+        ['%time%',      'システム変数。保存時刻（例: 15:30:00）。「ノートを作成」ボタンを押した瞬間に評価されます。'],
+    ],
+    modifierRows: [
+        ['$キー名:separator[、]$',    '指定した区切り文字で結合します。[] 内の文字列をそのまま使用します。'],
+        ['$キー名:separator[, ]$',   '例: カンマ＋スペースで結合'],
+        ['$キー名:list[- ]$',        'Markdown リスト形式で展開します。[] 内の文字列をそのまま各行の先頭に付けます。'],
+        ['$キー名:list[  - ]$',      '例: 2スペースインデント付きリスト（Frontmatter の aliases / tags に適しています）'],
+        ['$キー名:list[* ]$',        '例: * 記法のリスト'],
+        ['$キー名:list[1. ]$',       '例: 番号付きリスト（[] が "1." で始まる場合のみ自動採番）'],
     ],
 };
 

@@ -1,6 +1,6 @@
 import type {
     FormField, MetaConfig, ParseError, ParseWarning, ParseResult,
-    MarkdownListStyle, MultiselectField, ListField
+    MultiselectField, ListField
 } from '../model/FieldModel';
 import {
     validateFieldType, validateKey, validateOptionName,
@@ -66,48 +66,6 @@ function parseMetaLine(
     }
 }
 
-/**
- * separator / markdownlist の同時指定を解決し、先に定義された方を返す
- */
-function resolveSeparatorAndMarkdownlist(
-    optMap: Map<string, string | null>,
-    optionOrder: string[],
-    key: string,
-    warnings: ParseWarning[],
-    lineNum: number
-): { separator?: string; markdownlist?: MarkdownListStyle } {
-    const separatorIdx    = optionOrder.indexOf('separator');
-    const markdownlistIdx = optionOrder.indexOf('markdownlist');
-    let separator: string | undefined = undefined;
-    let markdownlist: MarkdownListStyle | undefined = undefined;
-
-    if (separatorIdx !== -1 && markdownlistIdx !== -1) {
-        warnings.push({
-            message: `Both "separator" and "markdownlist" are set in field "${key}". "${optionOrder[Math.min(separatorIdx, markdownlistIdx)]}" takes priority.`,
-            line: lineNum
-        });
-        if (separatorIdx < markdownlistIdx) {
-            separator = optMap.get('separator') ?? undefined;
-        } else {
-            const ml = optMap.get('markdownlist');
-            if (ml === '-' || ml === '*' || ml === '1.') markdownlist = ml;
-        }
-    } else {
-        if (separatorIdx !== -1) separator = optMap.get('separator') ?? undefined;
-        if (markdownlistIdx !== -1) {
-            const ml = optMap.get('markdownlist');
-            if (ml === '-' || ml === '*' || ml === '1.') markdownlist = ml;
-            else if (ml !== undefined) {
-                warnings.push({
-                    message: `Invalid markdownlist value "${ml}" in field "${key}". Must be "-", "*", or "1."`,
-                    line: lineNum
-                });
-            }
-        }
-    }
-    return { separator, markdownlist };
-}
-
 function parseFieldLine(
     tokens: string[],
     errors: ParseError[],
@@ -129,7 +87,6 @@ function parseFieldLine(
     if (keyError) { errors.push(keyError); return null; }
 
     const optMap: Map<string, string | null> = new Map();
-    const optionOrder: string[] = [];
 
     for (let i = 2; i < tokens.length; i++) {
         const opt = parseOptionToken(tokens[i]);
@@ -141,7 +98,6 @@ function parseFieldLine(
         if (optWarning) { warnings.push(optWarning); continue; }
         if (!optMap.has(opt.key)) {
             optMap.set(opt.key, opt.value);
-            optionOrder.push(opt.key);
         }
     }
 
@@ -198,22 +154,16 @@ function parseFieldLine(
                 return null;
             }
             const list = parseList(listRaw);
-            const { separator, markdownlist } = resolveSeparatorAndMarkdownlist(optMap, optionOrder, key, warnings, lineNum);
             const rowsStr = optMap.get('rows');
             const msField: MultiselectField = { type: 'multiselect', ...base, list };
-            if (separator    !== undefined) msField.separator    = separator;
-            if (markdownlist !== undefined) msField.markdownlist = markdownlist;
             if (rowsStr) (msField as unknown as { rows?: number }).rows = parseInt(rowsStr, 10);
             return msField;
         }
 
         case 'multilist': {
-            const { separator, markdownlist } = resolveSeparatorAndMarkdownlist(optMap, optionOrder, key, warnings, lineNum);
             const rowsStr = optMap.get('rows');
             const rows = rowsStr ? parseInt(rowsStr, 10) : undefined;
             const lf: ListField = { type: 'multilist', ...base };
-            if (separator    !== undefined) lf.separator    = separator;
-            if (markdownlist !== undefined) lf.markdownlist = markdownlist;
             if (rows !== undefined && !isNaN(rows)) lf.rows = rows;
             return lf;
         }

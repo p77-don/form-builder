@@ -84,7 +84,8 @@ $body$`,
   sec2Paragraphs: [
     "Add a ```formbuilder code block to your template file.",
     "Use meta to specify the output folder and file name, then define fields below it.",
-    "Write $key$ in the body text \u2014 it will be replaced with the value entered in the form."
+    "User variables use $key$ (dollar signs). System variables use %variable% (percent signs). These are two different notations \u2014 the difference is intentional.",
+    "Write $key$ in the body text to output a value as-is. For multiselect / multilist fields, you can control the output format with a modifier: $key:separator[,]$ or $key:list[- ]$."
   ],
   sec3Paragraphs: [
     'Open the Command Palette (Ctrl / Cmd + P) and run "Create Note From Template".',
@@ -100,7 +101,9 @@ $body$`,
 title: "$title$"
 created: "%date%"
 tags:
-  - "$category$"
+$tags:list[  - ]$
+aliases:
+$aliases:list[  - ]$
 ---
 
 \`\`\`formbuilder
@@ -112,8 +115,8 @@ tags:
 {{select|category|label=[Category]|list=[Work;Personal;Study;Other]}}
 {{select|priority|label=[Priority]|list=[High;Medium;Low]|default=[Medium]}}
 {{textarea|summary|label=[Summary]|rows=[4]}}
-{{multiselect|tags|label=[Tags]|list=[Important;Review;Draft;Done]|separator=[, ]}}
-{{multilist|aliases|label=[Aliases]|markdownlist=[-]}}
+{{multiselect|tags|label=[Tags]|list=[Important;Review;Draft;Done]}}
+{{multilist|aliases|label=[Aliases]}}
 {{checkbox|published|label=[Published]}}
 \`\`\`
 
@@ -124,17 +127,20 @@ tags:
 ## Summary
 $summary$
 
-**Tags:** $tags$
+**Tags:** $tags:separator[, ]$
 
 ## Aliases
-$aliases$`,
+$aliases:separator[, ]$`,
+  multilistHint: "Enter one item per line. Blank lines are ignored.",
   subMeta: "Meta Options",
   subFields: "Field Types",
   subOptions: "Common Options",
   subVariables: "Variables",
+  subModifiers: "Variable Modifiers (multiselect / multilist only)",
   metaRows: [
-    ["meta|folder=[FolderName]", "Output folder for the note"],
-    ["meta|filename=[FileName]", "File name of the note (variables allowed)"]
+    ["meta|folder=[FolderName]", "Fixed output folder. The note is always saved here."],
+    ["meta|folder=[$export$]", "Dynamic folder. Use a text field to let the user specify the folder at runtime. Pair with: {{text|export|label=[Output Folder]|default=[Notes]}}"],
+    ["meta|filename=[FileName]", "File name of the note. Variables ($key$, %date%, etc.) are allowed."]
   ],
   fieldRows: [
     ["text", "Single-line text input"],
@@ -144,7 +150,7 @@ $aliases$`,
     ["checkbox", "Toggle (true / false)"],
     ["select", "Single selection dropdown"],
     ["multiselect", "Multiple selection checkboxes"],
-    ["multilist", "Free text input, one item per line, output as list or joined string"]
+    ["multilist", "Free text input, one item per line"]
   ],
   optionRows: [
     ["label=[Display Name]", "Label shown on the form"],
@@ -153,16 +159,22 @@ $aliases$`,
     ["description=[...]", "Field description shown below the label"],
     ["default=[Value]", "Default value"],
     ["list=[A;B;C]", "Options for select / multiselect (semicolon-separated)"],
-    ["separator=[, ]", "Separator for multiselect / list output (default for list: newline)"],
-    ["markdownlist=[-]", "Output multiselect / list as Markdown list (- / * / 1.)"],
     ["min=[0]|max=[100]", "Min / Max value for number fields"],
-    ["rows=[5]", "Visible rows for textarea / multiselect / list"]
+    ["rows=[5]", "Visible rows for textarea / multiselect / multilist"]
   ],
   variableRows: [
-    ["$key$", "Replaced with the form input value for that key"],
-    ["%timestamp%", "Save timestamp (e.g. 20260626153000)"],
-    ["%date%", "Save date (e.g. 2026-06-26)"],
-    ["%time%", "Save time (e.g. 15:30:00)"]
+    ["$key$", 'User variable \u2014 replaced with the form input value. Surrounded by dollar signs $...$. For multiselect / multilist, values are joined with "," (no space) by default.'],
+    ["%timestamp%", "System variable \u2014 save timestamp (e.g. 20260626153000). Surrounded by percent signs %...%."],
+    ["%date%", 'System variable \u2014 save date (e.g. 2026-06-26). Evaluated at the moment "Create Note" is pressed.'],
+    ["%time%", 'System variable \u2014 save time (e.g. 15:30:00). Evaluated at the moment "Create Note" is pressed.']
+  ],
+  modifierRows: [
+    ["$key:separator[, ]$", "Join values with the specified separator. Any string allowed inside []."],
+    ["$key:separator[\u30FB]$", 'Example: joined with "\u30FB"'],
+    ["$key:list[- ]$", "Output as a Markdown list. The content of [] is prepended to each line as-is."],
+    ["$key:list[  - ]$", "Example: 2-space indented list (useful for Frontmatter aliases / tags)"],
+    ["$key:list[* ]$", "Example: unordered list with *"],
+    ["$key:list[1. ]$", 'Example: numbered list (auto-numbered only when [] starts with "1.")']
   ]
 };
 var ja = {
@@ -217,7 +229,8 @@ $body$`,
   sec2Paragraphs: [
     "\u30C6\u30F3\u30D7\u30EC\u30FC\u30C8\u30D5\u30A1\u30A4\u30EB\u306B ```formbuilder \u30B3\u30FC\u30C9\u30D6\u30ED\u30C3\u30AF\u3092\u8A18\u8FF0\u3057\u307E\u3059\u3002",
     "meta \u3067\u30D5\u30A9\u30EB\u30C0\u30FB\u30D5\u30A1\u30A4\u30EB\u540D\u3092\u6307\u5B9A\u3057\u3001\u305D\u306E\u4E0B\u306B\u30D5\u30A3\u30FC\u30EB\u30C9\u3092\u5B9A\u7FA9\u3057\u307E\u3059\u3002",
-    "\u672C\u6587\u4E2D\u306B $\u30AD\u30FC\u540D$ \u3068\u66F8\u304F\u3068\u3001\u30D5\u30A9\u30FC\u30E0\u306E\u5165\u529B\u5024\u306B\u7F6E\u304D\u63DB\u308F\u308A\u307E\u3059\u3002"
+    "\u30E6\u30FC\u30B6\u30FC\u5909\u6570\u306F\u30C9\u30EB\u8A18\u53F7\u3067\u56F2\u3080 $\u30AD\u30FC\u540D$\u3001\u30B7\u30B9\u30C6\u30E0\u5909\u6570\u306F\u30D1\u30FC\u30BB\u30F3\u30C8\u8A18\u53F7\u3067\u56F2\u3080 %\u5909\u6570\u540D% \u3067\u3059\u3002\u56F2\u307F\u65B9\u304C\u7570\u306A\u308A\u307E\u3059\u3002",
+    "\u672C\u6587\u306B $\u30AD\u30FC\u540D$ \u3068\u66F8\u304F\u3068\u30D5\u30A9\u30FC\u30E0\u306E\u5165\u529B\u5024\u304C\u305D\u306E\u307E\u307E\u5C55\u958B\u3055\u308C\u307E\u3059\u3002multiselect / multilist \u30D5\u30A3\u30FC\u30EB\u30C9\u306F\u3001\u30E2\u30C7\u30A3\u30D5\u30A1\u30A4\u30A2\u3067\u5C55\u958B\u5F62\u5F0F\u3092\u6307\u5B9A\u3067\u304D\u307E\u3059: $\u30AD\u30FC\u540D:separator[,]$ \u3084 $\u30AD\u30FC\u540D:list[- ]$\u3002"
   ],
   sec3Paragraphs: [
     "\u30B3\u30DE\u30F3\u30C9\u30D1\u30EC\u30C3\u30C8\uFF08Ctrl / Cmd + P\uFF09\u3092\u958B\u304D\u3001\u300CCreate Note From Template\u300D\u3092\u5B9F\u884C\u3057\u307E\u3059\u3002",
@@ -233,7 +246,9 @@ $body$`,
 title: "$title$"
 created: "%date%"
 tags:
-  - "$category$"
+$tags:list[  - ]$
+aliases:
+$aliases:list[  - ]$
 ---
 
 \`\`\`formbuilder
@@ -245,8 +260,8 @@ tags:
 {{select|category|label=[\u30AB\u30C6\u30B4\u30EA]|list=[\u4ED5\u4E8B;\u500B\u4EBA;\u5B66\u7FD2;\u305D\u306E\u4ED6]}}
 {{select|priority|label=[\u512A\u5148\u5EA6]|list=[\u9AD8;\u4E2D;\u4F4E]|default=[\u4E2D]}}
 {{textarea|summary|label=[\u6982\u8981]|rows=[4]}}
-{{multiselect|tags|label=[\u30BF\u30B0]|list=[\u91CD\u8981;\u30EC\u30D3\u30E5\u30FC;\u4E0B\u66F8\u304D;\u5B8C\u4E86]|separator=[, ]}}
-{{multilist|aliases|label=[\u30A8\u30A4\u30EA\u30A2\u30B9]|markdownlist=[-]}}
+{{multiselect|tags|label=[\u30BF\u30B0]|list=[\u91CD\u8981;\u30EC\u30D3\u30E5\u30FC;\u4E0B\u66F8\u304D;\u5B8C\u4E86]}}
+{{multilist|aliases|label=[\u30A8\u30A4\u30EA\u30A2\u30B9]}}
 {{checkbox|published|label=[\u516C\u958B]}}
 \`\`\`
 
@@ -257,17 +272,20 @@ tags:
 ## \u6982\u8981
 $summary$
 
-**\u30BF\u30B0:** $tags$
+**\u30BF\u30B0:** $tags:separator[\u3001]$
 
 ## \u30A8\u30A4\u30EA\u30A2\u30B9
-$aliases$`,
+$aliases:separator[\u3001]$`,
+  multilistHint: "1\u884C\u306B\u3064\u304D1\u9805\u76EE\u3092\u5165\u529B\u3057\u3066\u304F\u3060\u3055\u3044\u3002\u7A7A\u884C\u306F\u7121\u8996\u3055\u308C\u307E\u3059\u3002",
   subMeta: "meta \u30AA\u30D7\u30B7\u30E7\u30F3",
   subFields: "\u30D5\u30A3\u30FC\u30EB\u30C9\u30BF\u30A4\u30D7",
   subOptions: "\u4E3B\u306A\u30AA\u30D7\u30B7\u30E7\u30F3",
   subVariables: "\u5909\u6570",
+  subModifiers: "\u5909\u6570\u30E2\u30C7\u30A3\u30D5\u30A1\u30A4\u30A2\uFF08multiselect / multilist \u5C02\u7528\uFF09",
   metaRows: [
-    ["meta|folder=[\u30D5\u30A9\u30EB\u30C0\u540D]", "\u30CE\u30FC\u30C8\u306E\u4FDD\u5B58\u5148\u30D5\u30A9\u30EB\u30C0"],
-    ["meta|filename=[\u30D5\u30A1\u30A4\u30EB\u540D]", "\u30CE\u30FC\u30C8\u306E\u30D5\u30A1\u30A4\u30EB\u540D\uFF08\u5909\u6570\u4F7F\u7528\u53EF\uFF09"]
+    ["meta|folder=[\u30D5\u30A9\u30EB\u30C0\u540D]", "\u56FA\u5B9A\u306E\u4FDD\u5B58\u5148\u30D5\u30A9\u30EB\u30C0\u3002\u5E38\u306B\u3053\u3053\u306B\u4FDD\u5B58\u3055\u308C\u307E\u3059\u3002"],
+    ["meta|folder=[$export$]", "\u52D5\u7684\u30D5\u30A9\u30EB\u30C0\u3002\u30D5\u30A9\u30FC\u30E0\u3067\u4FDD\u5B58\u5148\u3092\u5165\u529B\u3055\u305B\u308B\u5834\u5408\u306F\u3053\u306E\u3088\u3046\u306B\u8A18\u8FF0\u3057\u307E\u3059\u3002\u5BFE\u306B\u306A\u308B\u30D5\u30A3\u30FC\u30EB\u30C9\u4F8B: {{text|export|label=[\u51FA\u529B\u5148\u30D5\u30A9\u30EB\u30C0]|default=[Notes]}}"],
+    ["meta|filename=[\u30D5\u30A1\u30A4\u30EB\u540D]", "\u30CE\u30FC\u30C8\u306E\u30D5\u30A1\u30A4\u30EB\u540D\u3002\u5909\u6570\uFF08$\u30AD\u30FC\u540D$\u30FB%date% \u7B49\uFF09\u4F7F\u7528\u53EF\u3002"]
   ],
   fieldRows: [
     ["text", "1\u884C\u30C6\u30AD\u30B9\u30C8\u5165\u529B"],
@@ -277,7 +295,7 @@ $aliases$`,
     ["checkbox", "\u30C8\u30B0\u30EB\uFF08true / false\uFF09"],
     ["select", "\u5358\u4E00\u9078\u629E\u30C9\u30ED\u30C3\u30D7\u30C0\u30A6\u30F3"],
     ["multiselect", "\u8907\u6570\u9078\u629E\u30C1\u30A7\u30C3\u30AF\u30DC\u30C3\u30AF\u30B9"],
-    ["multilist", "\u81EA\u7531\u30C6\u30AD\u30B9\u30C8\u5165\u529B\uFF081\u884C1\u9805\u76EE\uFF09\u3002\u30EA\u30B9\u30C8\u5F62\u5F0F\u307E\u305F\u306F\u9023\u7D50\u6587\u5B57\u5217\u3067\u51FA\u529B"]
+    ["multilist", "\u81EA\u7531\u30C6\u30AD\u30B9\u30C8\u5165\u529B\uFF081\u884C1\u9805\u76EE\uFF09"]
   ],
   optionRows: [
     ["label=[\u8868\u793A\u540D]", "\u30D5\u30A9\u30FC\u30E0\u4E0A\u306E\u8868\u793A\u30E9\u30D9\u30EB"],
@@ -286,16 +304,22 @@ $aliases$`,
     ["description=[...]", "\u30E9\u30D9\u30EB\u4E0B\u306B\u8868\u793A\u3059\u308B\u30D5\u30A3\u30FC\u30EB\u30C9\u8AAC\u660E"],
     ["default=[\u65E2\u5B9A\u5024]", "\u30C7\u30D5\u30A9\u30EB\u30C8\u5024"],
     ["list=[A;B;C]", "\u9078\u629E\u80A2\uFF08\u30BB\u30DF\u30B3\u30ED\u30F3\u533A\u5207\u308A\uFF09"],
-    ["separator=[, ]", "multiselect / list \u306E\u51FA\u529B\u533A\u5207\u308A\u6587\u5B57\uFF08list \u306E\u30C7\u30D5\u30A9\u30EB\u30C8\u306F\u6539\u884C\uFF09"],
-    ["markdownlist=[-]", "multiselect / list \u3092\u30EA\u30B9\u30C8\u5F62\u5F0F\u3067\u51FA\u529B\uFF08- / * / 1.\uFF09"],
     ["min=[0]|max=[100]", "number \u30D5\u30A3\u30FC\u30EB\u30C9\u306E\u6700\u5C0F\u30FB\u6700\u5927\u5024"],
-    ["rows=[5]", "textarea / multiselect / list \u306E\u8868\u793A\u884C\u6570"]
+    ["rows=[5]", "textarea / multiselect / multilist \u306E\u8868\u793A\u884C\u6570"]
   ],
   variableRows: [
-    ["$\u30AD\u30FC\u540D$", "\u305D\u306E\u30AD\u30FC\u306E\u30D5\u30A9\u30FC\u30E0\u5165\u529B\u5024\u306B\u7F6E\u304D\u63DB\u308F\u308B"],
-    ["%timestamp%", "\u4FDD\u5B58\u6642\u523B\uFF08\u4F8B: 20260626153000\uFF09"],
-    ["%date%", "\u4FDD\u5B58\u65E5\u4ED8\uFF08\u4F8B: 2026-06-26\uFF09"],
-    ["%time%", "\u4FDD\u5B58\u6642\u523B\uFF08\u4F8B: 15:30:00\uFF09"]
+    ["$\u30AD\u30FC\u540D$", "\u30E6\u30FC\u30B6\u30FC\u5909\u6570\u3002\u30C9\u30EB\u8A18\u53F7 $...$ \u3067\u56F2\u307F\u307E\u3059\u3002\u30D5\u30A9\u30FC\u30E0\u306E\u5165\u529B\u5024\u306B\u7F6E\u304D\u63DB\u308F\u308A\u307E\u3059\u3002multiselect / multilist \u306F\u30C7\u30D5\u30A9\u30EB\u30C8\u3067\u30AB\u30F3\u30DE\u306E\u307F\u3067\u7D50\u5408\uFF08\u30B9\u30DA\u30FC\u30B9\u306A\u3057\uFF09\u3002"],
+    ["%timestamp%", "\u30B7\u30B9\u30C6\u30E0\u5909\u6570\u3002\u30D1\u30FC\u30BB\u30F3\u30C8\u8A18\u53F7 %...% \u3067\u56F2\u307F\u307E\u3059\u3002\u4FDD\u5B58\u6642\u523B\uFF08\u4F8B: 20260626153000\uFF09\u3002"],
+    ["%date%", "\u30B7\u30B9\u30C6\u30E0\u5909\u6570\u3002\u4FDD\u5B58\u65E5\u4ED8\uFF08\u4F8B: 2026-06-26\uFF09\u3002\u300C\u30CE\u30FC\u30C8\u3092\u4F5C\u6210\u300D\u30DC\u30BF\u30F3\u3092\u62BC\u3057\u305F\u77AC\u9593\u306B\u8A55\u4FA1\u3055\u308C\u307E\u3059\u3002"],
+    ["%time%", "\u30B7\u30B9\u30C6\u30E0\u5909\u6570\u3002\u4FDD\u5B58\u6642\u523B\uFF08\u4F8B: 15:30:00\uFF09\u3002\u300C\u30CE\u30FC\u30C8\u3092\u4F5C\u6210\u300D\u30DC\u30BF\u30F3\u3092\u62BC\u3057\u305F\u77AC\u9593\u306B\u8A55\u4FA1\u3055\u308C\u307E\u3059\u3002"]
+  ],
+  modifierRows: [
+    ["$\u30AD\u30FC\u540D:separator[\u3001]$", "\u6307\u5B9A\u3057\u305F\u533A\u5207\u308A\u6587\u5B57\u3067\u7D50\u5408\u3057\u307E\u3059\u3002[] \u5185\u306E\u6587\u5B57\u5217\u3092\u305D\u306E\u307E\u307E\u4F7F\u7528\u3057\u307E\u3059\u3002"],
+    ["$\u30AD\u30FC\u540D:separator[, ]$", "\u4F8B: \u30AB\u30F3\u30DE\uFF0B\u30B9\u30DA\u30FC\u30B9\u3067\u7D50\u5408"],
+    ["$\u30AD\u30FC\u540D:list[- ]$", "Markdown \u30EA\u30B9\u30C8\u5F62\u5F0F\u3067\u5C55\u958B\u3057\u307E\u3059\u3002[] \u5185\u306E\u6587\u5B57\u5217\u3092\u305D\u306E\u307E\u307E\u5404\u884C\u306E\u5148\u982D\u306B\u4ED8\u3051\u307E\u3059\u3002"],
+    ["$\u30AD\u30FC\u540D:list[  - ]$", "\u4F8B: 2\u30B9\u30DA\u30FC\u30B9\u30A4\u30F3\u30C7\u30F3\u30C8\u4ED8\u304D\u30EA\u30B9\u30C8\uFF08Frontmatter \u306E aliases / tags \u306B\u9069\u3057\u3066\u3044\u307E\u3059\uFF09"],
+    ["$\u30AD\u30FC\u540D:list[* ]$", "\u4F8B: * \u8A18\u6CD5\u306E\u30EA\u30B9\u30C8"],
+    ["$\u30AD\u30FC\u540D:list[1. ]$", '\u4F8B: \u756A\u53F7\u4ED8\u304D\u30EA\u30B9\u30C8\uFF08[] \u304C "1." \u3067\u59CB\u307E\u308B\u5834\u5408\u306E\u307F\u81EA\u52D5\u63A1\u756A\uFF09']
   ]
 };
 var LOCALES = { en, ja };
@@ -364,6 +388,8 @@ var HelpModal = class extends import_obsidian2.Modal {
     this.table(root, L.optionRows);
     this.subSection(root, L.subVariables);
     this.table(root, L.variableRows);
+    this.subSection(root, L.subModifiers);
+    this.table(root, L.modifierRows);
     this.section(root, L.sec3Title, L.sec3Paragraphs);
     this.section(root, L.sec4Title, L.sec4Paragraphs);
     const btnRow = root.createDiv({ cls: "fb-btn-row" });
@@ -396,7 +422,7 @@ var HelpModal = class extends import_obsidian2.Modal {
 };
 
 // src/form/FieldRenderer.ts
-function renderField(containerEl, field, values) {
+function renderField(containerEl, field, values, multilistHint) {
   switch (field.type) {
     case "text":
       renderText(containerEl, field, values);
@@ -420,7 +446,7 @@ function renderField(containerEl, field, values) {
       renderMultiselect(containerEl, field, values);
       break;
     case "multilist":
-      renderList(containerEl, field, values);
+      renderList(containerEl, field, values, multilistHint);
       break;
   }
 }
@@ -553,16 +579,13 @@ function renderMultiselect(containerEl, field, values) {
     });
   }
 }
-function renderList(containerEl, field, values) {
+function renderList(containerEl, field, values, multilistHint) {
   var _a, _b;
   values.set(field.key, (_a = field.default) != null ? _a : "");
   const card = createCard(containerEl, field);
   appendLabelRow(card, field);
   if (!field.description) {
-    card.createDiv({
-      cls: "fb-desc",
-      text: "1\u884C\u306B\u3064\u304D1\u9805\u76EE\u3092\u5165\u529B\u3057\u3066\u304F\u3060\u3055\u3044\u3002\u7A7A\u884C\u306F\u7121\u8996\u3055\u308C\u307E\u3059\u3002"
-    });
+    card.createDiv({ cls: "fb-desc", text: multilistHint });
   }
   const textarea = card.createEl("textarea", { cls: "fb-textarea fb-list-input" });
   textarea.value = (_b = field.default) != null ? _b : "";
@@ -608,49 +631,80 @@ function formatDate(d) {
 function formatTime(d) {
   return `${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
 }
-function formatMarkdownList(values, style) {
-  if (style === "1.")
-    return values.map((v, i) => `${i + 1}. ${v}`).join("\n");
-  return values.map((v) => `${style} ${v}`).join("\n");
+function applyModifierSeparator(values, sep) {
+  return values.join(sep);
 }
-function formatMultiselect(selected, field) {
-  var _a;
-  if (field.markdownlist)
-    return formatMarkdownList(selected, field.markdownlist);
-  return selected.join((_a = field.separator) != null ? _a : ", ");
+function applyModifierList(values, prefix) {
+  const isNumbered = prefix.trimStart().startsWith("1.");
+  if (isNumbered) {
+    const indentEnd = prefix.indexOf("1.");
+    const indent = prefix.slice(0, indentEnd);
+    const suffix = prefix.slice(indentEnd + 2);
+    return values.map((v, i) => `${indent}${i + 1}.${suffix}${v}`).join("\n");
+  }
+  return values.map((v) => `${prefix}${v}`).join("\n");
 }
-function formatList(rawText, field) {
-  var _a;
-  const lines = rawText.split("\n").map((l) => l.trim()).filter((l) => l !== "");
-  if (lines.length === 0)
-    return "";
-  if (field.markdownlist)
-    return formatMarkdownList(lines, field.markdownlist);
-  return lines.join((_a = field.separator) != null ? _a : "\n");
+var VARIABLE_RE = /\$([a-zA-Z0-9_-]+)(?::([a-zA-Z]+)\[([^\]]*)\])?\$/g;
+function isArrayField(field) {
+  return field.type === "multiselect" || field.type === "multilist";
 }
-function formatValue(value, field) {
+function formatScalarValue(value, field) {
   if (value === void 0 || value === null)
     return "";
-  if (field.type === "multiselect") {
-    return formatMultiselect(Array.isArray(value) ? value : [], field);
-  }
-  if (field.type === "multilist") {
-    return formatList(typeof value === "string" ? value : "", field);
-  }
   if (field.type === "checkbox") {
     return value === true || value === "true" ? "true" : "false";
   }
   if (Array.isArray(value))
-    return value.join(", ");
+    return value.join(",");
   return String(value);
 }
-function resolveUserVariables(template, values, fields) {
-  let result = template;
-  for (const field of fields) {
-    const expanded = formatValue(values.get(field.key), field);
-    result = result.split(`$${field.key}$`).join(expanded);
+function toStringArray(value, field) {
+  if (field.type === "multiselect") {
+    return Array.isArray(value) ? value : [];
   }
-  return result;
+  if (field.type === "multilist") {
+    const raw = typeof value === "string" ? value : "";
+    return raw.split("\n").map((l) => l.trim()).filter((l) => l !== "");
+  }
+  return [];
+}
+function resolveUserVariables(template, values, fields) {
+  const fieldMap = new Map(fields.map((f) => [f.key, f]));
+  const warnings = [];
+  const result = template.replace(VARIABLE_RE, (match, key, modifier, modValue) => {
+    const field = fieldMap.get(key);
+    if (!field)
+      return match;
+    const value = values.get(key);
+    if (!modifier) {
+      if (isArrayField(field)) {
+        return toStringArray(value, field).join(",");
+      }
+      return formatScalarValue(value, field);
+    }
+    if (!isArrayField(field)) {
+      warnings.push({
+        key,
+        modifier,
+        message: `Modifier ":${modifier}" is only valid for "multilist" or "multiselect" fields. Ignored for field "${key}".`
+      });
+      return formatScalarValue(value, field);
+    }
+    const arr = toStringArray(value, field);
+    if (modifier === "separator") {
+      return applyModifierSeparator(arr, modValue);
+    }
+    if (modifier === "list") {
+      return applyModifierList(arr, modValue);
+    }
+    warnings.push({
+      key,
+      modifier,
+      message: `Unknown modifier ":${modifier}" on field "${key}". Known modifiers: "separator", "list". Ignored.`
+    });
+    return arr.join(",");
+  });
+  return { result, warnings };
 }
 function resolveSystemVariables(template) {
   const now = new Date();
@@ -687,17 +741,20 @@ async function ensureFolder(app, folderPath) {
 }
 async function generateNote(app, bodyTemplate, values, fields, meta, sanitizedNotice) {
   var _a, _b;
-  let content = resolveUserVariables(bodyTemplate, values, fields);
-  content = resolveSystemVariables(content);
+  const { result: content0, warnings: bodyWarnings } = resolveUserVariables(bodyTemplate, values, fields);
+  let content = resolveSystemVariables(content0);
+  for (const w of bodyWarnings) {
+    new import_obsidian3.Notice(`Form Builder: ${w.message}`, 6e3);
+  }
   const rawFilename = (_a = meta.filename) != null ? _a : "Untitled";
-  let resolvedFilename = resolveUserVariables(rawFilename, values, fields);
-  resolvedFilename = resolveSystemVariables(resolvedFilename);
+  const { result: filename0 } = resolveUserVariables(rawFilename, values, fields);
+  let resolvedFilename = resolveSystemVariables(filename0);
   resolvedFilename = sanitizeFileName(resolvedFilename, sanitizedNotice);
   if (!resolvedFilename.endsWith(".md"))
     resolvedFilename += ".md";
   const rawFolder = (_b = meta.folder) != null ? _b : "";
-  let resolvedFolder = resolveUserVariables(rawFolder, values, fields);
-  resolvedFolder = resolveSystemVariables(resolvedFolder);
+  const { result: folder0 } = resolveUserVariables(rawFolder, values, fields);
+  const resolvedFolder = resolveSystemVariables(folder0);
   await ensureFolder(app, resolvedFolder);
   const filePath = resolvedFolder ? (0, import_obsidian3.normalizePath)(`${resolvedFolder}/${resolvedFilename}`) : (0, import_obsidian3.normalizePath)(resolvedFilename);
   await app.vault.create(filePath, content);
@@ -736,8 +793,9 @@ var FormModal = class extends import_obsidian4.Modal {
     }
   }
   renderFields(root) {
+    const L = getLocale(this.locale);
     for (const field of this.parseResult.fields) {
-      renderField(root, field, this.values);
+      renderField(root, field, this.values, L.multilistHint);
     }
   }
   renderSubmitButton(root, label) {
@@ -868,8 +926,8 @@ var KNOWN_FIELD_OPTIONS = {
   date: ["required", "label", "placeholder", "description", "default"],
   checkbox: ["required", "label", "description", "default"],
   select: ["required", "label", "description", "default", "list"],
-  multiselect: ["required", "label", "description", "default", "list", "rows", "separator", "markdownlist"],
-  multilist: ["required", "label", "placeholder", "description", "default", "rows", "separator", "markdownlist"]
+  multiselect: ["required", "label", "description", "default", "list", "rows"],
+  multilist: ["required", "label", "placeholder", "description", "default", "rows"]
 };
 var VALID_KEY = /^[a-zA-Z0-9_-]+$/;
 function levenshtein(a, b) {
@@ -958,15 +1016,6 @@ function validateField(field, line) {
       });
     }
   }
-  if (field.type === "multiselect" || field.type === "multilist") {
-    const f = field;
-    if (f.separator !== void 0 && f.markdownlist !== void 0) {
-      warnings.push({
-        message: `Both "separator" and "markdownlist" are set in field "${field.key}". The first-defined one takes priority.`,
-        line
-      });
-    }
-  }
   return { errors, warnings };
 }
 var KNOWN_META_KEYS = /* @__PURE__ */ new Set(["folder", "filename"]);
@@ -1033,41 +1082,6 @@ function parseMetaLine(tokens, meta, warnings, lineNum) {
       meta.filename = opt.value;
   }
 }
-function resolveSeparatorAndMarkdownlist(optMap, optionOrder, key, warnings, lineNum) {
-  var _a, _b;
-  const separatorIdx = optionOrder.indexOf("separator");
-  const markdownlistIdx = optionOrder.indexOf("markdownlist");
-  let separator = void 0;
-  let markdownlist = void 0;
-  if (separatorIdx !== -1 && markdownlistIdx !== -1) {
-    warnings.push({
-      message: `Both "separator" and "markdownlist" are set in field "${key}". "${optionOrder[Math.min(separatorIdx, markdownlistIdx)]}" takes priority.`,
-      line: lineNum
-    });
-    if (separatorIdx < markdownlistIdx) {
-      separator = (_a = optMap.get("separator")) != null ? _a : void 0;
-    } else {
-      const ml = optMap.get("markdownlist");
-      if (ml === "-" || ml === "*" || ml === "1.")
-        markdownlist = ml;
-    }
-  } else {
-    if (separatorIdx !== -1)
-      separator = (_b = optMap.get("separator")) != null ? _b : void 0;
-    if (markdownlistIdx !== -1) {
-      const ml = optMap.get("markdownlist");
-      if (ml === "-" || ml === "*" || ml === "1.")
-        markdownlist = ml;
-      else if (ml !== void 0) {
-        warnings.push({
-          message: `Invalid markdownlist value "${ml}" in field "${key}". Must be "-", "*", or "1."`,
-          line: lineNum
-        });
-      }
-    }
-  }
-  return { separator, markdownlist };
-}
 function parseFieldLine(tokens, errors, warnings, lineNum) {
   var _a, _b, _c, _d;
   if (tokens.length < 2) {
@@ -1087,7 +1101,6 @@ function parseFieldLine(tokens, errors, warnings, lineNum) {
     return null;
   }
   const optMap = /* @__PURE__ */ new Map();
-  const optionOrder = [];
   for (let i = 2; i < tokens.length; i++) {
     const opt = parseOptionToken(tokens[i]);
     if (!opt) {
@@ -1101,7 +1114,6 @@ function parseFieldLine(tokens, errors, warnings, lineNum) {
     }
     if (!optMap.has(opt.key)) {
       optMap.set(opt.key, opt.value);
-      optionOrder.push(opt.key);
     }
   }
   const base = {
@@ -1151,26 +1163,16 @@ function parseFieldLine(tokens, errors, warnings, lineNum) {
         return null;
       }
       const list = parseList(listRaw);
-      const { separator, markdownlist } = resolveSeparatorAndMarkdownlist(optMap, optionOrder, key, warnings, lineNum);
       const rowsStr = optMap.get("rows");
       const msField = { type: "multiselect", ...base, list };
-      if (separator !== void 0)
-        msField.separator = separator;
-      if (markdownlist !== void 0)
-        msField.markdownlist = markdownlist;
       if (rowsStr)
         msField.rows = parseInt(rowsStr, 10);
       return msField;
     }
     case "multilist": {
-      const { separator, markdownlist } = resolveSeparatorAndMarkdownlist(optMap, optionOrder, key, warnings, lineNum);
       const rowsStr = optMap.get("rows");
       const rows = rowsStr ? parseInt(rowsStr, 10) : void 0;
       const lf = { type: "multilist", ...base };
-      if (separator !== void 0)
-        lf.separator = separator;
-      if (markdownlist !== void 0)
-        lf.markdownlist = markdownlist;
       if (rows !== void 0 && !isNaN(rows))
         lf.rows = rows;
       return lf;

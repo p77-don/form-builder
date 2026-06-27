@@ -2,8 +2,6 @@ export type FieldType =
     | 'text' | 'textarea' | 'number' | 'date'
     | 'checkbox' | 'select' | 'multiselect' | 'multilist';
 
-export type MarkdownListStyle = '-' | '*' | '1.';
-
 export interface BaseField {
     type: FieldType;
     key: string;
@@ -45,21 +43,16 @@ export interface SelectField extends BaseField {
 export interface MultiselectField extends BaseField {
     type: 'multiselect';
     list: string[];
-    separator?: string;
-    markdownlist?: MarkdownListStyle;
 }
 
 /**
- * list フィールド
- * textarea に1行1項目で自由入力し、保存時に指定形式で展開する。
- * separator 省略時のデフォルトは "\n"（改行）。
- * markdownlist 指定時は Markdown リスト形式で展開する。
+ * multilist フィールド
+ * textarea に1行1項目で自由入力する。
+ * 展開形式は本文中の変数モディファイア（$key:separator[...]$ / $key:list[...]$）で指定する。
  */
 export interface ListField extends BaseField {
     type: 'multilist';
     rows?: number;
-    separator?: string;
-    markdownlist?: MarkdownListStyle;
 }
 
 export type FormField =

@@ -60,18 +60,26 @@ export async function generateNote(
     meta: MetaConfig,
     sanitizedNotice: string
 ): Promise<void> {
-    let content = resolveUserVariables(bodyTemplate, values, fields);
-    content = resolveSystemVariables(content);
+    // 本文の変数展開
+    const { result: content0, warnings: bodyWarnings } = resolveUserVariables(bodyTemplate, values, fields);
+    let content = resolveSystemVariables(content0);
 
+    // モディファイア警告を Notice で表示
+    for (const w of bodyWarnings) {
+        new Notice(`Form Builder: ${w.message}`, 6000);
+    }
+
+    // ファイル名の変数展開（モディファイア警告は重複するため省略）
     const rawFilename = meta.filename ?? 'Untitled';
-    let resolvedFilename = resolveUserVariables(rawFilename, values, fields);
-    resolvedFilename = resolveSystemVariables(resolvedFilename);
+    const { result: filename0 } = resolveUserVariables(rawFilename, values, fields);
+    let resolvedFilename = resolveSystemVariables(filename0);
     resolvedFilename = sanitizeFileName(resolvedFilename, sanitizedNotice);
     if (!resolvedFilename.endsWith('.md')) resolvedFilename += '.md';
 
+    // フォルダの変数展開
     const rawFolder = meta.folder ?? '';
-    let resolvedFolder = resolveUserVariables(rawFolder, values, fields);
-    resolvedFolder = resolveSystemVariables(resolvedFolder);
+    const { result: folder0 } = resolveUserVariables(rawFolder, values, fields);
+    const resolvedFolder = resolveSystemVariables(folder0);
 
     await ensureFolder(app, resolvedFolder);
 

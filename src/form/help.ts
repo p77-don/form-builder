@@ -29,6 +29,8 @@ export class HelpModal extends Modal {
         this.table(root, L.optionRows);
         this.subSection(root, L.subVariables);
         this.table(root, L.variableRows);
+        this.subSection(root, L.subModifiers);
+        this.table(root, L.modifierRows);
         this.section(root, L.sec3Title, L.sec3Paragraphs);
         this.section(root, L.sec4Title, L.sec4Paragraphs);
 

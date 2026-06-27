@@ -1,4 +1,4 @@
-import type { FormField, ListField, ParseError, ParseWarning } from '../model/FieldModel';
+import type { FormField, ParseError, ParseWarning } from '../model/FieldModel';
 
 const KNOWN_FIELD_TYPES = new Set([
     'text', 'textarea', 'number', 'date', 'checkbox', 'select', 'multiselect', 'multilist'
@@ -11,8 +11,8 @@ const KNOWN_FIELD_OPTIONS: Record<string, string[]> = {
     date:        ['required', 'label', 'placeholder', 'description', 'default'],
     checkbox:    ['required', 'label', 'description', 'default'],
     select:      ['required', 'label', 'description', 'default', 'list'],
-    multiselect: ['required', 'label', 'description', 'default', 'list', 'rows', 'separator', 'markdownlist'],
-    multilist:   ['required', 'label', 'placeholder', 'description', 'default', 'rows', 'separator', 'markdownlist'],
+    multiselect: ['required', 'label', 'description', 'default', 'list', 'rows'],
+    multilist:   ['required', 'label', 'placeholder', 'description', 'default', 'rows'],
 };
 
 const VALID_KEY = /^[a-zA-Z0-9_-]+$/;
@@ -118,17 +118,6 @@ export function validateField(field: FormField, line?: number): ValidationResult
         if (field.default !== '' && !field.list.includes(field.default)) {
             warnings.push({
                 message: `Default value "${field.default}" is not in the list of field "${field.key}"`,
-                line
-            });
-        }
-    }
-
-    // multiselect / list の separator と markdownlist 同時指定チェック
-    if (field.type === 'multiselect' || field.type === 'multilist') {
-        const f = field as { separator?: string; markdownlist?: string };
-        if (f.separator !== undefined && f.markdownlist !== undefined) {
-            warnings.push({
-                message: `Both "separator" and "markdownlist" are set in field "${field.key}". The first-defined one takes priority.`,
                 line
             });
         }
