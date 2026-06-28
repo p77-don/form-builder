@@ -1,4 +1,4 @@
-import type { FormField } from '../model/FieldModel';
+import type { FormField, ValueStore } from '../model/FieldModel';
 
 // ---------------------------------------------------------------------------
 // 日時フォーマット
@@ -119,7 +119,7 @@ export interface ModifierWarning {
  */
 export function resolveUserVariables(
     template: string,
-    values: Map<string, string | string[] | boolean>,
+    values: ValueStore,
     fields: FormField[]
 ): { result: string; warnings: ModifierWarning[] } {
     const fieldMap = new Map<string, FormField>(fields.map(f => [f.key, f]));

@@ -2,12 +2,9 @@ import { Notice, Plugin, TFile } from 'obsidian';
 import { FormBuilderSettingTab, DEFAULT_SETTINGS } from './settings';
 import type { FormBuilderSettings } from './settings';
 import { FormModal, NoTemplateModal, TemplateSelectorModal } from './form/FormModal';
-import { parseTemplate } from './parser/TemplateParser';
+import { parseTemplate, FORMBUILDER_BLOCK_RE } from './parser/TemplateParser';
 import { showFatalError } from './ui/ErrorNotice';
 import { getLocale } from './locales';
-
-// formbuilder ブロックの存在確認（パースは不要）
-const FORMBUILDER_BLOCK_RE = /^```formbuilder\s*$/m;
 
 export default class FormBuilderPlugin extends Plugin {
     settings!: FormBuilderSettings;

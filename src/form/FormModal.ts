@@ -1,13 +1,12 @@
 import { App, Modal, Notice, TFile } from 'obsidian';
-import type { ParseResult } from '../model/FieldModel';
+import type { ParseResult, ValueStore } from '../model/FieldModel';
 import type { SupportedLocale } from '../locales';
 import { getLocale } from '../locales';
 import { HelpModal } from './help';
 import { renderField, highlightRequiredErrors } from './FieldRenderer';
 import { generateNote } from '../generator/NoteGenerator';
+import { NOTICE_DURATION } from '../ui/ErrorNotice';
 import type FormBuilderPlugin from '../main';
-
-type ValueStore = Map<string, string | string[] | boolean>;
 
 // ============================================================
 // フォームモーダル（Help ボタンなし）
@@ -84,7 +83,7 @@ export class FormModal extends Modal {
         } catch (e) {
             console.error('Form Builder: Failed to create note', e);
             const message = e instanceof Error ? e.message : String(e);
-            new Notice(`${L.noticeCreateError}\n${message}`, 8000);
+            new Notice(`${L.noticeCreateError}\n${message}`, NOTICE_DURATION);
         }
     }
 }

@@ -1,5 +1,5 @@
 import { App, normalizePath, Notice } from 'obsidian';
-import type { FormField, MetaConfig } from '../model/FieldModel';
+import type { FormField, MetaConfig, ValueStore } from '../model/FieldModel';
 import { resolveUserVariables, resolveSystemVariables } from './VariableResolver';
 
 const INVALID_FILENAME_CHARS = /[/\\:*?"<>|]/g;
@@ -14,7 +14,11 @@ const WINDOWS_RESERVED_NAMES = /^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(\.|$)/i;
  * - 末尾の "." やスペースを除去（Windows で問題になる）
  */
 export function sanitizeFileName(name: string, sanitizedNotice: string): string {
+    // OS禁止文字を "_" に置換
     let sanitized = name.replace(INVALID_FILENAME_CHARS, '_');
+
+    // 制御文字（0x00–0x1F）を除去（Windows/macOS/Linux 共通で問題になる）
+    sanitized = sanitized.replace(/[\x00-\x1F]/g, '');
 
     // Windows予約名への対応
     if (WINDOWS_RESERVED_NAMES.test(sanitized)) {
@@ -55,7 +59,7 @@ async function ensureFolder(app: App, folderPath: string): Promise<void> {
 export async function generateNote(
     app: App,
     bodyTemplate: string,
-    values: Map<string, string | string[] | boolean>,
+    values: ValueStore,
     fields: FormField[],
     meta: MetaConfig,
     sanitizedNotice: string

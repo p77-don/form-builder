@@ -7,7 +7,11 @@ import {
     validateField, validateMetaKey
 } from './SyntaxValidator';
 
-const FORMBUILDER_BLOCK_RE = /^```formbuilder\s*\r?\n([\s\S]*?)\r?\n```/m;
+/**
+ * formbuilder コードブロックを検出する正規表現。
+ * main.ts の存在確認と TemplateParser の解析で共通使用する。
+ */
+export const FORMBUILDER_BLOCK_RE = /^```formbuilder\s*\r?\n([\s\S]*?)\r?\n```/m;
 const FIELD_SYNTAX_RE = /^\{\{([\s\S]*?)\}\}$/;
 const KV_OPTION_RE = /^([a-zA-Z_-]+)=\[([^\]]*)\]$/;
 
@@ -17,6 +21,16 @@ function trimSpaces(s: string): string {
 
 function parseList(raw: string): string[] {
     return raw.split(';').map(item => trimSpaces(item)).filter(item => item !== '');
+}
+
+/**
+ * rows オプション値をパースして正の整数に変換する。
+ * 非数値・NaN・1未満の値はすべて undefined として扱い、レンダラー側のデフォルト値に委ねる。
+ */
+function parseRows(rawStr: string | null | undefined): number | undefined {
+    if (!rawStr) return undefined;
+    const n = parseInt(rawStr, 10);
+    return (!isNaN(n) && n >= 1) ? n : undefined;
 }
 
 function splitTokens(inner: string): string[] {
@@ -115,9 +129,8 @@ function parseFieldLine(
             return { type: 'text', ...base };
 
         case 'textarea': {
-            const rowsStr = optMap.get('rows');
-            const rows = rowsStr ? parseInt(rowsStr, 10) : undefined;
-            return { type: 'textarea', ...base, rows: isNaN(rows as number) ? undefined : rows };
+            const rows = parseRows(optMap.get('rows'));
+            return { type: 'textarea', ...base, ...(rows !== undefined && { rows }) };
         }
 
         case 'number': {
@@ -154,17 +167,16 @@ function parseFieldLine(
                 return null;
             }
             const list = parseList(listRaw);
-            const rowsStr = optMap.get('rows');
+            const rows = parseRows(optMap.get('rows'));
             const msField: MultiselectField = { type: 'multiselect', ...base, list };
-            if (rowsStr) (msField as unknown as { rows?: number }).rows = parseInt(rowsStr, 10);
+            if (rows !== undefined) (msField as unknown as { rows?: number }).rows = rows;
             return msField;
         }
 
         case 'multilist': {
-            const rowsStr = optMap.get('rows');
-            const rows = rowsStr ? parseInt(rowsStr, 10) : undefined;
+            const rows = parseRows(optMap.get('rows'));
             const lf: ListField = { type: 'multilist', ...base };
-            if (rows !== undefined && !isNaN(rows)) lf.rows = rows;
+            if (rows !== undefined) lf.rows = rows;
             return lf;
         }
 

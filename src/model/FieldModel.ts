@@ -81,3 +81,9 @@ export interface ParseResult {
     errors: ParseError[];
     warnings: ParseWarning[];
 }
+
+/**
+ * フォーム入力値を保持する Map 型。
+ * FormModal・FieldRenderer・NoteGenerator の間で共有される。
+ */
+export type ValueStore = Map<string, string | string[] | boolean>;

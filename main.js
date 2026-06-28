@@ -362,7 +362,7 @@ var FormBuilderSettingTab = class extends import_obsidian.PluginSettingTab {
 };
 
 // src/form/FormModal.ts
-var import_obsidian4 = require("obsidian");
+var import_obsidian5 = require("obsidian");
 
 // src/form/help.ts
 var import_obsidian2 = require("obsidian");
@@ -448,6 +448,10 @@ function renderField(containerEl, field, values, multilistHint) {
     case "multilist":
       renderList(containerEl, field, values, multilistHint);
       break;
+    default: {
+      const _exhaustive = field;
+      console.warn("Form Builder: Unknown field type", _exhaustive.type);
+    }
   }
 }
 function createCard(containerEl, field) {
@@ -716,6 +720,7 @@ var INVALID_FILENAME_CHARS = /[/\\:*?"<>|]/g;
 var WINDOWS_RESERVED_NAMES = /^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(\.|$)/i;
 function sanitizeFileName(name, sanitizedNotice) {
   let sanitized = name.replace(INVALID_FILENAME_CHARS, "_");
+  sanitized = sanitized.replace(/[\x00-\x1F]/g, "");
   if (WINDOWS_RESERVED_NAMES.test(sanitized)) {
     sanitized = "_" + sanitized;
   }
@@ -763,8 +768,20 @@ async function generateNote(app, bodyTemplate, values, fields, meta, sanitizedNo
     await app.workspace.getLeaf().openFile(file);
 }
 
+// src/ui/ErrorNotice.ts
+var import_obsidian4 = require("obsidian");
+var NOTICE_DURATION = 8e3;
+function showFatalError(errors, header) {
+  const messages = errors.map((e) => {
+    const lineInfo = e.line ? ` (line ${e.line})` : "";
+    return `\u2022 ${e.message}${lineInfo}`;
+  }).join("\n");
+  new import_obsidian4.Notice(`${header}
+${messages}`, NOTICE_DURATION);
+}
+
 // src/form/FormModal.ts
-var FormModal = class extends import_obsidian4.Modal {
+var FormModal = class extends import_obsidian5.Modal {
   constructor(app, parseResult, locale) {
     super(app);
     this.values = /* @__PURE__ */ new Map();
@@ -808,7 +825,7 @@ var FormModal = class extends import_obsidian4.Modal {
     const root = this.contentEl.querySelector(".fb-modal");
     const missing = highlightRequiredErrors(root, this.parseResult.fields, this.values);
     if (missing.length > 0) {
-      new import_obsidian4.Notice(L.noticeRequired);
+      new import_obsidian5.Notice(L.noticeRequired);
       return;
     }
     try {
@@ -824,12 +841,12 @@ var FormModal = class extends import_obsidian4.Modal {
     } catch (e) {
       console.error("Form Builder: Failed to create note", e);
       const message = e instanceof Error ? e.message : String(e);
-      new import_obsidian4.Notice(`${L.noticeCreateError}
-${message}`, 8e3);
+      new import_obsidian5.Notice(`${L.noticeCreateError}
+${message}`, NOTICE_DURATION);
     }
   }
 };
-var TemplateSelectorModal = class extends import_obsidian4.Modal {
+var TemplateSelectorModal = class extends import_obsidian5.Modal {
   // 起動時は昇順
   constructor(app, templates, locale, onSelect) {
     super(app);
@@ -881,7 +898,7 @@ var TemplateSelectorModal = class extends import_obsidian4.Modal {
     this.contentEl.empty();
   }
 };
-var NoTemplateModal = class extends import_obsidian4.Modal {
+var NoTemplateModal = class extends import_obsidian5.Modal {
   constructor(app, plugin, locale) {
     super(app);
     this.plugin = plugin;
@@ -1036,6 +1053,12 @@ function trimSpaces(s) {
 function parseList(raw) {
   return raw.split(";").map((item) => trimSpaces(item)).filter((item) => item !== "");
 }
+function parseRows(rawStr) {
+  if (!rawStr)
+    return void 0;
+  const n = parseInt(rawStr, 10);
+  return !isNaN(n) && n >= 1 ? n : void 0;
+}
 function splitTokens(inner) {
   const tokens = [];
   let current = "";
@@ -1128,9 +1151,8 @@ function parseFieldLine(tokens, errors, warnings, lineNum) {
     case "text":
       return { type: "text", ...base };
     case "textarea": {
-      const rowsStr = optMap.get("rows");
-      const rows = rowsStr ? parseInt(rowsStr, 10) : void 0;
-      return { type: "textarea", ...base, rows: isNaN(rows) ? void 0 : rows };
+      const rows = parseRows(optMap.get("rows"));
+      return { type: "textarea", ...base, ...rows !== void 0 && { rows } };
     }
     case "number": {
       const minStr = optMap.get("min");
@@ -1163,17 +1185,16 @@ function parseFieldLine(tokens, errors, warnings, lineNum) {
         return null;
       }
       const list = parseList(listRaw);
-      const rowsStr = optMap.get("rows");
+      const rows = parseRows(optMap.get("rows"));
       const msField = { type: "multiselect", ...base, list };
-      if (rowsStr)
-        msField.rows = parseInt(rowsStr, 10);
+      if (rows !== void 0)
+        msField.rows = rows;
       return msField;
     }
     case "multilist": {
-      const rowsStr = optMap.get("rows");
-      const rows = rowsStr ? parseInt(rowsStr, 10) : void 0;
+      const rows = parseRows(optMap.get("rows"));
       const lf = { type: "multilist", ...base };
-      if (rows !== void 0 && !isNaN(rows))
+      if (rows !== void 0)
         lf.rows = rows;
       return lf;
     }
@@ -1228,19 +1249,7 @@ function parseTemplate(templateContent) {
   return { meta, fields, bodyTemplate, errors, warnings };
 }
 
-// src/ui/ErrorNotice.ts
-var import_obsidian5 = require("obsidian");
-function showFatalError(errors, header) {
-  const messages = errors.map((e) => {
-    const lineInfo = e.line ? ` (line ${e.line})` : "";
-    return `\u2022 ${e.message}${lineInfo}`;
-  }).join("\n");
-  new import_obsidian5.Notice(`${header}
-${messages}`, 8e3);
-}
-
 // src/main.ts
-var FORMBUILDER_BLOCK_RE2 = /^```formbuilder\s*$/m;
 var FormBuilderPlugin = class extends import_obsidian6.Plugin {
   async onload() {
     await this.loadSettings();
@@ -1262,7 +1271,7 @@ var FormBuilderPlugin = class extends import_obsidian6.Plugin {
     for (const file of allFiles) {
       try {
         const content = await this.app.vault.read(file);
-        if (FORMBUILDER_BLOCK_RE2.test(content))
+        if (FORMBUILDER_BLOCK_RE.test(content))
           templates.push(file);
       } catch (e) {
       }

@@ -1,6 +1,4 @@
-import type { FormField, ListField, MultiselectField } from '../model/FieldModel';
-
-type ValueStore = Map<string, string | string[] | boolean>;
+import type { FormField, ListField, MultiselectField, ValueStore } from '../model/FieldModel';
 
 export function renderField(
     containerEl: HTMLElement,
@@ -17,6 +15,11 @@ export function renderField(
         case 'select':      renderSelect(containerEl, field, values); break;
         case 'multiselect': renderMultiselect(containerEl, field as MultiselectField, values); break;
         case 'multilist':   renderList(containerEl, field as ListField, values, multilistHint); break;
+        default: {
+            // TypeScript の網羅性チェック: FieldType に新しい型を追加した際にコンパイルエラーで検出する
+            const _exhaustive: never = field;
+            console.warn('Form Builder: Unknown field type', (_exhaustive as FormField).type);
+        }
     }
 }
 
