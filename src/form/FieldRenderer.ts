@@ -206,11 +206,14 @@ export function highlightRequiredErrors(
         if (!field.required) continue;
         const value = values.get(field.key);
 
-        // list フィールドは空行除去後に1行以上あれば有効
-        const isEmpty = field.type === 'multilist'
+        // checkbox は required の対象外（false も有効な値のため）
+        // multilist は空行除去後に1行以上あれば有効
+        const isEmpty = field.type === 'checkbox'
+            ? false
+            : field.type === 'multilist'
             ? (typeof value !== 'string' || value.split('\n').map(l => l.trim()).filter(Boolean).length === 0)
             : (value === undefined || value === '' ||
-               (Array.isArray(value) && value.length === 0) || value === false);
+               (Array.isArray(value) && value.length === 0));
 
         if (isEmpty) {
             missing.push(field.key);

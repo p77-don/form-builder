@@ -80,7 +80,7 @@ Templates
 
 ````markdown
 ---
-（Frontmatter：オプション）
+（Frontmatter：変数展開の対象）
 ---
 
 ```formbuilder
@@ -149,7 +149,7 @@ a-z  A-Z  0-9  _  -
 値は必ず `[]` で囲みます。
 
 ```
-label=[キャラクター名]
+label=[タイトル]
 placeholder=[名前を入力してください]
 min=[0]
 max=[200]
@@ -278,8 +278,8 @@ placeholder=[ 先頭にスペースがある ]
 #### `number` — 数値入力
 
 ```
-{{number|age}}
-{{number|age|label=[年齢]|min=[0]|max=[120]|default=[20]}}
+{{number|price}}
+{{number|price|label=[価格]|min=[0]|max=[999999]|default=[0]}}
 ```
 
 フォーム上に数値入力欄を表示します。`min` / `max` を指定すると入力範囲を制限できます。
@@ -291,9 +291,9 @@ placeholder=[ 先頭にスペースがある ]
 **出力例：**
 
 ```
-テンプレート本文: 年齢: $age$ 歳
-入力値: 25
-出力:   年齢: 25 歳
+テンプレート本文: 価格: $price$ 円
+入力値: 1500
+出力:   価格: 1500 円
 ```
 
 ---
@@ -328,10 +328,10 @@ placeholder=[ 先頭にスペースがある ]
 
 フォーム上にトグルスイッチを表示します。
 
-**使用可能なオプション：** `label` `description` `default` `required`
+**使用可能なオプション：** `label` `description` `default`
 
 - `default=[true]` でデフォルトをオン（有効）にできます
-- `required` を指定した場合、トグルがオフ（false）だと送信をブロックします
+- `required` は `checkbox` には効果がありません（オフ状態も有効な値であるため）
 
 **出力例：**
 
@@ -471,8 +471,8 @@ Form Builder には2種類の変数があり、**囲む記号が異なります*
 ```
 $キー名$
 $title$
-$character_name$
-$age$
+$author$
+$status$
 ```
 
 キー名は `[a-zA-Z0-9_-]` の文字のみ使用できます。大文字・小文字は区別されます。
@@ -557,26 +557,26 @@ $tags:separator[ | ]$    → 重要 | 確認待ち | 完了
 `[]` 内の文字列をそのまま各行の先頭に付けて、改行で結合します。
 
 ```
-$skills:list[- ]$     →   - 剣術
-                          - 魔法
-                          - 弓術
+$tags:list[- ]$       →   - TypeScript
+                          - Python
+                          - Go
 
-$skills:list[* ]$     →   * 剣術
-                          * 魔法
+$tags:list[* ]$       →   * TypeScript
+                          * Python
 
-$skills:list[ ・ ]$   →    ・ 剣術
-                           ・ 魔法
+$tags:list[ ・ ]$     →    ・ TypeScript
+                           ・ Python
 ```
 
 **自動採番：** `[]` 内が `1.` で始まる場合のみ番号を自動採番します。
 
 ```
-$skills:list[1. ]$    →   1. 剣術
-                          2. 魔法
-                          3. 弓術
+$tags:list[1. ]$      →   1. TypeScript
+                          2. Python
+                          3. Go
 
-$skills:list[1) ]$    →   1) 剣術    ← "1." 以外は採番しない
-                          1) 魔法
+$tags:list[1) ]$      →   1) TypeScript    ← "1." 以外は採番しない
+                          1) Python
 ```
 
 **インデント付きリスト（Frontmatter 向け）：**
@@ -594,16 +594,16 @@ $tags:list[  - ]$
 ---
 ```
 
-入力値「alice / アリス」「fantasy / character」の場合の出力：
+入力値「The Pragmatic Programmer / 達人プログラマー」「技術書 / 参考文献」の場合の出力：
 
 ```yaml
 ---
 aliases:
-  - alice
-  - アリス
+  - The Pragmatic Programmer
+  - 達人プログラマー
 tags:
-  - fantasy
-  - character
+  - 技術書
+  - 参考文献
 ---
 ```
 
@@ -614,7 +614,7 @@ tags:
 ```
 
 ```
-別名: alice、アリス
+別名: The Pragmatic Programmer、達人プログラマー
 ```
 
 ---
@@ -629,7 +629,7 @@ tags:
 |---|---|
 | 未知のフィールドタイプ | `Unknown field type: "foo"` |
 | `select` / `multiselect` に `list` がない | `"select" requires the "list" option` |
-| `min > max` | `"min" (10) must not exceed "max" (5) in field "age"` |
+| `min > max` | `"min" (10) must not exceed "max" (5) in field "count"` |
 | `{{` と `}}` の対応が取れない | `Unclosed "{{" found on line 3` |
 | キーに使用不可文字が含まれる | `Invalid key: "$name$". Keys must match [a-zA-Z0-9_-]` |
 
@@ -683,11 +683,11 @@ $body$
 
 ---
 
-### ② キャラクターシート（Frontmatter + モディファイア）
+### ② 読書記録（Frontmatter + モディファイア）
 
 ````markdown
 ---
-title: "$character_name$"
+title: "$book_title$"
 created: "%date%"
 tags:
 $tags:list[  - ]$
@@ -696,54 +696,62 @@ $aliases:list[  - ]$
 ---
 
 ```formbuilder
-{{meta|folder=[Characters]}}
-{{meta|filename=[$character_name$-%timestamp%]}}
+{{meta|folder=[Books]}}
+{{meta|filename=[$book_title$-%timestamp%]}}
 
-{{text|character_name|label=[キャラクター名]|required}}
-{{text|race|label=[種族]}}
-{{number|age|label=[年齢]|min=[0]|max=[999]}}
-{{select|gender|label=[性別]|list=[男性;女性;その他]}}
-{{textarea|profile|label=[プロフィール]|rows=[6]}}
-{{multiselect|skills|label=[スキル]|list=[剣術;魔法;弓術;回避;回復;索敵]}}
-{{multiselect|tags|label=[タグ]|list=[主人公;敵;NPC;死亡]}}
-{{multilist|aliases|label=[別名・エイリアス]}}
-{{checkbox|active|label=[アクティブ]|default=[true]}}
+{{text|book_title|label=[書名]|required}}
+{{text|author|label=[著者]}}
+{{text|publisher|label=[出版社]}}
+{{date|read_date|label=[読了日]}}
+{{select|status|label=[ステータス]|list=[読みたい;読書中;読了;中断]|default=[読みたい]}}
+{{select|rating|label=[評価]|list=[★★★★★;★★★★;★★★;★★;★]}}
+{{textarea|summary|label=[概要・あらすじ]|rows=[4]}}
+{{textarea|memo|label=[感想・メモ]|rows=[6]}}
+{{multiselect|tags|label=[タグ]|list=[技術書;ビジネス;小説;実用;参考文献;再読したい]}}
+{{multilist|aliases|label=[別題・原題]}}
+{{checkbox|recommended|label=[おすすめ]}}
 ```
 
-# $character_name$
+# $book_title$
 
-| 項目 | 値 |
-|---|---|
-| 種族 | $race$ |
-| 年齢 | $age$ |
-| 性別 | $gender$ |
+**著者:** $author$　**出版社:** $publisher$　**読了日:** $read_date$
 
-## プロフィール
+**ステータス:** $status$　**評価:** $rating$
 
-$profile$
+## 概要
 
-## スキル
+$summary$
 
-$skills:list[- ]$
+## 感想・メモ
 
-関連タグ: $tags:separator[、]$
+$memo$
 
-作成日: %date%
+**タグ:** $tags:separator[、]$
 ````
 
-Frontmatter への展開例（aliases に「alice / アリス」、tags に「主人公 / NPC」を入力した場合）：
+Frontmatter への展開例（aliases に「The Pragmatic Programmer / 達人プログラマー」、tags に「技術書 / 参考文献」を入力した場合）：
 
 ```yaml
 ---
-title: "アリス"
+title: "達人プログラマー"
 created: "2026-06-26"
 tags:
-  - 主人公
-  - NPC
+  - 技術書
+  - 参考文献
 aliases:
-  - alice
-  - アリス
+  - The Pragmatic Programmer
+  - 達人プログラマー
 ---
+```
+
+同じ変数を本文で別形式に展開することも可能です。
+
+```markdown
+**タグ:** $tags:separator[、]$
+```
+
+```
+タグ: 技術書、参考文献
 ```
 
 ---

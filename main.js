@@ -601,7 +601,7 @@ function highlightRequiredErrors(containerEl, fields, values) {
     if (!field.required)
       continue;
     const value = values.get(field.key);
-    const isEmpty = field.type === "multilist" ? typeof value !== "string" || value.split("\n").map((l) => l.trim()).filter(Boolean).length === 0 : value === void 0 || value === "" || Array.isArray(value) && value.length === 0 || value === false;
+    const isEmpty = field.type === "checkbox" ? false : field.type === "multilist" ? typeof value !== "string" || value.split("\n").map((l) => l.trim()).filter(Boolean).length === 0 : value === void 0 || value === "" || Array.isArray(value) && value.length === 0;
     if (isEmpty) {
       missing.push(field.key);
       const el = containerEl.querySelector(`[data-form-key="${field.key}"]`);
@@ -635,7 +635,7 @@ function applyModifierSeparator(values, sep) {
   return values.join(sep);
 }
 function applyModifierList(values, prefix) {
-  const isNumbered = prefix.trimStart().startsWith("1.");
+  const isNumbered = prefix.replace(/^[\s\u3000]+/, "").startsWith("1.");
   if (isNumbered) {
     const indentEnd = prefix.indexOf("1.");
     const indent = prefix.slice(0, indentEnd);

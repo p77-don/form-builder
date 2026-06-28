@@ -36,7 +36,7 @@ function applyModifierSeparator(values: string[], sep: string): string {
  * [] 内が "1." で始まる場合のみ自動採番する。
  */
 function applyModifierList(values: string[], prefix: string): string {
-    const isNumbered = prefix.trimStart().startsWith('1.');
+    const isNumbered = prefix.replace(/^[\s\u3000]+/, '').startsWith('1.');
     if (isNumbered) {
         // "1." より前のインデント部分を保持しつつ採番
         const indentEnd = prefix.indexOf('1.');
