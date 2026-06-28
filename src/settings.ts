@@ -20,6 +20,41 @@ export class FormBuilderSettingTab extends PluginSettingTab {
         this.plugin = plugin;
     }
 
+    // v1.13.0+ 向け宣言的 API。
+    // Obsidian は getSettingDefinitions() が配列を返す場合に display() をバイパスするため、
+    // 両メソッドを実装することで v1.13.0 未満との後方互換を保つ（デュアルサポートパターン）。
+    getSettingDefinitions() {
+        const localeOptions = Object.fromEntries(
+            Object.entries(LOCALE_LABELS) as [SupportedLocale, string][]
+        );
+
+        return [
+            {
+                name: 'Form Builder',
+            },
+            {
+                name: 'Template folder',
+                desc: 'Folder where your formbuilder template files are stored.',
+                control: {
+                    type: 'folder' as const,
+                    key: 'templateFolder' as const,
+                    placeholder: 'Templates',
+                    includeRoot: false,
+                },
+            },
+            {
+                name: 'Language',
+                desc: 'Language used in forms, notices, and the settings page.',
+                control: {
+                    type: 'dropdown' as const,
+                    key: 'locale' as const,
+                    options: localeOptions,
+                },
+            },
+        ];
+    }
+
+    // v1.13.0 未満の Obsidian 向けフォールバック。
     display(): void {
         const { containerEl } = this;
         containerEl.empty();
@@ -52,7 +87,6 @@ export class FormBuilderSettingTab extends PluginSettingTab {
                 drop.onChange(async (value) => {
                     this.plugin.settings.locale = value as SupportedLocale;
                     await this.plugin.saveSettings();
-                    // 言語切り替え後に設定画面を再描画
                     this.display();
                 });
             });

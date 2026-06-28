@@ -8,6 +8,13 @@ import { generateNote } from '../generator/NoteGenerator';
 import { NOTICE_DURATION } from '../ui/ErrorNotice';
 import type FormBuilderPlugin from '../main';
 
+/** Obsidian の内部 setting パネルを開く。公開 API がないため型安全なラッパーを使用。 */
+interface AppWithSetting {
+    setting: { open: () => void };
+}
+function openObsidianSettings(app: App): void {
+    (app as unknown as AppWithSetting).setting.open();
+}
 // ============================================================
 // フォームモーダル（Help ボタンなし）
 // ============================================================
@@ -24,10 +31,10 @@ export class FormModal extends Modal {
     }
 
     onOpen(): void {
+        this.modalEl.addClass('fb-modal-root');
         const { contentEl } = this;
         contentEl.empty();
         const L = getLocale(this.locale);
-        this.setTitle(L.formTitle);
 
         const root = contentEl.createDiv({ cls: 'fb-modal' });
         this.renderWarnings(root);
@@ -57,7 +64,7 @@ export class FormModal extends Modal {
     private renderSubmitButton(root: HTMLElement, label: string): void {
         const wrap = root.createDiv({ cls: 'fb-submit-wrap' });
         const btn = wrap.createEl('button', { cls: 'fb-submit-btn', text: label });
-        btn.addEventListener('click', () => this.onSubmit());
+        btn.addEventListener('click', () => { void this.onSubmit(); });
     }
 
     private async onSubmit(): Promise<void> {
@@ -106,6 +113,7 @@ export class TemplateSelectorModal extends Modal {
     }
 
     onOpen(): void {
+        this.modalEl.addClass('fb-modal-root');
         const { contentEl } = this;
         contentEl.empty();
         const L = getLocale(this.locale);
@@ -178,6 +186,7 @@ export class NoTemplateModal extends Modal {
     }
 
     onOpen(): void {
+        this.modalEl.addClass('fb-modal-root');
         const { contentEl } = this;
         contentEl.empty();
         const L = getLocale(this.locale);
@@ -197,8 +206,7 @@ export class NoTemplateModal extends Modal {
         btnRow.createEl('button', { cls: 'fb-btn', text: L.btnSettings })
             .addEventListener('click', () => {
                 this.close();
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                (this.app as any).setting.open();
+                openObsidianSettings(this.app);
             });
 
         btnRow.createEl('button', { cls: 'fb-btn', text: L.btnClose })

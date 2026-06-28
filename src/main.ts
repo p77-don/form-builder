@@ -1,4 +1,4 @@
-import { Notice, Plugin, TFile } from 'obsidian';
+import { Notice, Plugin, TFile, TFolder } from 'obsidian';
 import { FormBuilderSettingTab, DEFAULT_SETTINGS } from './settings';
 import type { FormBuilderSettings } from './settings';
 import { FormModal, NoTemplateModal, TemplateSelectorModal } from './form/FormModal';
@@ -9,31 +9,38 @@ import { getLocale } from './locales';
 export default class FormBuilderPlugin extends Plugin {
     settings!: FormBuilderSettings;
 
-    async onload(): Promise<void> {
-        await this.loadSettings();
-        this.addSettingTab(new FormBuilderSettingTab(this.app, this));
+    onload(): void {
+        void this.loadSettings().then(() => {
+            this.addSettingTab(new FormBuilderSettingTab(this.app, this));
 
-        this.addCommand({
-            id: 'create-note-from-template',
-            name: 'Create Note From Template',
-            callback: () => this.openTemplatePicker(),
+            this.addCommand({
+                id: 'create-note-from-template',
+                name: 'Create Note From Template',
+                callback: () => { void this.openTemplatePicker(); },
+            });
         });
     }
 
-    async onunload(): Promise<void> {}
+    onunload(): void {}
 
     private async openTemplatePicker(): Promise<void> {
         const { templateFolder, locale } = this.settings;
 
-        // テンプレートフォルダ内の Markdown ファイルを収集
-        const allFiles = this.app.vault.getMarkdownFiles().filter(f =>
-            f.path.startsWith(templateFolder + '/') ||
-            f.path.startsWith(templateFolder + '\\')
+        // テンプレートフォルダを直接取得（Vault 全件列挙を避ける）
+        const folder = this.app.vault.getFolderByPath(templateFolder);
+        if (!folder) {
+            new NoTemplateModal(this.app, this, locale).open();
+            return;
+        }
+
+        // フォルダ直下の Markdown ファイルのみを対象にする
+        const mdFiles = folder.children.filter(
+            (f): f is TFile => f instanceof TFile && f.extension === 'md'
         );
 
         // formbuilder ブロックを持つファイルのみに絞り込む
         const templates: TFile[] = [];
-        for (const file of allFiles) {
+        for (const file of mdFiles) {
             try {
                 const content = await this.app.vault.read(file);
                 if (FORMBUILDER_BLOCK_RE.test(content)) templates.push(file);
@@ -50,8 +57,8 @@ export default class FormBuilderPlugin extends Plugin {
         if (templates.length === 1) {
             await this.openFormForTemplate(templates[0]);
         } else {
-            new TemplateSelectorModal(this.app, templates, locale, async (file: TFile) => {
-                await this.openFormForTemplate(file);
+            new TemplateSelectorModal(this.app, templates, locale, (file: TFile) => {
+                void this.openFormForTemplate(file);
             }).open();
         }
     }
@@ -63,7 +70,7 @@ export default class FormBuilderPlugin extends Plugin {
         let content: string;
         try {
             content = await this.app.vault.read(file);
-        } catch (e) {
+        } catch {
             new Notice(`${L.noticeReadError}\n"${file.path}"`);
             return;
         }
@@ -79,7 +86,7 @@ export default class FormBuilderPlugin extends Plugin {
     }
 
     async loadSettings(): Promise<void> {
-        this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+        this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData()) as FormBuilderSettings;
     }
 
     async saveSettings(): Promise<void> {

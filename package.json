@@ -1,6 +1,6 @@
 {
   "name": "form-builder",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Generate input forms from Markdown templates and create notes.",
   "main": "main.js",
   "license": "MIT",
@@ -10,7 +10,6 @@
   },
   "devDependencies": {
     "@types/node": "^16.11.6",
-    "builtin-modules": "3.3.0",
     "esbuild": "0.17.3",
     "obsidian": "latest",
     "tslib": "2.4.0",

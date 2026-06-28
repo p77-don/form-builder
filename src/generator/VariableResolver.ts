@@ -125,7 +125,7 @@ export function resolveUserVariables(
     const fieldMap = new Map<string, FormField>(fields.map(f => [f.key, f]));
     const warnings: ModifierWarning[] = [];
 
-    const result = template.replace(VARIABLE_RE, (match, key, modifier, modValue) => {
+    const result = template.replace(VARIABLE_RE, (match: string, key: string, modifier: string | undefined, modValue: string | undefined): string => {
         const field = fieldMap.get(key);
 
         // キーが未定義の場合はそのまま出力（仕様：未定義変数は置換しない）
@@ -144,10 +144,11 @@ export function resolveUserVariables(
 
         // モディファイアあり：配列フィールド以外には警告を出してそのまま展開
         if (!isArrayField(field)) {
+            const modName: string = modifier ?? '';
             warnings.push({
                 key,
-                modifier,
-                message: `Modifier ":${modifier}" is only valid for "multilist" or "multiselect" fields. Ignored for field "${key}".`
+                modifier: modName,
+                message: `Modifier ":${modName}" is only valid for "multilist" or "multiselect" fields. Ignored for field "${key}".`
             });
             return formatScalarValue(value, field);
         }
@@ -155,18 +156,19 @@ export function resolveUserVariables(
         const arr = toStringArray(value, field);
 
         if (modifier === 'separator') {
-            return applyModifierSeparator(arr, modValue);
+            return applyModifierSeparator(arr, modValue ?? '');
         }
 
         if (modifier === 'list') {
-            return applyModifierList(arr, modValue);
+            return applyModifierList(arr, modValue ?? '');
         }
 
         // 未知のモディファイア
+        const unknownMod: string = modifier ?? '';
         warnings.push({
             key,
-            modifier,
-            message: `Unknown modifier ":${modifier}" on field "${key}". Known modifiers: "separator", "list". Ignored.`
+            modifier: unknownMod,
+            message: `Unknown modifier ":${unknownMod}" on field "${key}". Known modifiers: "separator", "list". Ignored.`
         });
         // デフォルト展開にフォールバック
         return arr.join(',');

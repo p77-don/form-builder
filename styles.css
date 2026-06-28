@@ -7,7 +7,7 @@
    ============================================= */
 
 /* ---------- CSS 変数（ライトテーマ） ---------- */
-.theme-light .modal:has(.fb-modal) {
+.theme-light .modal.fb-modal-root {
     --fb-bg:         #e8e8ec;
     --fb-shadow-dark:  #b8b8bc;
     --fb-shadow-light: #ffffff;
@@ -24,7 +24,7 @@
 }
 
 /* ---------- CSS 変数（ダークテーマ） ---------- */
-.theme-dark .modal:has(.fb-modal) {
+.theme-dark .modal.fb-modal-root {
     --fb-bg:          #1e1e24;
     --fb-shadow-dark:  #111116;
     --fb-shadow-light: #2e2e38;
@@ -41,7 +41,7 @@
 }
 
 /* ---------- モーダル自体の背景 ---------- */
-.modal:has(.fb-modal) {
+.modal.fb-modal-root {
     background: var(--fb-bg);
     border: none;
     border-radius: 20px;
@@ -50,14 +50,14 @@
         -8px -8px 20px var(--fb-shadow-light);
 }
 
-.modal:has(.fb-modal) .modal-title {
+.modal.fb-modal-root .modal-title {
     color: var(--fb-text);
     font-size: 1.1rem;
     font-weight: 700;
     letter-spacing: 0.03em;
 }
 
-.modal:has(.fb-modal) .modal-close-button {
+.modal.fb-modal-root .modal-close-button {
     color: var(--fb-text-sub);
 }
 

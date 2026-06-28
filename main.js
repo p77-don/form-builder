@@ -338,6 +338,39 @@ var FormBuilderSettingTab = class extends import_obsidian.PluginSettingTab {
     super(app, plugin);
     this.plugin = plugin;
   }
+  // v1.13.0+ 向け宣言的 API。
+  // Obsidian は getSettingDefinitions() が配列を返す場合に display() をバイパスするため、
+  // 両メソッドを実装することで v1.13.0 未満との後方互換を保つ（デュアルサポートパターン）。
+  getSettingDefinitions() {
+    const localeOptions = Object.fromEntries(
+      Object.entries(LOCALE_LABELS)
+    );
+    return [
+      {
+        name: "Form Builder"
+      },
+      {
+        name: "Template folder",
+        desc: "Folder where your formbuilder template files are stored.",
+        control: {
+          type: "folder",
+          key: "templateFolder",
+          placeholder: "Templates",
+          includeRoot: false
+        }
+      },
+      {
+        name: "Language",
+        desc: "Language used in forms, notices, and the settings page.",
+        control: {
+          type: "dropdown",
+          key: "locale",
+          options: localeOptions
+        }
+      }
+    ];
+  }
+  // v1.13.0 未満の Obsidian 向けフォールバック。
   display() {
     const { containerEl } = this;
     containerEl.empty();
@@ -372,6 +405,7 @@ var HelpModal = class extends import_obsidian2.Modal {
     this.locale = locale;
   }
   onOpen() {
+    this.modalEl.addClass("fb-modal-root");
     const { contentEl } = this;
     contentEl.empty();
     const L = getLocale(this.locale);
@@ -557,6 +591,8 @@ function renderSelect(containerEl, field, values) {
 }
 function renderMultiselect(containerEl, field, values) {
   var _a;
+  if (field.type !== "multiselect")
+    return;
   const defaultRaw = (_a = field.default) != null ? _a : "";
   const defaultItems = defaultRaw ? defaultRaw.split(";").map((s) => s.trim()).filter((s) => field.list.includes(s)) : [];
   const selected = new Set(defaultItems);
@@ -585,6 +621,8 @@ function renderMultiselect(containerEl, field, values) {
 }
 function renderList(containerEl, field, values, multilistHint) {
   var _a, _b;
+  if (field.type !== "multilist")
+    return;
   values.set(field.key, (_a = field.default) != null ? _a : "");
   const card = createCard(containerEl, field);
   appendLabelRow(card, field);
@@ -687,24 +725,26 @@ function resolveUserVariables(template, values, fields) {
       return formatScalarValue(value, field);
     }
     if (!isArrayField(field)) {
+      const modName = modifier != null ? modifier : "";
       warnings.push({
         key,
-        modifier,
-        message: `Modifier ":${modifier}" is only valid for "multilist" or "multiselect" fields. Ignored for field "${key}".`
+        modifier: modName,
+        message: `Modifier ":${modName}" is only valid for "multilist" or "multiselect" fields. Ignored for field "${key}".`
       });
       return formatScalarValue(value, field);
     }
     const arr = toStringArray(value, field);
     if (modifier === "separator") {
-      return applyModifierSeparator(arr, modValue);
+      return applyModifierSeparator(arr, modValue != null ? modValue : "");
     }
     if (modifier === "list") {
-      return applyModifierList(arr, modValue);
+      return applyModifierList(arr, modValue != null ? modValue : "");
     }
+    const unknownMod = modifier != null ? modifier : "";
     warnings.push({
       key,
-      modifier,
-      message: `Unknown modifier ":${modifier}" on field "${key}". Known modifiers: "separator", "list". Ignored.`
+      modifier: unknownMod,
+      message: `Unknown modifier ":${unknownMod}" on field "${key}". Known modifiers: "separator", "list". Ignored.`
     });
     return arr.join(",");
   });
@@ -720,7 +760,7 @@ var INVALID_FILENAME_CHARS = /[/\\:*?"<>|]/g;
 var WINDOWS_RESERVED_NAMES = /^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(\.|$)/i;
 function sanitizeFileName(name, sanitizedNotice) {
   let sanitized = name.replace(INVALID_FILENAME_CHARS, "_");
-  sanitized = sanitized.replace(/[\x00-\x1F]/g, "");
+  sanitized = sanitized.replace(/[\u0000-\u001F]/g, "");
   if (WINDOWS_RESERVED_NAMES.test(sanitized)) {
     sanitized = "_" + sanitized;
   }
@@ -781,6 +821,9 @@ ${messages}`, NOTICE_DURATION);
 }
 
 // src/form/FormModal.ts
+function openObsidianSettings(app) {
+  app.setting.open();
+}
 var FormModal = class extends import_obsidian5.Modal {
   constructor(app, parseResult, locale) {
     super(app);
@@ -789,10 +832,10 @@ var FormModal = class extends import_obsidian5.Modal {
     this.locale = locale;
   }
   onOpen() {
+    this.modalEl.addClass("fb-modal-root");
     const { contentEl } = this;
     contentEl.empty();
     const L = getLocale(this.locale);
-    this.setTitle(L.formTitle);
     const root = contentEl.createDiv({ cls: "fb-modal" });
     this.renderWarnings(root);
     this.renderFields(root);
@@ -818,7 +861,9 @@ var FormModal = class extends import_obsidian5.Modal {
   renderSubmitButton(root, label) {
     const wrap = root.createDiv({ cls: "fb-submit-wrap" });
     const btn = wrap.createEl("button", { cls: "fb-submit-btn", text: label });
-    btn.addEventListener("click", () => this.onSubmit());
+    btn.addEventListener("click", () => {
+      void this.onSubmit();
+    });
   }
   async onSubmit() {
     const L = getLocale(this.locale);
@@ -856,6 +901,7 @@ var TemplateSelectorModal = class extends import_obsidian5.Modal {
     this.onSelect = onSelect;
   }
   onOpen() {
+    this.modalEl.addClass("fb-modal-root");
     const { contentEl } = this;
     contentEl.empty();
     const L = getLocale(this.locale);
@@ -905,6 +951,7 @@ var NoTemplateModal = class extends import_obsidian5.Modal {
     this.locale = locale;
   }
   onOpen() {
+    this.modalEl.addClass("fb-modal-root");
     const { contentEl } = this;
     contentEl.empty();
     const L = getLocale(this.locale);
@@ -916,7 +963,7 @@ var NoTemplateModal = class extends import_obsidian5.Modal {
     btnRow.createEl("button", { cls: "fb-btn", text: L.btnHelp }).addEventListener("click", () => new HelpModal(this.app, this.locale).open());
     btnRow.createEl("button", { cls: "fb-btn", text: L.btnSettings }).addEventListener("click", () => {
       this.close();
-      this.app.setting.open();
+      openObsidianSettings(this.app);
     });
     btnRow.createEl("button", { cls: "fb-btn", text: L.btnClose }).addEventListener("click", () => this.close());
   }
@@ -1251,24 +1298,32 @@ function parseTemplate(templateContent) {
 
 // src/main.ts
 var FormBuilderPlugin = class extends import_obsidian6.Plugin {
-  async onload() {
-    await this.loadSettings();
-    this.addSettingTab(new FormBuilderSettingTab(this.app, this));
-    this.addCommand({
-      id: "create-note-from-template",
-      name: "Create Note From Template",
-      callback: () => this.openTemplatePicker()
+  onload() {
+    void this.loadSettings().then(() => {
+      this.addSettingTab(new FormBuilderSettingTab(this.app, this));
+      this.addCommand({
+        id: "create-note-from-template",
+        name: "Create Note From Template",
+        callback: () => {
+          void this.openTemplatePicker();
+        }
+      });
     });
   }
-  async onunload() {
+  onunload() {
   }
   async openTemplatePicker() {
     const { templateFolder, locale } = this.settings;
-    const allFiles = this.app.vault.getMarkdownFiles().filter(
-      (f) => f.path.startsWith(templateFolder + "/") || f.path.startsWith(templateFolder + "\\")
+    const folder = this.app.vault.getFolderByPath(templateFolder);
+    if (!folder) {
+      new NoTemplateModal(this.app, this, locale).open();
+      return;
+    }
+    const mdFiles = folder.children.filter(
+      (f) => f instanceof import_obsidian6.TFile && f.extension === "md"
     );
     const templates = [];
-    for (const file of allFiles) {
+    for (const file of mdFiles) {
       try {
         const content = await this.app.vault.read(file);
         if (FORMBUILDER_BLOCK_RE.test(content))
@@ -1283,8 +1338,8 @@ var FormBuilderPlugin = class extends import_obsidian6.Plugin {
     if (templates.length === 1) {
       await this.openFormForTemplate(templates[0]);
     } else {
-      new TemplateSelectorModal(this.app, templates, locale, async (file) => {
-        await this.openFormForTemplate(file);
+      new TemplateSelectorModal(this.app, templates, locale, (file) => {
+        void this.openFormForTemplate(file);
       }).open();
     }
   }

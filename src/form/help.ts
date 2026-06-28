@@ -11,6 +11,7 @@ export class HelpModal extends Modal {
     }
 
     onOpen(): void {
+        this.modalEl.addClass('fb-modal-root');
         const { contentEl } = this;
         contentEl.empty();
         const L = getLocale(this.locale);

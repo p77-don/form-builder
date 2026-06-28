@@ -1,4 +1,4 @@
-import type { FormField, ListField, MultiselectField, ValueStore } from '../model/FieldModel';
+import type { FormField, ValueStore } from '../model/FieldModel';
 
 export function renderField(
     containerEl: HTMLElement,
@@ -13,8 +13,8 @@ export function renderField(
         case 'date':        renderDate(containerEl, field, values); break;
         case 'checkbox':    renderCheckbox(containerEl, field, values); break;
         case 'select':      renderSelect(containerEl, field, values); break;
-        case 'multiselect': renderMultiselect(containerEl, field as MultiselectField, values); break;
-        case 'multilist':   renderList(containerEl, field as ListField, values, multilistHint); break;
+        case 'multiselect': renderMultiselect(containerEl, field, values); break;
+        case 'multilist':   renderList(containerEl, field, values, multilistHint); break;
         default: {
             // TypeScript の網羅性チェック: FieldType に新しい型を追加した際にコンパイルエラーで検出する
             const _exhaustive: never = field;
@@ -139,9 +139,10 @@ function renderSelect(containerEl: HTMLElement, field: FormField, values: ValueS
 
 function renderMultiselect(
     containerEl: HTMLElement,
-    field: MultiselectField,
+    field: FormField,
     values: ValueStore
 ): void {
+    if (field.type !== 'multiselect') return;
     const defaultRaw   = field.default ?? '';
     const defaultItems = defaultRaw
         ? defaultRaw.split(';').map(s => s.trim()).filter(s => field.list.includes(s))
@@ -175,10 +176,11 @@ function renderMultiselect(
 
 function renderList(
     containerEl: HTMLElement,
-    field: ListField,
+    field: FormField,
     values: ValueStore,
     multilistHint: string
 ): void {
+    if (field.type !== 'multilist') return;
     values.set(field.key, field.default ?? '');
     const card = createCard(containerEl, field);
     appendLabelRow(card, field);
