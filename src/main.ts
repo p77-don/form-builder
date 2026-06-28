@@ -1,4 +1,4 @@
-import { Notice, Plugin, TFile, TFolder } from 'obsidian';
+import { Notice, Plugin, TFile } from 'obsidian';
 import { FormBuilderSettingTab, DEFAULT_SETTINGS } from './settings';
 import type { FormBuilderSettings } from './settings';
 import { FormModal, NoTemplateModal, TemplateSelectorModal } from './form/FormModal';

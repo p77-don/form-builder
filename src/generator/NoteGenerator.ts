@@ -18,7 +18,7 @@ export function sanitizeFileName(name: string, sanitizedNotice: string): string 
     let sanitized = name.replace(INVALID_FILENAME_CHARS, '_');
 
     // 制御文字（U+0000–U+001F）を除去（Windows/macOS/Linux 共通で問題になる）
-    sanitized = sanitized.replace(/[\u0000-\u001F]/g, '');
+    sanitized = sanitized.replace(/[\u0000-\u001F]/gu, '');
 
     // Windows予約名への対応
     if (WINDOWS_RESERVED_NAMES.test(sanitized)) {

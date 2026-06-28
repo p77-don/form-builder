@@ -760,7 +760,7 @@ var INVALID_FILENAME_CHARS = /[/\\:*?"<>|]/g;
 var WINDOWS_RESERVED_NAMES = /^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(\.|$)/i;
 function sanitizeFileName(name, sanitizedNotice) {
   let sanitized = name.replace(INVALID_FILENAME_CHARS, "_");
-  sanitized = sanitized.replace(/[\u0000-\u001F]/g, "");
+  sanitized = sanitized.replace(/[\u0000-\u001F]/gu, "");
   if (WINDOWS_RESERVED_NAMES.test(sanitized)) {
     sanitized = "_" + sanitized;
   }
