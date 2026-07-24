@@ -1,16 +1,22 @@
 import { Notice, Plugin, TFile } from 'obsidian';
 import { FormBuilderSettingTab, DEFAULT_SETTINGS } from './settings';
 import type { FormBuilderSettings } from './settings';
-import { FormModal, NoTemplateModal, TemplateSelectorModal } from './form/FormModal';
-import { parseTemplate, FORMBUILDER_BLOCK_RE } from './parser/TemplateParser';
+import { FormModal, NoTemplateModal } from './form/FormModal';
+import { TemplatePickerModal } from './form/TemplatePickerModal';
+import { parseTemplate } from './parser/TemplateParser';
+import { collectTemplateFiles } from './template/TemplateScanner';
+import { TemplateStore } from './template/TemplateStore';
 import { showFatalError } from './ui/ErrorNotice';
 import { getLocale } from './locales';
 
 export default class FormBuilderPlugin extends Plugin {
     settings!: FormBuilderSettings;
+    templateStore!: TemplateStore;
 
     onload(): void {
         void this.loadSettings().then(() => {
+            this.templateStore = new TemplateStore(this);
+
             this.addSettingTab(new FormBuilderSettingTab(this.app, this));
 
             this.addCommand({
@@ -18,6 +24,17 @@ export default class FormBuilderPlugin extends Plugin {
                 name: 'Create Note From Template',
                 callback: () => { void this.openTemplatePicker(); },
             });
+
+            // ファイルのリネーム・移動を検知し、お気に入り・履歴のパスを追従させる。
+            // （Obsidian を閉じている間・PCのエクスプローラーでの変更は追従できないため、
+            //   その分は TemplatePickerModal 側の「見つかりません」表示で安全網を張っている）
+            this.registerEvent(
+                this.app.vault.on('rename', (file, oldPath) => {
+                    if (file instanceof TFile && file.extension === 'md') {
+                        void this.templateStore.handleRename(oldPath, file.path);
+                    }
+                })
+            );
         });
     }
 
@@ -33,21 +50,8 @@ export default class FormBuilderPlugin extends Plugin {
             return;
         }
 
-        // フォルダ直下の Markdown ファイルのみを対象にする
-        const mdFiles = folder.children.filter(
-            (f): f is TFile => f instanceof TFile && f.extension === 'md'
-        );
-
-        // formbuilder ブロックを持つファイルのみに絞り込む
-        const templates: TFile[] = [];
-        for (const file of mdFiles) {
-            try {
-                const content = await this.app.vault.read(file);
-                if (FORMBUILDER_BLOCK_RE.test(content)) templates.push(file);
-            } catch {
-                // 読み込み失敗したファイルは無視
-            }
-        }
+        // サブフォルダも含めて formbuilder ブロックを持つファイルを再帰的に収集する
+        const templates = await collectTemplateFiles(this.app.vault, folder);
 
         if (templates.length === 0) {
             new NoTemplateModal(this.app, this, locale).open();
@@ -57,7 +61,7 @@ export default class FormBuilderPlugin extends Plugin {
         if (templates.length === 1) {
             await this.openFormForTemplate(templates[0]);
         } else {
-            new TemplateSelectorModal(this.app, templates, locale, (file: TFile) => {
+            new TemplatePickerModal(this.app, this, templates, folder.path, locale, (file: TFile) => {
                 void this.openFormForTemplate(file);
             }).open();
         }

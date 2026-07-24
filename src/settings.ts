@@ -1,15 +1,25 @@
 import { App, PluginSettingTab, Setting } from 'obsidian';
 import type FormBuilderPlugin from './main';
 import { type SupportedLocale, LOCALE_LABELS, getLocale } from './locales';
+import type { TabType } from './model/TemplateEntry';
 
 export interface FormBuilderSettings {
     templateFolder: string;
     locale: SupportedLocale;
+    /** お気に入り登録されたテンプレートのパス一覧 */
+    favorites: string[];
+    /** 最近使ったテンプレートのパス一覧（先頭が最新、最大20件） */
+    recentTemplates: string[];
+    /** テンプレート選択モーダルで最後に開いていたタブ */
+    lastTab: TabType;
 }
 
 export const DEFAULT_SETTINGS: FormBuilderSettings = {
     templateFolder: 'Templates',
     locale: 'en',
+    favorites: [],
+    recentTemplates: [],
+    lastTab: 'folder',
 };
 
 export class FormBuilderSettingTab extends PluginSettingTab {

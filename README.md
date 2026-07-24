@@ -1,46 +1,25 @@
 # Form Builder
 
-An Obsidian plugin that automatically generates input forms from Markdown templates and creates new notes populated with the form data.
+FormBuilder allows you to build input forms by writing simple, custom syntax in templates and to create notes that incorporate the entered values.
 
----
-
-## Table of Contents
-
-1. [Installation](#installation)
-2. [Setup](#setup)
-3. [Basic Usage](#basic-usage)
-4. [Template Structure](#template-structure)
-5. [FormBuilder Syntax Reference](#formbuilder-syntax-reference)
-   - [Basic Syntax](#basic-syntax)
-   - [meta Syntax](#meta-syntax)
-   - [Field Syntax](#field-syntax)
-   - [Field Types](#field-types)
-   - [Options Reference](#options-reference)
-   - [Variables](#variables)
-   - [Variable Modifiers](#variable-modifiers)
-6. [Errors and Warnings](#errors-and-warnings)
-7. [Template Examples](#template-examples)
-8. [FAQ](#faq)
-
-
- 日本語版READMEは [こちら](#目次)
+ 日本語版READMEは [こちら](#日本語説明)
 
 ---
 
 ## Installation
 
-### Install from Community Plugins (Recommended)
+### Install from Community Plugins (recommended)
 
-1. Open **Settings → Community Plugins** in Obsidian
-2. If you haven't already, turn off **Restricted Mode**
+1. Open **Settings → Community plugins** in Obsidian
+2. Turn off **Restricted Mode** if it isn't already off
 3. Click **Browse** and search for `Form Builder`
 4. Select **Form Builder** and click **Install**
-5. After installation, click **Enable**
+5. Once installed, click **Enable**
 
-### Manual Installation
+### Manual installation
 
 1. Download the latest `main.js`, `manifest.json`, and `styles.css` from [Releases](https://github.com/p77-don/form-builder/releases)
-2. Place all three files in the following folder inside your vault:
+2. Place the three files in the following folder inside your Vault
 
 ```
 {vault}/.obsidian/plugins/form-builder/
@@ -49,32 +28,32 @@ An Obsidian plugin that automatically generates input forms from Markdown templa
 └── styles.css
 ```
 
-3. Enable **Form Builder** under **Settings → Community Plugins**
+3. Enable **Form Builder** under **Settings → Community plugins**
 
 ---
 
 ## Setup
 
-### Template Folder
+### Setting the template folder
 
-Go to **Settings → Form Builder → Template folder** and enter the name of the folder where your template files will be stored.
+Enter the name of the folder where your template files live under **Settings → Form Builder → Template folder**.
 
 ```
 Templates
 ```
 
-The default is `Templates`. Only Markdown files inside this folder that contain a `formbuilder` code block will be recognized as templates.
+The default is `Templates`. Only Markdown files in this folder that contain a `formbuilder` code block are recognized as templates.
 
-### Language
+### Language setting
 
-Under **Settings → Form Builder → Language**, you can switch the display language for the entire plugin.
+**Settings → Form Builder → Language** switches the display language for the entire plugin.
 
 | Option | Description |
 |---|---|
 | English | English (default) |
 | 日本語 | Japanese |
 
-Changing this setting instantly updates the settings screen, forms, help text, and all notification messages.
+Changing this setting instantly updates the settings screen, forms, help, and all notification messages.
 
 ---
 
@@ -82,15 +61,55 @@ Changing this setting instantly updates the settings screen, forms, help text, a
 
 1. Create a Markdown file containing a `formbuilder` code block in your template folder
 2. Open the command palette (`Ctrl` / `Cmd` + `P`) and run **Create Note From Template**
-3. If multiple templates exist, select one from the list (ascending/descending sort toggle available)
-4. Fill in the form and click **Create Note**
+3. If multiple templates exist, the **Template Picker** opens — browse by folder, jump to a favorite, or reuse something from your history (see [Template Picker](#template-picker))
+4. Fill in the form that appears and click **Create Note**
 5. A new note is created in the folder specified by `meta` and automatically opened
+
+---
+
+## Template Picker
+
+When more than one template is available, running **Create Note From Template** opens the **Template Picker**.
+
+![Template select](docs/select.png)
+
+### Tabs
+
+| Tab | Shows |
+|---|---|
+| 📁 Folder | Your template folder's subfolder structure, exactly as it is in the Vault. Click a folder to expand (📂) or collapse (📁) it. |
+| ★ Favorites | Only the templates you've starred. |
+| 🕒 History | The last 20 templates you've used, most recent first. |
+
+The picker remembers which tab you had open last time.
+
+### Search
+
+The search box at the top filters whichever tab is currently open. While searching the Folder tab, results are shown as a flat list (instead of the folder tree) so you can find a template regardless of which subfolder it's in. Once you start typing, a **×** appears — click it to clear the search box.
+
+### Sort
+
+The ▲ / ▼ button next to **? Help** toggles ascending/descending order by name. It applies to the Folder and Favorites tabs; on the History tab it's grayed out, since history is always ordered by most recently used.
+
+### Favorites
+
+Tap ☆ next to any template to add it to Favorites (it becomes ★). Tap ★ again to remove it.
+
+### History
+
+Every template you successfully use is added to the top of History (an existing entry moves up instead of duplicating). **Clear History** — next to the sort button, visible only on this tab — empties the whole list. To avoid accidental data loss, tap it once to arm it (it turns red and reads "tap again to confirm"), then tap again within a few seconds to actually clear it.
+
+### Missing templates
+
+If a favorited or recently-used template file is renamed or moved from *within* Obsidian (e.g. in the file explorer), Form Builder updates the saved reference automatically and you won't notice anything. If it's renamed, moved, or deleted from *outside* Obsidian (e.g. your OS's file explorer) while Obsidian is closed, Form Builder can't track that change. In that case the entry is shown grayed out with a **(missing — tap ✕ to remove)** label instead of silently disappearing, so you can decide for yourself whether to remove it.
+
+Templates found in nested subfolders are labeled with their path relative to your template folder (e.g. `item/case/item-b`) wherever they're shown in a flat list (Favorites, History, or a Folder-tab search), so templates with the same file name in different folders stay distinguishable.
 
 ---
 
 ## Template Structure
 
-A template file consists of two areas: the **form definition area** and the **body area**.
+A template file consists of two parts: a **form definition area** and a **body area**.
 
 ````markdown
 ---
@@ -98,30 +117,34 @@ A template file consists of two areas: the **form definition area** and the **bo
 ---
 
 ```formbuilder
-(Form definition)
+(form definition)
 ```
 
 (Body: subject to variable expansion)
 ````
 
-### Form Definition Area
+### Form definition area
 
-Written exclusively inside the ` ```formbuilder ` code block.
-Contains field definitions and output settings (`meta`).
-This block is not included in the generated note — it is automatically removed.
+Written only inside a ` ```formbuilder ` code block.
+This is where you define fields and output settings (`meta`).
+This block is not included in the generated note — it's removed automatically.
 
-### Body Area
+![code block](docs/code_block.png)
 
-Everything outside the code block is subject to variable expansion:
+### Body area
+
+Everything outside the code block is subject to variable expansion.
 
 - Frontmatter
-- Regular text, headings, lists, tables, blockquotes, HTML
+- Regular text, headings, lists, tables, quotes, HTML
 
-Write `$keyName$` in the body to substitute it with the corresponding form input value.
-For `multiselect` / `multilist` fields, use **variable modifiers** to control the output format. See [Variable Modifiers](#variable-modifiers) for details.
+Writing `$key$` in the body replaces it with the form's input value.
+For `multiselect` / `multilist` fields, you can control the expanded format with a **variable modifier** — see [Variable Modifiers](#variable-modifiers) for details.
 
-> **Variable delimiter differences:**
-> User variables are wrapped in dollar signs (`$...$`), while system variables are wrapped in percent signs (`%...%`). This distinction is intentional.
+> **The two kinds of brackets:**
+> User variables are wrapped in dollar signs `$...$`; system variables are wrapped in percent signs `%...%`.
+
+![main text](docs/main_text.png)
 
 ---
 
@@ -137,10 +160,10 @@ All syntax is wrapped in `{{` and `}}`.
 {{type|key|option=[value]|option2=[value2]}}
 ```
 
-#### Whitespace Handling
+#### Whitespace handling
 
 Half-width and full-width spaces around `{{`, `}}`, and `|` are ignored.
-The following are all treated identically:
+The following are all treated as identical.
 
 ```
 {{text|name}}
@@ -148,17 +171,17 @@ The following are all treated identically:
 {{ text | name | required }}
 ```
 
-#### Valid Characters for Keys
+#### Allowed characters in a key
 
 ```
 a-z  A-Z  0-9  _  -
 ```
 
-The following characters cannot be used in keys: `| { } [ ] $ % space (half-width or full-width)`
+The following characters cannot be used in a key: `| { } [ ] $ % space (half-width or full-width)`
 
 Keys are case-sensitive (`name` and `Name` are different keys).
 
-#### Option Value Format
+#### Option value syntax
 
 Values must be wrapped in `[]`.
 
@@ -169,18 +192,18 @@ min=[0]
 max=[200]
 ```
 
-All characters inside `[]` are used as-is, including spaces.
+Everything inside `[]` is used as the value verbatim (including spaces).
 
 ```
-placeholder=[ leading space ]
-→ value is " leading space "
+placeholder=[ has a leading space ]
+→ the value is " has a leading space "
 ```
 
 ---
 
 ### meta Syntax
 
-Defines global settings for the template. These are not displayed in the form — they are referenced when the note is saved.
+Describes settings for the template as a whole. These aren't shown in the form — they're settings referenced when the note is saved.
 
 ```
 {{meta|key=[value]}}
@@ -188,31 +211,31 @@ Defines global settings for the template. These are not displayed in the form �
 
 #### meta|folder
 
-Specifies the folder where the note will be saved.
+Specifies the folder the note is saved to.
 
-**Fixed folder:**
+**To fix the folder:**
 
 ```
 {{meta|folder=[Notes]}}
 {{meta|folder=[Projects/2026]}}
 ```
 
-The note is always saved to the specified folder. If the folder does not exist, it is created automatically (including nested paths). If omitted, the note is saved to the vault root.
+The note is always saved to the specified folder. If it doesn't exist, it's created automatically (nested paths are supported too). If omitted, the note is saved to the Vault root.
 
-**User-specified folder via form input:**
+**To let the form ask for the destination:**
 
-Use `$keyName$` in `folder` and define a corresponding field separately.
+Use `$key$` in `folder` and define a matching field separately.
 
 ```
 {{meta|folder=[$export$]}}
-{{text|export|label=[Output Folder]|default=[Notes]}}
+{{text|export|label=[Output folder]|default=[Notes]}}
 ```
 
-An "Output Folder" input field appears in the form, allowing the user to specify the destination at runtime. It is recommended to set an initial value with `default=[Notes]`.
+An "Output folder" input appears in the form, letting the user specify it at run time. It's recommended to set an initial value with `default=[Notes]`.
 
 #### meta|filename
 
-Specifies the filename for the generated note (the `.md` extension is added automatically).
+Specifies the file name of the generated note (the `.md` extension is added automatically).
 
 ```
 {{meta|filename=[my-note]}}
@@ -220,22 +243,22 @@ Specifies the filename for the generated note (the `.md` extension is added auto
 {{meta|filename=[Report_%date%]}}
 ```
 
-- Use `$keyName$` to incorporate form input values
-- System variables such as `%timestamp%`, `%date%`, and `%time%` are supported
-- System variables are evaluated at the moment the note is saved
-- Characters not allowed in filenames (`/ \ : * ? " < > |`) are automatically replaced with `_`
+- You can use `$key$` to reference form input values
+- You can use system variables such as `%timestamp%`, `%date%`, and `%time%`
+- System variables are evaluated when the note is saved
+- Characters not allowed in file names (`/ \ : * ? " < > |`) are automatically replaced with `_`
 - Windows reserved device names (`CON`, `NUL`, `COM1`, etc.) are prefixed with `_`
-- If omitted, the filename defaults to `Untitled.md`
+- If omitted, the file is named `Untitled.md`
 
-#### Unknown meta Keys
+#### Unknown meta keys
 
-If an undefined key is specified, a warning is shown and the key is ignored. Form generation continues.
+If an undefined key is used, a warning is shown and the key is ignored (form generation continues).
 
 ---
 
 ### Field Syntax
 
-Defines the input fields displayed in the form.
+Defines the input fields shown in the form.
 
 ```
 {{type|key}}
@@ -247,20 +270,20 @@ Defines the input fields displayed in the form.
 
 1. `type` (field type) — required
 2. `key` (variable name) — required
-3. Options follow in any order
+3. Everything after is an option (order doesn't matter)
 
 ---
 
 ### Field Types
 
-#### `text` — Single-line Text Input
+#### `text` — single-line text input
 
 ```
 {{text|name}}
-{{text|name|label=[Name]|placeholder=[John Doe]|required}}
+{{text|name|label=[Name]|placeholder=[Jane Doe]|required}}
 ```
 
-Displays a single-line text input field in the form.
+Displays a single-line text field in the form.
 
 **Available options:** `label` `placeholder` `description` `default` `required`
 
@@ -268,51 +291,51 @@ Displays a single-line text input field in the form.
 
 ```
 Template body: Author: $name$
-Input value:   John Doe
-Output:        Author: John Doe
+Input value:   Jane Doe
+Output:        Author: Jane Doe
 ```
 
 ---
 
-#### `textarea` — Multi-line Text Input
+#### `textarea` — multi-line text input
 
 ```
 {{textarea|description}}
-{{textarea|description|label=[Description]|rows=[8]|placeholder=[Write details...]}}
+{{textarea|description|label=[Description]|rows=[8]|placeholder=[Write the details...]}}
 ```
 
-Displays a multi-line text input field in the form.
+Displays a multi-line text field in the form.
 
 **Available options:** `label` `placeholder` `description` `default` `required` `rows`
 
-**Output example:** The entered content is expanded as-is (line breaks are preserved).
+**Output example:** The entered text is expanded verbatim (line breaks are preserved).
 
 ---
 
-#### `number` — Number Input
+#### `number` — numeric input
 
 ```
 {{number|price}}
 {{number|price|label=[Price]|min=[0]|max=[999999]|default=[0]}}
 ```
 
-Displays a numeric input field in the form. Specifying `min` / `max` restricts the acceptable input range.
+Displays a numeric input field. `min` / `max` can be used to constrain the allowed range.
 
 **Available options:** `label` `placeholder` `description` `default` `required` `min` `max`
 
-**Error condition:** If `min > max`, a fatal error occurs and form generation is aborted.
+**Error condition:** If `min > max`, this is a fatal error and form generation is aborted.
 
 **Output example:**
 
 ```
-Template body: Price: $price$
+Template body: Price: $price$ yen
 Input value:   1500
-Output:        Price: 1500
+Output:        Price: 1500 yen
 ```
 
 ---
 
-#### `date` — Date Input
+#### `date` — date input
 
 ```
 {{date|birthday}}
@@ -333,7 +356,7 @@ Output:        Date: 2000-01-01
 
 ---
 
-#### `checkbox` — Toggle (Boolean)
+#### `checkbox` — toggle (boolean)
 
 ```
 {{checkbox|published}}
@@ -344,74 +367,74 @@ Displays a toggle switch in the form.
 
 **Available options:** `label` `description` `default`
 
-- `default=[true]` sets the initial state to on (enabled)
-- `required` has no effect on `checkbox` (the off state is also a valid value)
+- `default=[true]` turns the toggle on by default
+- `required` has no effect on `checkbox` (an "off" state is still a valid value)
 
 **Output example:**
 
 ```
-When on:  true
-When off: false
+Output when on:  true
+Output when off: false
 ```
 
 ---
 
-#### `select` — Single Selection
+#### `select` — single choice
 
 ```
-{{select|status|list=[Todo;In Progress;Done]}}
-{{select|status|label=[Status]|list=[Todo;In Progress;Done]|default=[Todo]}}
+{{select|status|list=[Not started;In progress;Done]}}
+{{select|status|label=[Status]|list=[Not started;In progress;Done]|default=[Not started]}}
 ```
 
 Displays a dropdown list in the form.
-The `list` option is required — omitting it causes a fatal error.
+The `list` option is required — omitting it is a fatal error.
 
 **Available options:** `label` `description` `default` `required` `list`
 
-**`list` format:**
+**`list` syntax:**
 
-Separate options with semicolons (`;`). Spaces immediately before or after a semicolon are automatically trimmed; spaces within an option are preserved.
+Separate options with a semicolon (`;`). Spaces immediately before or after a semicolon are trimmed automatically; spaces inside an item are preserved.
 
 ```
-list=[Todo;In Progress;Done]
-list=[ Todo ; In Progress ; Done ]   → same result (surrounding spaces trimmed)
-list=[I am a boy;I am a girl]        → two items: "I am a boy" and "I am a girl"
+list=[Not started;In progress;Done]
+list=[ Not started ; In progress ; Done ]  → same result (surrounding spaces trimmed)
+list=[I am a boy;I am a girl]              → two items: "I am a boy", "I am a girl"
 ```
 
-**Note on `default`:** If the `default` value does not exist in `list`, a warning is shown and the field is left with no selection.
+**A note on `default`:** if the value given in `default` doesn't exist in `list`, a warning is shown and the field starts unselected.
 
 **Output example:**
 
 ```
 Template body: Status: $status$
-Selected:      In Progress
-Output:        Status: In Progress
+Selected value: In progress
+Output:         Status: In progress
 ```
 
 ---
 
-#### `multiselect` — Multiple Selection
+#### `multiselect` — multiple choice
 
 ```
 {{multiselect|tags|list=[Important;Pending;Done]}}
 {{multiselect|tags|label=[Tags]|list=[Important;Pending;Done]|default=[Important;Done]}}
 ```
 
-Displays a checkbox-based multiple selection UI in the form.
-The `list` option is required — omitting it causes a fatal error.
+Displays a checkbox-style multi-select UI in the form.
+The `list` option is required — omitting it is a fatal error.
 
 **Available options:** `label` `description` `default` `required` `list` `rows`
 
-**Multiple defaults:** Specify multiple default values separated by semicolons.
+**Multiple defaults with `default`:** separate several default values with a semicolon.
 
 ```
 {{multiselect|tags|list=[Important;Pending;Done]|default=[Important;Done]}}
 ```
 
-**Output format control:**
+**Controlling the output format:**
 
-The output format is specified using **variable modifiers** in the body, not in the field definition.
-If no modifier is used (`$tags$`), selected values are joined with commas only (no spaces).
+The output format isn't set on the field itself — it's set with a **variable modifier** in the body text.
+Expanded without a modifier (`$tags$`), the selected values are joined with a plain comma (no space).
 
 ```
 $tags$               → Important,Done
@@ -423,28 +446,28 @@ See [Variable Modifiers](#variable-modifiers) for details.
 
 ---
 
-#### `multilist` — Free-form Multiple Value Input
+#### `multilist` — free-form, multi-value input
 
 ```
 {{multilist|aliases}}
 {{multilist|aliases|label=[Aliases]|rows=[5]}}
 ```
 
-Displays a multi-line text input field where **one item is entered per line**. Empty lines are automatically removed on save.
+Displays a multi-line text field in the form. **One item per line.** Blank lines are removed automatically when the note is saved.
 
-Unlike `select` and `multiselect`, no predefined options are required — users can enter any values freely. This is ideal for cases like Frontmatter `aliases`, where multiple arbitrary strings need to be registered.
+Unlike `select` or `multiselect`, no predefined options are needed — the user can type any values freely. This is a good fit for cases like Frontmatter `aliases`, where you want to register an arbitrary number of free-text strings.
 
 **Available options:** `label` `placeholder` `description` `default` `required` `rows`
 
-**Output format control:**
+**Controlling the output format:**
 
-Like `multiselect`, the output format is specified using **variable modifiers** in the body.
-If no modifier is used (`$aliases$`), values are joined with commas only (no spaces).
+As with `multiselect`, the output format is set with a **variable modifier** in the body text.
+Expanded without a modifier (`$aliases$`), the entered values are joined with a plain comma (no space).
 
 ```
-$aliases$               → Tokyo Office,Osaka Office,HQ
-$aliases:separator[, ]$ → Tokyo Office, Osaka Office, HQ
-$aliases:list[- ]$      → - Tokyo Office\n- Osaka Office\n- HQ
+$aliases$               → Tokyo Office,main office,HQ
+$aliases:separator[, ]$ → Tokyo Office, main office, HQ
+$aliases:list[- ]$      → - Tokyo Office\n- main office\n- HQ
 ```
 
 See [Variable Modifiers](#variable-modifiers) for details.
@@ -453,86 +476,90 @@ See [Variable Modifiers](#variable-modifiers) for details.
 
 ### Options Reference
 
-| Option | Value Format | Applicable Fields | Description |
+| Option | Value format | Applies to | Description |
 |---|---|---|---|
-| `label=[text]` | string | all fields | Label displayed in the form. Defaults to the key name if omitted |
-| `required` | flag (no value) | all fields | Marks the field as required. Blocks submission and highlights the field if left empty |
-| `placeholder=[...]` | string | text / textarea / number / multilist | Hint text shown inside the input field |
-| `description=[...]` | string | all fields | Descriptive text displayed below the label |
-| `default=[value]` | string | all fields | Initial value when the form is displayed |
-| `list=[A;B;C]` | semicolon-delimited string | select / multiselect | List of options (required for these types) |
-| `min=[number]` | number | number | Minimum acceptable value |
-| `max=[number]` | number | number | Maximum acceptable value |
-| `rows=[count]` | integer | textarea / multiselect / multilist | Number of visible rows |
+| `label=[display name]` | String | All fields | The label shown in the form. Defaults to the key name if omitted |
+| `required` | Flag (no value) | All fields | Requires input. Blocks submission and highlights the field if left empty |
+| `placeholder=[...]` | String | text / textarea / number / multilist | Hint text shown inside the input |
+| `description=[...]` | String | All fields | Description text shown below the label |
+| `default=[value]` | String | All fields | Initial value shown when the form opens |
+| `list=[A;B;C]` | Semicolon-separated string | select / multiselect | The list of options (required for these types) |
+| `min=[number]` | Number | number | Minimum allowed value |
+| `max=[number]` | Number | number | Maximum allowed value |
+| `rows=[count]` | Integer | textarea / multiselect / multilist | Number of visible rows |
 
 ---
 
 ### Variables
 
-#### User Variables vs System Variables
+#### User variables vs. system variables
 
-Form Builder has two types of variables, distinguished by their **delimiter symbols**.
+Form Builder has two kinds of variables, distinguished by **which symbol wraps them**.
 
-| Type | Format | Evaluated |
+| Kind | Syntax | Evaluated |
 |---|---|---|
-| User variable | `$keyName$` (dollar sign) | Form input value |
-| System variable | `%variableName%` (percent sign) | At the moment the note is saved |
+| User variable | `$key$` (dollar sign) | The form's input value |
+| System variable | `%name%` (percent sign) | At the moment the note is saved |
 
-#### User Variables
+#### User variables
 
-Reference form input values. Can be used in the template body, Frontmatter, and in `meta`'s `filename` / `folder`.
+Reference the value entered in the form. They can be used in the template body, Frontmatter, and in `meta`'s `filename` / `folder`.
 
 ```
-$keyName$
+$key$
 $title$
 $author$
 $status$
 ```
 
-Key names may only contain `[a-zA-Z0-9_-]`. Keys are case-sensitive.
+Keys may only contain `[a-zA-Z0-9_-]` characters. Keys are case-sensitive.
 
-Variables present in the body that have no corresponding field definition (`$undefined_key$`) are output as-is — no error is raised.
+A variable that appears in the body but has no matching field defined (`$undefined_key$`) is output as-is (this is not an error).
 
 **Default expansion for `multiselect` / `multilist`:**
 
-When expanded without a modifier (`$key$`), selected/entered values are joined with commas only (no spaces).
+Expanded without a modifier (`$key$`), the selected or entered values are joined with a plain comma (no space).
 
 ```
 Selected values: Important, Done (2 items)
 $tags$ → Important,Done
 ```
 
-To change the output format, use [Variable Modifiers](#variable-modifiers).
+To change the output format, use a [Variable Modifier](#variable-modifiers).
 
-#### System Variables
+#### System variables
 
-Variables provided by the plugin. All are evaluated **when the note is saved**.
+Variables provided by the plugin. All of them are evaluated **when the note is saved**.
 
 | Variable | Description | Example output |
 |---|---|---|
-| `%timestamp%` | Save timestamp (yyyyMMddHHmmss) | `20260626153000` |
+| `%timestamp%` | Save time (yyyyMMddHHmmss format) | `20260626153000` |
 | `%date%` | Save date | `2026-06-26` |
 | `%time%` | Save time | `15:30:00` |
+| `%folder%` | The note's final output folder (after `meta\|folder` is resolved) | `Characters` |
+| `%filename%` | The note's final file name without the `.md` extension (after `meta\|filename` is resolved and sanitized) | `Alice-20260624153000` |
 
-> **Note:** System variables are evaluated at the moment **the Create Note button is clicked**, not when the form is opened.
+> **Note:**
+> system variables are evaluated at **the moment you click Create Note**, not when the form was opened.
+> `%folder%` and `%filename%` can only be used in the body. Using them inside `meta|folder` or `meta|filename` itself would be self-referential, so they are not expanded there.
 
-#### Variable Expansion Scope
+#### Variable expansion scope
 
-| Location | User Variables | System Variables |
+| Location | User variables | System variables |
 |---|---|---|
 | Frontmatter | ✅ | ✅ |
 | Body (headings, lists, tables, etc.) | ✅ | ✅ |
 | `meta\|filename` | ✅ | ✅ |
 | `meta\|folder` | ✅ | ✅ |
-| Inside `formbuilder` block | ❌ (processed as form definition) | ❌ |
+| Inside the `formbuilder` block | ❌ (treated as the form definition) | ❌ |
 
-#### Mixing User and System Variables
+#### Mixing user and system variables
 
 ```
 {{meta|filename=[$title$-%timestamp%]}}
 ```
 
-If `$title$` is set to "Meeting Notes" when saving:
+If you enter "Meeting Notes" for `$title$` and save:
 
 ```
 Meeting Notes-20260626153000.md
@@ -542,32 +569,33 @@ Meeting Notes-20260626153000.md
 
 ### Variable Modifiers
 
-`multiselect` / `multilist` fields hold array values. When expanding them in the body, modifiers let you control the output format.
+`multiselect` / `multilist` fields hold an array of values. When expanding them in the body, you can specify the output format with a modifier.
 
-#### Basic Syntax
+#### Basic syntax
 
 ```
-$key$                        No modifier (comma-joined, no spaces)
-$key:separator[delimiter]$   Join with a custom delimiter
-$key:list[prefix]$           Prefix each item and join with line breaks
+$key$                        No modifier (joined with a comma only)
+$key:separator[separator]$   Joined with the given separator
+$key:list[prefix]$           Each item prefixed and joined with line breaks
 ```
 
-If a modifier is used on a field type other than `multiselect` / `multilist`, a warning is shown and the modifier is ignored.
+If a modifier is used on a field that isn't `multiselect` / `multilist`, a warning is shown and the modifier is ignored.
 
-#### `separator` Modifier
+#### The `separator` modifier
 
-The string inside `[]` is used as the delimiter exactly as written, including spaces.
+Uses the string inside `[]` as the separator verbatim, including any spaces.
 
 ```
 $tags:separator[,]$      → Important,Pending,Done
 $tags:separator[, ]$     → Important, Pending, Done
 $tags:separator[ / ]$    → Important / Pending / Done
+$tags:separator[・]$     → Important・Pending・Done
 $tags:separator[ | ]$    → Important | Pending | Done
 ```
 
-#### `list` Modifier
+#### The `list` modifier
 
-The string inside `[]` is prepended to each item, and items are joined with line breaks.
+Uses the string inside `[]` as a prefix for each line, joined with line breaks.
 
 ```
 $tags:list[- ]$       →   - TypeScript
@@ -576,22 +604,25 @@ $tags:list[- ]$       →   - TypeScript
 
 $tags:list[* ]$       →   * TypeScript
                           * Python
+
+$tags:list[ ・ ]$     →    ・ TypeScript
+                           ・ Python
 ```
 
-**Auto-numbering:** Numbers are automatically incremented only when `[]` starts with `1.`.
+**Auto-numbering:** numbers are generated automatically only when the text inside `[]` starts with `1.`.
 
 ```
 $tags:list[1. ]$      →   1. TypeScript
                           2. Python
                           3. Go
 
-$tags:list[1) ]$      →   1) TypeScript    ← "1)" is not auto-numbered
+$tags:list[1) ]$      →   1) TypeScript    ← only "1." triggers numbering
                           1) Python
 ```
 
 **Indented lists (for Frontmatter):**
 
-When expanding into Frontmatter `aliases` or `tags`, control indentation by adding spaces in the prefix string.
+When expanding into Frontmatter fields like `aliases` or `tags`, you can control the indentation by adding spaces to the prefix string.
 
 Template:
 
@@ -604,36 +635,36 @@ $tags:list[  - ]$
 ---
 ```
 
-Output when "The Pragmatic Programmer / Tatsujin Programmer" is entered for aliases and "Tech Books / References" for tags:
+Output, given the input "The_Pragmatic_Programmer / The_Perfect_Programmer" and "technical_book / References":
 
 ```yaml
 ---
 aliases:
-  - The Pragmatic Programmer
-  - Tatsujin Programmer
+  - The_Pragmatic_Programmer
+  - The_Perfect_Programmer
 tags:
-  - Tech Books
+  - technical_book
   - References
 ---
 ```
 
-The same variable can also be expanded in a different format in the body:
+The same variable can also be expanded in a different format elsewhere in the body.
 
 ```markdown
-Aliases: $aliases:separator[, ]$
+Aliases: $aliases:separator[、]$
 ```
 
 ```
-Aliases: The Pragmatic Programmer, Tatsujin Programmer
+Aliases: The Pragmatic Programmer、The Perfect Programmer
 ```
 
 ---
 
 ## Errors and Warnings
 
-### Fatal Errors (Form generation is aborted)
+### Fatal errors (form generation is aborted)
 
-In these cases, an error notification is shown and the form does not open.
+In the following cases, an error notice is shown and the form doesn't open.
 
 | Condition | Example message |
 |---|---|
@@ -641,38 +672,38 @@ In these cases, an error notification is shown and the form does not open.
 | `select` / `multiselect` missing `list` | `"select" requires the "list" option` |
 | `min > max` | `"min" (10) must not exceed "max" (5) in field "count"` |
 | Unmatched `{{` / `}}` | `Unclosed "{{" found on line 3` |
-| Invalid characters in key | `Invalid key: "$name$". Keys must match [a-zA-Z0-9_-]` |
+| Key contains disallowed characters | `Invalid key: "$name$". Keys must match [a-zA-Z0-9_-]` |
 
-### Warnings (Form is still displayed)
+### Warnings (the form still opens)
 
-In these cases, a warning message is shown at the top of the form, but the form remains usable.
+In the following cases, a warning is shown at the top of the form, but the form remains usable.
 
 | Condition | Behavior |
 |---|---|
-| Unknown option name (e.g. `requred`) | The option is ignored. If the edit distance is close, a suggestion is shown |
+| Unknown option name (e.g. `requred`) | The option is ignored. A suggestion is shown if a close match is found |
 | Undefined meta key | The key is ignored |
-| `default` value not in `list` | `default` is ignored; field is shown with no selection |
+| `default` value not present in `list` | `default` is ignored and the field starts unselected |
 
-### Modifier Warnings (Notified on save)
+### Modifier warnings (shown on save)
 
-If variable modifiers are used incorrectly, a Notice is shown when the note is saved (the note is still saved).
+If a variable modifier is used incorrectly, a Notice is shown when the note is saved (the note is still saved).
 
 | Condition | Behavior |
 |---|---|
-| `:separator` / `:list` used on a non-`multiselect`/`multilist` key | Modifier is ignored; value is expanded as-is |
-| Unknown modifier name (e.g. `:markdownlist`) | Modifier is ignored; values are joined with commas |
+| `:separator` / `:list` used on a key that isn't `multiselect` / `multilist` | The modifier is ignored and the value is expanded as-is |
+| Unknown modifier name (e.g. `:markdownlist`) | The modifier is ignored and values are joined with a comma |
 
-> **Typo suggestions:** For unknown option names, if the edit distance (Levenshtein distance) from a known option name is 2 or less, a `Did you mean "..."?` suggestion is displayed.
+> **Typo suggestions:** for unknown option names, a `Did you mean "..."?` suggestion is shown if the edit distance (Levenshtein distance) to a known option name is 2 or less.
 
-### Submission Validation
+### Submit-time validation
 
-If a `required` field is left empty when **Create Note** is clicked, submission is blocked and the relevant field is highlighted in red.
+If a field marked `required` is left empty and you click **Create Note**, submission is blocked and the field is highlighted in red.
 
 ---
 
 ## Template Examples
 
-### ① Simple Memo
+### 1. A simple note
 
 ````markdown
 ```formbuilder
@@ -680,7 +711,7 @@ If a `required` field is left empty when **Create Note** is clicked, submission 
 {{meta|filename=[$title$-%date%]}}
 
 {{text|title|label=[Title]|required}}
-{{select|category|label=[Category]|list=[Work;Personal;Learning;Other]}}
+{{select|category|label=[Category]|list=[Work;Personal;Study;Other]}}
 {{textarea|body|label=[Content]|rows=[8]}}
 ```
 
@@ -693,7 +724,7 @@ $body$
 
 ---
 
-### ② Book Log (Frontmatter + Modifiers)
+### 2. A reading log (Frontmatter + modifiers)
 
 ````markdown
 ---
@@ -712,13 +743,13 @@ $aliases:list[  - ]$
 {{text|book_title|label=[Title]|required}}
 {{text|author|label=[Author]}}
 {{text|publisher|label=[Publisher]}}
-{{date|read_date|label=[Date Finished]}}
-{{select|status|label=[Status]|list=[Want to Read;Reading;Finished;Dropped]|default=[Want to Read]}}
+{{date|read_date|label=[Date finished]}}
+{{select|status|label=[Status]|list=[Want to read;Reading;Finished;Paused]|default=[Want to read]}}
 {{select|rating|label=[Rating]|list=[★★★★★;★★★★;★★★;★★;★]}}
 {{textarea|summary|label=[Summary]|rows=[4]}}
-{{textarea|memo|label=[Notes / Impressions]|rows=[6]}}
-{{multiselect|tags|label=[Tags]|list=[Tech;Business;Fiction;Practical;Reference;Re-read]}}
-{{multilist|aliases|label=[Alternative / Original Title]}}
+{{textarea|memo|label=[Notes / thoughts]|rows=[6]}}
+{{multiselect|tags|label=[Tags]|list=[Technical;Business;Fiction;Practical;Reference;Reread candidate]}}
+{{multilist|aliases|label=[Alternate / original titles]}}
 {{checkbox|recommended|label=[Recommended]}}
 ```
 
@@ -732,41 +763,41 @@ $aliases:list[  - ]$
 
 $summary$
 
-## Notes / Impressions
+## Notes / thoughts
 
 $memo$
 
 **Tags:** $tags:separator[, ]$
 ````
 
-Frontmatter output example (aliases: "The Pragmatic Programmer / Tatsujin Programmer", tags: "Tech / Reference"):
+Frontmatter output example (given `aliases` = "The Pragmatic Programmer / 達人プログラマー" and `tags` = "Technical / Reference"):
 
 ```yaml
 ---
-title: "The Pragmatic Programmer"
+title: "達人プログラマー"
 created: "2026-06-26"
 tags:
-  - Tech
+  - Technical
   - Reference
 aliases:
   - The Pragmatic Programmer
-  - Tatsujin Programmer
+  - 達人プログラマー
 ---
 ```
 
-The same variable can be expanded in a different format in the body:
+The same variable can also be expanded in a different format elsewhere in the body.
 
 ```markdown
 **Tags:** $tags:separator[, ]$
 ```
 
 ```
-Tags: Tech, Reference
+Tags: Technical, Reference
 ```
 
 ---
 
-### ③ Meeting Minutes (Auto-generated filename using system variables)
+### 3. Meeting minutes (auto-generated file name using a system variable)
 
 ````markdown
 ---
@@ -777,12 +808,12 @@ date: "%date%"
 {{meta|folder=[Meetings]}}
 {{meta|filename=[Meeting_%date%]}}
 
-{{text|project|label=[Project Name]|required}}
-{{date|meeting_date|label=[Meeting Date]}}
+{{text|project|label=[Project name]|required}}
+{{date|meeting_date|label=[Meeting date]}}
 {{multilist|attendees|label=[Attendees]}}
 {{textarea|agenda|label=[Agenda]|rows=[4]}}
 {{textarea|notes|label=[Minutes]|rows=[10]}}
-{{textarea|action|label=[Action Items]|rows=[4]}}
+{{textarea|action|label=[Action items]|rows=[4]}}
 ```
 
 # $project$ — Meeting Minutes
@@ -807,28 +838,28 @@ $action$
 
 ## FAQ
 
-**Q. My template does not appear in the list**
+**Q. A template doesn't show up in the list**
 
-Make sure the file contains a `formbuilder` code block. Regular Markdown files without one are not listed. Also verify that the **Template folder** setting points to the correct folder name.
+Check that the file contains a `formbuilder` code block — a plain Markdown file without one won't appear in the list. Also double-check that **Template folder** in Settings points to the correct folder.
 
-**Q. `$keyName$` is not being replaced**
+**Q. `$key$` isn't replaced and shows up as-is**
 
-Check that a field with the matching `key` is defined in the form definition. Keys are case-sensitive (`Title` and `title` are different keys).
+Check that a field with the matching `key` is defined in the form. Keys are case-sensitive (`Title` and `title` are different keys).
 
-**Q. YAML lists in Frontmatter are not expanding correctly**
+**Q. A Frontmatter YAML list isn't expanding correctly**
 
-To output a YAML list (with indentation) from `multiselect` / `multilist`, use a variable modifier:
+To output an indented YAML list from `multiselect` / `multilist`, use a variable modifier.
 
 ```markdown
 tags:
 $tags:list[  - ]$
 ```
 
-The number of leading spaces inside `[]` controls the indentation width. Use two spaces (`list[  - ]`) to match Obsidian's standard 2-space indentation.
+The number of leading spaces inside `[]` becomes the indentation width. To match Obsidian's standard 2-space indentation, write `list[  - ]` (two spaces).
 
-**Q. I want to use a `multiselect` value in different formats in the body and Frontmatter**
+**Q. I want to use a `multiselect` value in a different format in the body vs. in Frontmatter**
 
-The same variable can be expanded multiple times with different modifiers:
+You can expand the same variable multiple times with different modifiers.
 
 ```markdown
 ---
@@ -836,26 +867,26 @@ tags:
 $tags:list[  - ]$
 ---
 
-Body: $tags:separator[, ]$
+In the body: $tags:separator[, ]$
 ```
 
-**Q. What is the difference between `multiselect` and `multilist`?**
+**Q. What's the difference between `multiselect` and `multilist`?**
 
 | | `multiselect` | `multilist` |
 |---|---|---|
-| Options | Must be predefined in the template | Free-form input |
-| UI | Checkbox-based | Text area (one item per line) |
-| Use case | Choose multiple values from a fixed list | Register multiple arbitrary strings |
+| Options | Must be predefined in the template | Free text |
+| UI | Checkboxes | Text area (one item per line) |
+| Use case | Choosing several from a fixed set | Registering an arbitrary number of free-text strings |
 
-Both support the same output modifiers (`:separator` / `:list`).
+Both use a modifier (`:separator` / `:list`) to control the output format.
 
-**Q. What happens if I enter a character that is not allowed in a filename?**
+**Q. What happens if I enter a character that isn't allowed in a file name?**
 
-Characters prohibited by the OS (`/ \ : * ? " < > |`) are automatically replaced with `_`, and a notification is shown. Windows reserved device names (`CON`, `NUL`, `COM1`, etc.) are prefixed with `_`.
+Characters prohibited by the OS (`/ \ : * ? " < > |`) are automatically replaced with `_`, and a notice is shown. Windows reserved device names (`CON`, `NUL`, `COM1`, etc.) are prefixed with `_`.
 
-**Q. Can I specify nested folders in `meta|folder`?**
+**Q. Can I specify a nested folder in `meta|folder`?**
 
-Yes. Use `/` as a separator, e.g. `Projects/2026/Notes`. Any missing folders in the path are created automatically.
+Yes — use `/` as a separator, e.g. `Projects/2026/Notes`. Any missing folders in the path are created automatically.
 
 ---
 
@@ -866,29 +897,9 @@ MIT
 ---
 ---
 
-# Form Builder（日本語）
+# 日本語説明
 
-Markdown テンプレートから入力フォームを自動生成し、フォームへの入力内容を反映した新しいノートを作成する Obsidian プラグインです。
-
----
-
-## 目次
-
-1. [インストール](#インストール)
-2. [セットアップ](#セットアップ)
-3. [基本的な使い方](#基本的な使い方)
-4. [テンプレートの構造](#テンプレートの構造)
-5. [FormBuilder 構文リファレンス](#formbuilder-構文リファレンス)
-   - [基本書式](#基本書式)
-   - [meta 構文](#meta-構文)
-   - [フィールド構文](#フィールド構文)
-   - [フィールドタイプ一覧](#フィールドタイプ一覧)
-   - [オプション一覧](#オプション一覧)
-   - [変数](#変数)
-   - [変数モディファイア](#変数モディファイア)
-6. [エラーと警告](#エラーと警告)
-7. [テンプレート例](#テンプレート例)
-8. [FAQ](#faq-1)
+FormBuilderは、テンプレートに簡素な独自構文を記述することで、入力用フォームを構築でき、入力された値を反映させたノートを作成することができます。
 
 ---
 
@@ -947,9 +958,49 @@ Templates
 
 1. テンプレートフォルダに `formbuilder` コードブロックを含む Markdown ファイルを作成する
 2. コマンドパレット（`Ctrl` / `Cmd` + `P`）を開き、**Create Note From Template** を実行する
-3. テンプレートが複数ある場合は一覧から選択する（昇順 / 降順の切り替えボタンあり）
+3. テンプレートが複数ある場合は **テンプレート選択画面** が開く。フォルダから探す、お気に入りから開く、使用履歴から選ぶといった方法が使える（詳しくは[テンプレート選択画面](#テンプレート選択画面)を参照）
 4. 表示されたフォームに入力し、**Create Note** を押す
 5. `meta` で指定したフォルダに新しいノートが生成され、自動的に開く
+
+---
+
+## テンプレート選択画面
+
+テンプレートが複数ある場合、**Create Note From Template** を実行すると、 **テンプレート選択画面** が開きます。
+
+![Template select](docs/select.png)
+
+### タブ
+
+| タブ | 表示内容 |
+|---|---|
+| 📁 フォルダ | テンプレートフォルダ以下のサブフォルダ構造をそのまま表示します。フォルダをクリックすると開閉できます（📂 = 開いている / 📁 = 閉じている）。 |
+| ★ お気に入り | お気に入り登録したテンプレートのみを表示します。 |
+| 🕒 使用履歴 | 直近で使用したテンプレートを最大20件、新しい順に表示します。 |
+
+前回開いていたタブは自動的に記憶され、次回もそのタブが開きます。
+
+### 検索
+
+上部の検索ボックスは、現在開いているタブに対して絞り込みを行います。フォルダタブで検索すると、階層は無視されフラットな一覧として表示されるため、どのサブフォルダにあるテンプレートでも見つけられます。文字を入力すると **×** が現れ、クリックすると検索文字列だけをクリアできます。
+
+### 並び替え
+
+**？ヘルプ** ボタンの左隣にある ▲ / ▼ ボタンで、名前順の昇順・降順を切り替えられます。フォルダタブ・お気に入りタブに適用され、使用履歴タブでは常に使用順（新しい順）で表示されるため、ボタンはグレーアウトして押せなくなります。
+
+### お気に入り
+
+各テンプレートの ☆ をタップするとお気に入りに追加され（★ に変わります）、もう一度タップすると解除されます。
+
+### 使用履歴
+
+テンプレートを使ってノートを生成するたびに、そのテンプレートは履歴の先頭に追加されます（すでに履歴にある場合は重複せず先頭へ移動します）。並び替えボタンの隣、使用履歴タブでのみ表示される **使用履歴をクリア** ボタンで、履歴を一括削除できます。誤操作を防ぐため、1回タップすると赤く変わり「もう一度タップで削除」という確認表示になり、数秒以内にもう一度タップした場合のみ実際に削除されます。
+
+### 見つからないテンプレートについて
+
+お気に入り・使用履歴に登録したテンプレートファイルが **Obsidian 内の操作**（ファイルエクスプローラーでのリネーム・移動）によって移動した場合、Form Builder は参照先を自動的に追従するため、特に何も気にする必要はありません。一方、**Obsidian を閉じている間に PC のエクスプローラーなどでリネーム・移動・削除**された場合は、この追従ができません。その場合、該当テンプレートは黙って一覧から消えるのではなく、グレーアウトした状態で **（見つかりません — ✕ で削除できます）** と表示されます。実際に削除するかどうかはユーザー自身の判断に委ねられます。
+
+サブフォルダ内のテンプレートは、お気に入り・使用履歴・フォルダタブでの検索結果など、フラットな一覧で表示される際にテンプレートフォルダを基準とした相対パス（例:`item/case/item-b`）で表示されるため、別フォルダに同名のテンプレートがあっても区別できます。
 
 ---
 
@@ -975,6 +1026,8 @@ Templates
 フィールドの定義と出力先の設定（meta）を記述します。
 このブロックは生成されたノートには含まれません（自動削除されます）。
 
+![code block](docs/code_block.png)
+
 ### 本文領域
 
 コードブロック外のすべての領域が変数展開の対象になります。
@@ -986,7 +1039,9 @@ Templates
 `multiselect` / `multilist` フィールドは、**変数モディファイア**で展開形式を指定できます。詳しくは[変数モディファイア](#変数モディファイア)を参照してください。
 
 > **変数の囲みの違い：**
-> ユーザー変数はドル記号 `$...$` で、システム変数はパーセント記号 `%...%` で囲みます。これは意図的な仕様です。
+> ユーザー変数はドル記号 `$...$` で、システム変数はパーセント記号 `%...%` で囲みます。
+
+![main text](docs/main_text.png)
 
 ---
 
@@ -1378,8 +1433,12 @@ $tags$ → 重要,完了
 | `%timestamp%` | 保存時刻（yyyyMMddHHmmss 形式） | `20260626153000` |
 | `%date%` | 保存日付 | `2026-06-26` |
 | `%time%` | 保存時刻 | `15:30:00` |
+| `%folder%` | ノートの最終的な出力フォルダ（`meta\|folder` 展開後の値） | `Characters` |
+| `%filename%` | ノートの最終的なファイル名（拡張子 `.md` を除く。`meta\|filename` 展開・サニタイズ後の値） | `アリス-20260624153000` |
 
-> **注意：** システム変数はフォームを開いた時刻ではなく、**Create Note ボタンを押した瞬間**の時刻で評価されます。
+> **注意：** 
+> システム変数はフォームを開いた時刻ではなく、**Create Note ボタンを押した瞬間**の時刻で評価されます。
+>`%folder%` と `%filename%` は本文でのみ使用できます。`meta|folder` や `meta|filename` 自身の中で使うと自己参照になってしまうため、そこでは展開されません。
 
 #### 変数の展開スコープ
 

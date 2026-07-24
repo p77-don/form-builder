@@ -177,10 +177,31 @@ export function resolveUserVariables(
     return { result, warnings };
 }
 
-export function resolveSystemVariables(template: string): string {
+export interface ResolvedNoteLocation {
+    /** meta|folder 展開後の最終的な出力フォルダ */
+    folder: string;
+    /** meta|filename 展開・サニタイズ後の最終的なファイル名（拡張子 .md を除く） */
+    filename: string;
+}
+
+/**
+ * システム変数を展開する。
+ * %timestamp% / %date% / %time% は常に展開する。
+ * %folder% / %filename% は location が渡された場合のみ展開する
+ * （meta|folder・meta|filename 自体を展開する際は、自己参照を避けるため location を渡さない）。
+ */
+export function resolveSystemVariables(template: string, location?: ResolvedNoteLocation): string {
     const now = new Date();
-    return template
+    let result = template
         .split('%timestamp%').join(formatTimestamp(now))
         .split('%date%').join(formatDate(now))
         .split('%time%').join(formatTime(now));
+
+    if (location) {
+        result = result
+            .split('%folder%').join(location.folder)
+            .split('%filename%').join(location.filename);
+    }
+
+    return result;
 }

@@ -64,32 +64,33 @@ export async function generateNote(
     meta: MetaConfig,
     sanitizedNotice: string
 ): Promise<void> {
-    // 本文の変数展開
+    // ファイル名の変数展開（%folder% / %filename% はまだ使えない。自己参照になるため）
+    const rawFilename = meta.filename ?? 'Untitled';
+    const { result: filename0 } = resolveUserVariables(rawFilename, values, fields);
+    let resolvedFilename = resolveSystemVariables(filename0);
+    resolvedFilename = sanitizeFileName(resolvedFilename, sanitizedNotice);
+
+    // フォルダの変数展開（同様に %folder% / %filename% はまだ使えない）
+    const rawFolder = meta.folder ?? '';
+    const { result: folder0 } = resolveUserVariables(rawFolder, values, fields);
+    const resolvedFolder = resolveSystemVariables(folder0);
+
+    // 本文の変数展開。ここで初めて %folder% / %filename%（拡張子なし）を本文中に展開できる
     const { result: content0, warnings: bodyWarnings } = resolveUserVariables(bodyTemplate, values, fields);
-    let content = resolveSystemVariables(content0);
+    const content = resolveSystemVariables(content0, { folder: resolvedFolder, filename: resolvedFilename });
 
     // モディファイア警告を Notice で表示
     for (const w of bodyWarnings) {
         new Notice(`Form Builder: ${w.message}`, 6000);
     }
 
-    // ファイル名の変数展開（モディファイア警告は重複するため省略）
-    const rawFilename = meta.filename ?? 'Untitled';
-    const { result: filename0 } = resolveUserVariables(rawFilename, values, fields);
-    let resolvedFilename = resolveSystemVariables(filename0);
-    resolvedFilename = sanitizeFileName(resolvedFilename, sanitizedNotice);
-    if (!resolvedFilename.endsWith('.md')) resolvedFilename += '.md';
-
-    // フォルダの変数展開
-    const rawFolder = meta.folder ?? '';
-    const { result: folder0 } = resolveUserVariables(rawFolder, values, fields);
-    const resolvedFolder = resolveSystemVariables(folder0);
+    const filenameWithExt = resolvedFilename.endsWith('.md') ? resolvedFilename : `${resolvedFilename}.md`;
 
     await ensureFolder(app, resolvedFolder);
 
     const filePath = resolvedFolder
-        ? normalizePath(`${resolvedFolder}/${resolvedFilename}`)
-        : normalizePath(resolvedFilename);
+        ? normalizePath(`${resolvedFolder}/${filenameWithExt}`)
+        : normalizePath(filenameWithExt);
 
     await app.vault.create(filePath, content);
 

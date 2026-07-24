@@ -10,7 +10,7 @@
     "strictNullChecks": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "lib": ["ES2018", "DOM"]
+    "lib": ["ES2019", "DOM"]
   },
   "include": ["src/**/*.ts"]
 }

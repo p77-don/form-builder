@@ -48,6 +48,16 @@ export interface Locale {
     selectorTitle: string;
     sortAsc:       string;
     sortDesc:      string;
+    pickerSearchPlaceholder: string;
+    pickerTabFolder:         string;
+    pickerTabFavorites:      string;
+    pickerTabRecent:         string;
+    pickerNoResults:         string;
+    pickerNoFavorites:       string;
+    pickerNoRecent:          string;
+    pickerClearRecent:        string;
+    pickerClearRecentConfirm: string;
+    pickerMissingLabel:      string;
 
     // ----------------------------------------
     // テンプレート未検出モーダル
@@ -121,6 +131,16 @@ const en: Locale = {
     selectorTitle: 'Select Template',
     sortAsc:       '▲ A → Z',
     sortDesc:      '▼ Z → A',
+    pickerSearchPlaceholder: 'Search templates...',
+    pickerTabFolder:         '📁 Folder',
+    pickerTabFavorites:      '★ Favorites',
+    pickerTabRecent:         '🕒 History',
+    pickerNoResults:         'No matching templates.',
+    pickerNoFavorites:       'No favorites yet. Tap ☆ next to a template to add one.',
+    pickerNoRecent:          'No usage history yet.',
+    pickerClearRecent:        'Clear History',
+    pickerClearRecentConfirm: 'Tap again to confirm',
+    pickerMissingLabel:      '(missing — tap ✕ to remove)',
 
     // テンプレート未検出
     welcomeTitle:      'Welcome to Form Builder',
@@ -244,6 +264,8 @@ $aliases:separator[, ]$`,
         ['%timestamp%', 'System variable — save timestamp (e.g. 20260626153000). Surrounded by percent signs %...%.'],
         ['%date%',      'System variable — save date (e.g. 2026-06-26). Evaluated at the moment "Create Note" is pressed.'],
         ['%time%',      'System variable — save time (e.g. 15:30:00). Evaluated at the moment "Create Note" is pressed.'],
+        ['%folder%',    'System variable — the note\'s final output folder (after meta|folder is resolved). Body text only; cannot be used inside meta|folder or meta|filename.'],
+        ['%filename%',  'System variable — the note\'s final file name without the ".md" extension (after meta|filename is resolved and sanitized). Body text only; cannot be used inside meta|folder or meta|filename.'],
     ],
     modifierRows: [
         ['$key:separator[, ]$',   'Join values with the specified separator. Any string allowed inside [].'],
@@ -283,6 +305,16 @@ const ja: Locale = {
     selectorTitle: 'テンプレートを選択',
     sortAsc:       '▲ 昇順',
     sortDesc:      '▼ 降順',
+    pickerSearchPlaceholder: 'テンプレートを検索...',
+    pickerTabFolder:         '📁 フォルダ',
+    pickerTabFavorites:      '★ お気に入り',
+    pickerTabRecent:         '🕒 使用履歴',
+    pickerNoResults:         '一致するテンプレートがありません。',
+    pickerNoFavorites:       'お気に入りはまだありません。テンプレート横の ☆ をタップすると登録できます。',
+    pickerNoRecent:          '使用履歴はまだありません。',
+    pickerClearRecent:        '使用履歴をクリア',
+    pickerClearRecentConfirm: 'もう一度タップで削除',
+    pickerMissingLabel:      '（見つかりません — ✕ で削除できます）',
 
     // テンプレート未検出
     welcomeTitle:      'Form Builder へようこそ',
@@ -406,6 +438,8 @@ $aliases:separator[、]$`,
         ['%timestamp%', 'システム変数。パーセント記号 %...% で囲みます。保存時刻（例: 20260626153000）。'],
         ['%date%',      'システム変数。保存日付（例: 2026-06-26）。「ノートを作成」ボタンを押した瞬間に評価されます。'],
         ['%time%',      'システム変数。保存時刻（例: 15:30:00）。「ノートを作成」ボタンを押した瞬間に評価されます。'],
+        ['%folder%',    'システム変数。このノートの最終的な出力フォルダ（meta|folder 展開後の値）。本文でのみ使用可能で、meta|folder・meta|filename の中では使用できません。'],
+        ['%filename%',  'システム変数。このノートの最終的なファイル名（拡張子 .md を除く。meta|filename 展開・サニタイズ後の値）。本文でのみ使用可能で、meta|folder・meta|filename の中では使用できません。'],
     ],
     modifierRows: [
         ['$キー名:separator[、]$',    '指定した区切り文字で結合します。[] 内の文字列をそのまま使用します。'],

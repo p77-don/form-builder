@@ -22,7 +22,7 @@ __export(main_exports, {
   default: () => FormBuilderPlugin
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian6 = require("obsidian");
+var import_obsidian8 = require("obsidian");
 
 // src/settings.ts
 var import_obsidian = require("obsidian");
@@ -54,6 +54,16 @@ var en = {
   selectorTitle: "Select Template",
   sortAsc: "\u25B2 A \u2192 Z",
   sortDesc: "\u25BC Z \u2192 A",
+  pickerSearchPlaceholder: "Search templates...",
+  pickerTabFolder: "\u{1F4C1} Folder",
+  pickerTabFavorites: "\u2605 Favorites",
+  pickerTabRecent: "\u{1F552} History",
+  pickerNoResults: "No matching templates.",
+  pickerNoFavorites: "No favorites yet. Tap \u2606 next to a template to add one.",
+  pickerNoRecent: "No usage history yet.",
+  pickerClearRecent: "Clear History",
+  pickerClearRecentConfirm: "Tap again to confirm",
+  pickerMissingLabel: "(missing \u2014 tap \u2715 to remove)",
   // テンプレート未検出
   welcomeTitle: "Welcome to Form Builder",
   noTemplateMessage: "No templates found. Please create a .md file in your template folder.",
@@ -166,7 +176,9 @@ $aliases:separator[, ]$`,
     ["$key$", 'User variable \u2014 replaced with the form input value. Surrounded by dollar signs $...$. For multiselect / multilist, values are joined with "," (no space) by default.'],
     ["%timestamp%", "System variable \u2014 save timestamp (e.g. 20260626153000). Surrounded by percent signs %...%."],
     ["%date%", 'System variable \u2014 save date (e.g. 2026-06-26). Evaluated at the moment "Create Note" is pressed.'],
-    ["%time%", 'System variable \u2014 save time (e.g. 15:30:00). Evaluated at the moment "Create Note" is pressed.']
+    ["%time%", 'System variable \u2014 save time (e.g. 15:30:00). Evaluated at the moment "Create Note" is pressed.'],
+    ["%folder%", "System variable \u2014 the note's final output folder (after meta|folder is resolved). Body text only; cannot be used inside meta|folder or meta|filename."],
+    ["%filename%", `System variable \u2014 the note's final file name without the ".md" extension (after meta|filename is resolved and sanitized). Body text only; cannot be used inside meta|folder or meta|filename.`]
   ],
   modifierRows: [
     ["$key:separator[, ]$", "Join values with the specified separator. Any string allowed inside []."],
@@ -199,6 +211,16 @@ var ja = {
   selectorTitle: "\u30C6\u30F3\u30D7\u30EC\u30FC\u30C8\u3092\u9078\u629E",
   sortAsc: "\u25B2 \u6607\u9806",
   sortDesc: "\u25BC \u964D\u9806",
+  pickerSearchPlaceholder: "\u30C6\u30F3\u30D7\u30EC\u30FC\u30C8\u3092\u691C\u7D22...",
+  pickerTabFolder: "\u{1F4C1} \u30D5\u30A9\u30EB\u30C0",
+  pickerTabFavorites: "\u2605 \u304A\u6C17\u306B\u5165\u308A",
+  pickerTabRecent: "\u{1F552} \u4F7F\u7528\u5C65\u6B74",
+  pickerNoResults: "\u4E00\u81F4\u3059\u308B\u30C6\u30F3\u30D7\u30EC\u30FC\u30C8\u304C\u3042\u308A\u307E\u305B\u3093\u3002",
+  pickerNoFavorites: "\u304A\u6C17\u306B\u5165\u308A\u306F\u307E\u3060\u3042\u308A\u307E\u305B\u3093\u3002\u30C6\u30F3\u30D7\u30EC\u30FC\u30C8\u6A2A\u306E \u2606 \u3092\u30BF\u30C3\u30D7\u3059\u308B\u3068\u767B\u9332\u3067\u304D\u307E\u3059\u3002",
+  pickerNoRecent: "\u4F7F\u7528\u5C65\u6B74\u306F\u307E\u3060\u3042\u308A\u307E\u305B\u3093\u3002",
+  pickerClearRecent: "\u4F7F\u7528\u5C65\u6B74\u3092\u30AF\u30EA\u30A2",
+  pickerClearRecentConfirm: "\u3082\u3046\u4E00\u5EA6\u30BF\u30C3\u30D7\u3067\u524A\u9664",
+  pickerMissingLabel: "\uFF08\u898B\u3064\u304B\u308A\u307E\u305B\u3093 \u2014 \u2715 \u3067\u524A\u9664\u3067\u304D\u307E\u3059\uFF09",
   // テンプレート未検出
   welcomeTitle: "Form Builder \u3078\u3088\u3046\u3053\u305D",
   noTemplateMessage: "\u30C6\u30F3\u30D7\u30EC\u30FC\u30C8\u304C\u898B\u3064\u304B\u308A\u307E\u305B\u3093\u3067\u3057\u305F\u3002\u30C6\u30F3\u30D7\u30EC\u30FC\u30C8\u30D5\u30A9\u30EB\u30C0\u306B .md \u30D5\u30A1\u30A4\u30EB\u3092\u4F5C\u6210\u3057\u3066\u304F\u3060\u3055\u3044\u3002",
@@ -311,7 +333,9 @@ $aliases:separator[\u3001]$`,
     ["$\u30AD\u30FC\u540D$", "\u30E6\u30FC\u30B6\u30FC\u5909\u6570\u3002\u30C9\u30EB\u8A18\u53F7 $...$ \u3067\u56F2\u307F\u307E\u3059\u3002\u30D5\u30A9\u30FC\u30E0\u306E\u5165\u529B\u5024\u306B\u7F6E\u304D\u63DB\u308F\u308A\u307E\u3059\u3002multiselect / multilist \u306F\u30C7\u30D5\u30A9\u30EB\u30C8\u3067\u30AB\u30F3\u30DE\u306E\u307F\u3067\u7D50\u5408\uFF08\u30B9\u30DA\u30FC\u30B9\u306A\u3057\uFF09\u3002"],
     ["%timestamp%", "\u30B7\u30B9\u30C6\u30E0\u5909\u6570\u3002\u30D1\u30FC\u30BB\u30F3\u30C8\u8A18\u53F7 %...% \u3067\u56F2\u307F\u307E\u3059\u3002\u4FDD\u5B58\u6642\u523B\uFF08\u4F8B: 20260626153000\uFF09\u3002"],
     ["%date%", "\u30B7\u30B9\u30C6\u30E0\u5909\u6570\u3002\u4FDD\u5B58\u65E5\u4ED8\uFF08\u4F8B: 2026-06-26\uFF09\u3002\u300C\u30CE\u30FC\u30C8\u3092\u4F5C\u6210\u300D\u30DC\u30BF\u30F3\u3092\u62BC\u3057\u305F\u77AC\u9593\u306B\u8A55\u4FA1\u3055\u308C\u307E\u3059\u3002"],
-    ["%time%", "\u30B7\u30B9\u30C6\u30E0\u5909\u6570\u3002\u4FDD\u5B58\u6642\u523B\uFF08\u4F8B: 15:30:00\uFF09\u3002\u300C\u30CE\u30FC\u30C8\u3092\u4F5C\u6210\u300D\u30DC\u30BF\u30F3\u3092\u62BC\u3057\u305F\u77AC\u9593\u306B\u8A55\u4FA1\u3055\u308C\u307E\u3059\u3002"]
+    ["%time%", "\u30B7\u30B9\u30C6\u30E0\u5909\u6570\u3002\u4FDD\u5B58\u6642\u523B\uFF08\u4F8B: 15:30:00\uFF09\u3002\u300C\u30CE\u30FC\u30C8\u3092\u4F5C\u6210\u300D\u30DC\u30BF\u30F3\u3092\u62BC\u3057\u305F\u77AC\u9593\u306B\u8A55\u4FA1\u3055\u308C\u307E\u3059\u3002"],
+    ["%folder%", "\u30B7\u30B9\u30C6\u30E0\u5909\u6570\u3002\u3053\u306E\u30CE\u30FC\u30C8\u306E\u6700\u7D42\u7684\u306A\u51FA\u529B\u30D5\u30A9\u30EB\u30C0\uFF08meta|folder \u5C55\u958B\u5F8C\u306E\u5024\uFF09\u3002\u672C\u6587\u3067\u306E\u307F\u4F7F\u7528\u53EF\u80FD\u3067\u3001meta|folder\u30FBmeta|filename \u306E\u4E2D\u3067\u306F\u4F7F\u7528\u3067\u304D\u307E\u305B\u3093\u3002"],
+    ["%filename%", "\u30B7\u30B9\u30C6\u30E0\u5909\u6570\u3002\u3053\u306E\u30CE\u30FC\u30C8\u306E\u6700\u7D42\u7684\u306A\u30D5\u30A1\u30A4\u30EB\u540D\uFF08\u62E1\u5F35\u5B50 .md \u3092\u9664\u304F\u3002meta|filename \u5C55\u958B\u30FB\u30B5\u30CB\u30BF\u30A4\u30BA\u5F8C\u306E\u5024\uFF09\u3002\u672C\u6587\u3067\u306E\u307F\u4F7F\u7528\u53EF\u80FD\u3067\u3001meta|folder\u30FBmeta|filename \u306E\u4E2D\u3067\u306F\u4F7F\u7528\u3067\u304D\u307E\u305B\u3093\u3002"]
   ],
   modifierRows: [
     ["$\u30AD\u30FC\u540D:separator[\u3001]$", "\u6307\u5B9A\u3057\u305F\u533A\u5207\u308A\u6587\u5B57\u3067\u7D50\u5408\u3057\u307E\u3059\u3002[] \u5185\u306E\u6587\u5B57\u5217\u3092\u305D\u306E\u307E\u307E\u4F7F\u7528\u3057\u307E\u3059\u3002"],
@@ -331,7 +355,10 @@ function getLocale(lang) {
 // src/settings.ts
 var DEFAULT_SETTINGS = {
   templateFolder: "Templates",
-  locale: "en"
+  locale: "en",
+  favorites: [],
+  recentTemplates: [],
+  lastTab: "folder"
 };
 var FormBuilderSettingTab = class extends import_obsidian.PluginSettingTab {
   constructor(app, plugin) {
@@ -750,9 +777,13 @@ function resolveUserVariables(template, values, fields) {
   });
   return { result, warnings };
 }
-function resolveSystemVariables(template) {
+function resolveSystemVariables(template, location) {
   const now = new Date();
-  return template.split("%timestamp%").join(formatTimestamp(now)).split("%date%").join(formatDate(now)).split("%time%").join(formatTime(now));
+  let result = template.split("%timestamp%").join(formatTimestamp(now)).split("%date%").join(formatDate(now)).split("%time%").join(formatTime(now));
+  if (location) {
+    result = result.split("%folder%").join(location.folder).split("%filename%").join(location.filename);
+  }
+  return result;
 }
 
 // src/generator/NoteGenerator.ts
@@ -786,22 +817,21 @@ async function ensureFolder(app, folderPath) {
 }
 async function generateNote(app, bodyTemplate, values, fields, meta, sanitizedNotice) {
   var _a, _b;
-  const { result: content0, warnings: bodyWarnings } = resolveUserVariables(bodyTemplate, values, fields);
-  let content = resolveSystemVariables(content0);
-  for (const w of bodyWarnings) {
-    new import_obsidian3.Notice(`Form Builder: ${w.message}`, 6e3);
-  }
   const rawFilename = (_a = meta.filename) != null ? _a : "Untitled";
   const { result: filename0 } = resolveUserVariables(rawFilename, values, fields);
   let resolvedFilename = resolveSystemVariables(filename0);
   resolvedFilename = sanitizeFileName(resolvedFilename, sanitizedNotice);
-  if (!resolvedFilename.endsWith(".md"))
-    resolvedFilename += ".md";
   const rawFolder = (_b = meta.folder) != null ? _b : "";
   const { result: folder0 } = resolveUserVariables(rawFolder, values, fields);
   const resolvedFolder = resolveSystemVariables(folder0);
+  const { result: content0, warnings: bodyWarnings } = resolveUserVariables(bodyTemplate, values, fields);
+  const content = resolveSystemVariables(content0, { folder: resolvedFolder, filename: resolvedFilename });
+  for (const w of bodyWarnings) {
+    new import_obsidian3.Notice(`Form Builder: ${w.message}`, 6e3);
+  }
+  const filenameWithExt = resolvedFilename.endsWith(".md") ? resolvedFilename : `${resolvedFilename}.md`;
   await ensureFolder(app, resolvedFolder);
-  const filePath = resolvedFolder ? (0, import_obsidian3.normalizePath)(`${resolvedFolder}/${resolvedFilename}`) : (0, import_obsidian3.normalizePath)(resolvedFilename);
+  const filePath = resolvedFolder ? (0, import_obsidian3.normalizePath)(`${resolvedFolder}/${filenameWithExt}`) : (0, import_obsidian3.normalizePath)(filenameWithExt);
   await app.vault.create(filePath, content);
   const file = app.vault.getFileByPath(filePath);
   if (file)
@@ -891,59 +921,6 @@ ${message}`, NOTICE_DURATION);
     }
   }
 };
-var TemplateSelectorModal = class extends import_obsidian5.Modal {
-  // 起動時は昇順
-  constructor(app, templates, locale, onSelect) {
-    super(app);
-    this.ascending = true;
-    this.templates = templates;
-    this.locale = locale;
-    this.onSelect = onSelect;
-  }
-  onOpen() {
-    this.modalEl.addClass("fb-modal-root");
-    const { contentEl } = this;
-    contentEl.empty();
-    const L = getLocale(this.locale);
-    this.setTitle(L.selectorTitle);
-    const root = contentEl.createDiv({ cls: "fb-modal" });
-    const sortRow = root.createDiv({ cls: "fb-sort-row" });
-    const sortBtn = sortRow.createEl("button", {
-      cls: "fb-btn fb-sort-btn",
-      text: L.sortAsc
-    });
-    const listWrap = root.createDiv();
-    const renderList2 = () => {
-      listWrap.empty();
-      const sorted = [...this.templates].sort(
-        (a, b) => this.ascending ? a.basename.localeCompare(b.basename) : b.basename.localeCompare(a.basename)
-      );
-      const ul = listWrap.createEl("ul", { cls: "fb-template-list" });
-      for (const file of sorted) {
-        const btn = ul.createEl("li").createEl("button", {
-          cls: "fb-template-btn"
-        });
-        btn.appendText(file.basename);
-        btn.addEventListener("click", () => {
-          this.close();
-          this.onSelect(file);
-        });
-      }
-    };
-    sortBtn.addEventListener("click", () => {
-      this.ascending = !this.ascending;
-      sortBtn.textContent = this.ascending ? L.sortAsc : L.sortDesc;
-      sortBtn.toggleClass("fb-sort-btn--desc", !this.ascending);
-      renderList2();
-    });
-    renderList2();
-    const btnRow = root.createDiv({ cls: "fb-btn-row" });
-    btnRow.createEl("button", { cls: "fb-btn", text: L.btnHelp }).addEventListener("click", () => new HelpModal(this.app, this.locale).open());
-  }
-  onClose() {
-    this.contentEl.empty();
-  }
-};
 var NoTemplateModal = class extends import_obsidian5.Modal {
   constructor(app, plugin, locale) {
     super(app);
@@ -969,6 +946,379 @@ var NoTemplateModal = class extends import_obsidian5.Modal {
   }
   onClose() {
     this.contentEl.empty();
+  }
+};
+
+// src/form/TemplatePickerModal.ts
+var import_obsidian6 = require("obsidian");
+
+// src/template/TemplateTreeBuilder.ts
+function buildTemplateTree(rootPath, files, ascending = true) {
+  const rootName = rootPath.split("/").pop() || rootPath;
+  const root = { name: rootName, path: rootPath, children: [], files: [] };
+  const nodeMap = /* @__PURE__ */ new Map();
+  nodeMap.set(rootPath, root);
+  function ensureNode(path) {
+    const existing = nodeMap.get(path);
+    if (existing)
+      return existing;
+    const lastSlash = path.lastIndexOf("/");
+    const parentPath = lastSlash === -1 ? rootPath : path.slice(0, lastSlash);
+    const parent = ensureNode(parentPath);
+    const name = path.split("/").pop() || path;
+    const node = { name, path, children: [], files: [] };
+    parent.children.push(node);
+    nodeMap.set(path, node);
+    return node;
+  }
+  for (const file of files) {
+    const folderPath = file.parent ? file.parent.path : rootPath;
+    const node = folderPath === rootPath ? root : ensureNode(folderPath);
+    node.files.push(file.path);
+  }
+  sortNode(root, ascending);
+  return root;
+}
+function sortNode(node, ascending) {
+  const dir = ascending ? 1 : -1;
+  node.children.sort((a, b) => dir * a.name.localeCompare(b.name));
+  node.files.sort((a, b) => dir * a.localeCompare(b));
+  for (const child of node.children)
+    sortNode(child, ascending);
+}
+
+// src/form/TemplatePickerModal.ts
+var TemplatePickerModal = class extends import_obsidian6.Modal {
+  constructor(app, plugin, allTemplates, templateFolderPath, locale, onSelect) {
+    super(app);
+    this.searchQuery = "";
+    this.ascending = true;
+    this.expandedFolders = /* @__PURE__ */ new Set();
+    this.resetClearRecentConfirm = () => {
+    };
+    this.plugin = plugin;
+    this.allTemplates = allTemplates;
+    this.templateFolderPath = templateFolderPath;
+    this.locale = locale;
+    this.onSelect = onSelect;
+    this.activeTab = plugin.templateStore.getLastTab();
+  }
+  onOpen() {
+    this.modalEl.addClass("fb-modal-root", "fb-picker-modal");
+    const { contentEl } = this;
+    contentEl.empty();
+    const L = getLocale(this.locale);
+    this.setTitle(L.selectorTitle);
+    const root = contentEl.createDiv({ cls: "fb-modal fb-picker" });
+    this.renderSearchBox(root, L);
+    this.tabBarEl = root.createDiv({ cls: "fb-tab-bar" });
+    this.listContainer = root.createDiv({ cls: "fb-picker-list" });
+    this.renderTabBar(L);
+    this.renderList(L);
+    const btnRow = root.createDiv({ cls: "fb-btn-row" });
+    this.renderClearRecentButton(btnRow, L);
+    this.renderSortToggle(btnRow, L);
+    btnRow.createEl("button", { cls: "fb-btn", text: L.btnHelp }).addEventListener("click", () => new HelpModal(this.app, this.locale).open());
+    this.updateActionButtons();
+  }
+  onClose() {
+    this.contentEl.empty();
+  }
+  // ------------------------------------------------------------
+  // 検索ボックス（共通フィルター。入力時のみ「×」でクリアできる）
+  // ------------------------------------------------------------
+  renderSearchBox(root, L) {
+    const wrap = root.createDiv({ cls: "fb-search-wrap" });
+    this.searchInputEl = wrap.createEl("input", {
+      cls: "fb-input fb-search-input",
+      type: "text",
+      placeholder: L.pickerSearchPlaceholder
+    });
+    this.searchInputEl.value = this.searchQuery;
+    this.searchInputEl.addEventListener("input", () => {
+      this.searchQuery = this.searchInputEl.value;
+      this.updateSearchClearVisibility();
+      this.renderList(L);
+    });
+    this.searchClearBtnEl = wrap.createEl("button", { cls: "fb-search-clear", text: "\xD7" });
+    this.searchClearBtnEl.setAttribute("aria-label", "Clear search");
+    this.searchClearBtnEl.addEventListener("click", () => {
+      this.searchQuery = "";
+      this.searchInputEl.value = "";
+      this.updateSearchClearVisibility();
+      this.searchInputEl.focus();
+      this.renderList(L);
+    });
+    this.updateSearchClearVisibility();
+  }
+  updateSearchClearVisibility() {
+    this.searchClearBtnEl.toggleClass("fb-search-clear--visible", this.searchQuery.length > 0);
+  }
+  // ------------------------------------------------------------
+  // 昇順／降順トグル・使用履歴クリアボタン（？ヘルプボタンの左隣に常設）
+  // ------------------------------------------------------------
+  renderSortToggle(container, L) {
+    const btn = container.createEl("button", {
+      cls: "fb-sort-toggle",
+      text: this.ascending ? L.sortAsc : L.sortDesc
+    });
+    this.sortToggleEl = btn;
+    btn.addEventListener("click", () => {
+      if (this.activeTab === "recent")
+        return;
+      this.ascending = !this.ascending;
+      btn.textContent = this.ascending ? L.sortAsc : L.sortDesc;
+      this.renderList(L);
+    });
+  }
+  /** 使用履歴の全削除ボタン。誤操作防止のため、1回目のタップで確認表示にし、
+   *  一定時間内に再度タップした場合のみ実際に削除する。使用履歴タブ以外では非表示にする。 */
+  renderClearRecentButton(container, L) {
+    const btn = container.createEl("button", { cls: "fb-sort-toggle", text: L.pickerClearRecent });
+    this.clearRecentBtnEl = btn;
+    let confirming = false;
+    let revertTimer;
+    const reset = () => {
+      confirming = false;
+      if (revertTimer !== void 0)
+        window.clearTimeout(revertTimer);
+      btn.textContent = L.pickerClearRecent;
+      btn.removeClass("fb-clear-toggle--confirm");
+    };
+    this.resetClearRecentConfirm = reset;
+    btn.addEventListener("click", () => {
+      if (!confirming) {
+        confirming = true;
+        btn.textContent = L.pickerClearRecentConfirm;
+        btn.addClass("fb-clear-toggle--confirm");
+        revertTimer = window.setTimeout(reset, 3e3);
+        return;
+      }
+      reset();
+      void this.plugin.templateStore.clearRecent().then(() => this.renderList(L));
+    });
+  }
+  /** タブ切替のたびに呼び出し、昇順・降順ボタンの有効/無効と、
+   *  使用履歴クリアボタンの表示/非表示を切り替える。 */
+  updateActionButtons() {
+    const isRecent = this.activeTab === "recent";
+    this.sortToggleEl.disabled = isRecent;
+    this.sortToggleEl.toggleClass("fb-sort-toggle--disabled", isRecent);
+    this.clearRecentBtnEl.toggleClass("fb-hidden", !isRecent);
+    if (!isRecent)
+      this.resetClearRecentConfirm();
+  }
+  // ------------------------------------------------------------
+  // タブバー
+  // ------------------------------------------------------------
+  renderTabBar(L) {
+    this.tabBarEl.empty();
+    const tabs = [
+      { id: "folder", label: L.pickerTabFolder },
+      { id: "favorites", label: L.pickerTabFavorites },
+      { id: "recent", label: L.pickerTabRecent }
+    ];
+    for (const tab of tabs) {
+      const btn = this.tabBarEl.createEl("button", {
+        cls: this.activeTab === tab.id ? "fb-tab fb-tab-active" : "fb-tab",
+        text: tab.label
+      });
+      btn.addEventListener("click", () => {
+        if (this.activeTab === tab.id)
+          return;
+        this.activeTab = tab.id;
+        void this.plugin.templateStore.setLastTab(tab.id);
+        this.renderTabBar(L);
+        this.updateActionButtons();
+        this.renderList(L);
+      });
+    }
+  }
+  // ------------------------------------------------------------
+  // コンテンツ（タブ切替時・検索時・ソート切替時に呼び出される）
+  // ------------------------------------------------------------
+  renderList(L) {
+    this.listContainer.empty();
+    switch (this.activeTab) {
+      case "folder":
+        this.renderFolderTab(L);
+        break;
+      case "favorites":
+        this.renderFavoritesTab(L);
+        break;
+      case "recent":
+        this.renderRecentTab(L);
+        break;
+    }
+  }
+  // ---- フォルダタブ ----
+  renderFolderTab(L) {
+    const dir = this.ascending ? 1 : -1;
+    if (this.searchQuery) {
+      const filtered = this.filterFiles(this.allTemplates).sort((a, b) => dir * this.displayName(a.path).localeCompare(this.displayName(b.path)));
+      if (filtered.length === 0) {
+        this.listContainer.createDiv({ cls: "fb-picker-empty", text: L.pickerNoResults });
+        return;
+      }
+      const ul = this.listContainer.createEl("ul", { cls: "fb-template-list" });
+      for (const file of filtered)
+        this.renderTemplateButton(ul, file, this.displayName(file.path));
+      return;
+    }
+    const tree = buildTemplateTree(this.templateFolderPath, this.allTemplates, this.ascending);
+    this.renderFolderNode(this.listContainer, tree, true);
+  }
+  renderFolderNode(container, node, isRoot) {
+    let body;
+    if (isRoot) {
+      body = container;
+    } else {
+      const expanded = this.expandedFolders.has(node.path);
+      const header = container.createDiv({ cls: "fb-folder-header" });
+      header.createSpan({ cls: "fb-folder-icon", text: expanded ? "\u{1F4C2}" : "\u{1F4C1}" });
+      header.createSpan({ cls: "fb-folder-name", text: node.name });
+      header.addEventListener("click", () => {
+        if (expanded)
+          this.expandedFolders.delete(node.path);
+        else
+          this.expandedFolders.add(node.path);
+        this.renderList(getLocale(this.locale));
+      });
+      if (!expanded)
+        return;
+      body = container.createDiv({ cls: "fb-folder-body" });
+    }
+    for (const child of node.children) {
+      this.renderFolderNode(body, child, false);
+    }
+    if (node.files.length > 0) {
+      const ul = body.createEl("ul", { cls: "fb-template-list" });
+      for (const path of node.files) {
+        const file = this.allTemplates.find((f) => f.path === path);
+        if (file)
+          this.renderTemplateButton(ul, file);
+      }
+    }
+  }
+  // ---- お気に入りタブ ----
+  renderFavoritesTab(L) {
+    const entries = this.plugin.templateStore.annotate(this.app, this.plugin.templateStore.getFavorites());
+    this.renderEntryList(entries, L, L.pickerNoFavorites, true);
+  }
+  // ---- 使用履歴タブ（使用順のため並び替え対象外） ----
+  renderRecentTab(L) {
+    const entries = this.plugin.templateStore.annotate(this.app, this.plugin.templateStore.getRecent());
+    this.renderEntryList(entries, L, L.pickerNoRecent, false);
+  }
+  renderEntryList(entries, L, emptyMessage, sortable) {
+    let filtered = this.filterEntries(entries);
+    if (sortable) {
+      const dir = this.ascending ? 1 : -1;
+      filtered = [...filtered].sort((a, b) => dir * this.displayName(a.path).localeCompare(this.displayName(b.path)));
+    }
+    if (filtered.length === 0) {
+      this.listContainer.createDiv({ cls: "fb-picker-empty", text: emptyMessage });
+      return;
+    }
+    const ul = this.listContainer.createEl("ul", { cls: "fb-template-list" });
+    for (const entry of filtered)
+      this.renderEntryButton(ul, entry, L);
+  }
+  // ------------------------------------------------------------
+  // 検索フィルター（共通）
+  // ------------------------------------------------------------
+  filterFiles(files) {
+    if (!this.searchQuery)
+      return files;
+    const q = this.searchQuery.toLowerCase();
+    return files.filter((f) => f.basename.toLowerCase().includes(q));
+  }
+  filterEntries(entries) {
+    if (!this.searchQuery)
+      return entries;
+    const q = this.searchQuery.toLowerCase();
+    return entries.filter((e) => this.displayName(e.path).toLowerCase().includes(q));
+  }
+  /** テンプレートフォルダ（templateFolderPath）を基準とした相対パスを表示名として返す（拡張子は除く）。
+   *  例: templateFolder が "template" の場合
+   *    template/charactor.md            → charactor
+   *    template/item/item-a.md          → item/item-a
+   *    template/item/case/item-b.md     → item/case/item-b
+   *  お気に入り・使用履歴タブはフラット表示のため、この相対パスで区別しやすくする。 */
+  displayName(path) {
+    const noExt = path.endsWith(".md") ? path.slice(0, -3) : path;
+    const root = this.templateFolderPath;
+    if (root && noExt.startsWith(`${root}/`)) {
+      return noExt.slice(root.length + 1);
+    }
+    return noExt.split("/").pop() || noExt;
+  }
+  // ------------------------------------------------------------
+  // 1件分の項目描画
+  // ------------------------------------------------------------
+  /** フォルダタブ用（実体が必ず存在する TFile ベース）。
+   *  label 省略時はファイル名のみ（ツリー表示時）、指定時はその文字列を表示する（検索時のフラット表示など）。 */
+  renderTemplateButton(ul, file, label) {
+    const li = ul.createEl("li");
+    const row = li.createDiv({ cls: "fb-template-row" });
+    const btn = row.createEl("button", { cls: "fb-template-btn" });
+    btn.appendText(label != null ? label : file.basename);
+    btn.addEventListener("click", () => this.selectTemplate(file));
+    const favBtn = row.createEl("button", {
+      cls: "fb-fav-toggle",
+      text: this.plugin.templateStore.isFavorite(file.path) ? "\u2605" : "\u2606"
+    });
+    favBtn.setAttribute("aria-label", "Toggle favorite");
+    favBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      void this.plugin.templateStore.toggleFavorite(file.path).then(() => {
+        this.renderList(getLocale(this.locale));
+      });
+    });
+  }
+  /** お気に入り／使用履歴タブ用（見つからない場合のグレーアウト表示に対応） */
+  renderEntryButton(ul, entry, L) {
+    const li = ul.createEl("li");
+    const row = li.createDiv({
+      cls: entry.isMissing ? "fb-template-row fb-template-missing" : "fb-template-row"
+    });
+    const btn = row.createEl("button", { cls: "fb-template-btn" });
+    btn.appendText(this.displayName(entry.path));
+    if (entry.isMissing) {
+      btn.createSpan({ cls: "fb-missing-label", text: ` ${L.pickerMissingLabel}` });
+      btn.disabled = true;
+    } else {
+      btn.addEventListener("click", () => {
+        const file = this.app.vault.getFileByPath(entry.path);
+        if (file instanceof import_obsidian6.TFile)
+          this.selectTemplate(file);
+      });
+    }
+    const favBtn = row.createEl("button", {
+      cls: "fb-fav-toggle",
+      text: entry.isMissing ? "\u2715" : this.plugin.templateStore.isFavorite(entry.path) ? "\u2605" : "\u2606"
+    });
+    favBtn.setAttribute("aria-label", entry.isMissing ? "Remove" : "Toggle favorite");
+    favBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      void (async () => {
+        if (entry.isMissing) {
+          await this.plugin.templateStore.removeFavorite(entry.path);
+          await this.plugin.templateStore.removeRecent(entry.path);
+        } else {
+          await this.plugin.templateStore.toggleFavorite(entry.path);
+        }
+        this.renderList(L);
+      })();
+    });
+  }
+  // ------------------------------------------------------------
+  // テンプレート選択 → フォーム生成へ
+  // ------------------------------------------------------------
+  selectTemplate(file) {
+    this.close();
+    void this.plugin.templateStore.pushRecent(file.path);
+    this.onSelect(file);
   }
 };
 
@@ -1296,10 +1646,141 @@ function parseTemplate(templateContent) {
   return { meta, fields, bodyTemplate, errors, warnings };
 }
 
+// src/template/TemplateScanner.ts
+var import_obsidian7 = require("obsidian");
+async function collectTemplateFiles(vault, folder) {
+  const result = [];
+  for (const child of folder.children) {
+    if (child instanceof import_obsidian7.TFolder) {
+      const nested = await collectTemplateFiles(vault, child);
+      result.push(...nested);
+    } else if (child instanceof import_obsidian7.TFile && child.extension === "md") {
+      try {
+        const content = await vault.read(child);
+        if (FORMBUILDER_BLOCK_RE.test(content)) {
+          result.push(child);
+        }
+      } catch (e) {
+      }
+    }
+  }
+  return result;
+}
+
+// src/template/TemplateStore.ts
+var MAX_RECENT = 20;
+var TemplateStore = class {
+  constructor(plugin) {
+    this.plugin = plugin;
+  }
+  // ------------------------------------------------------------
+  // お気に入り
+  // ------------------------------------------------------------
+  getFavorites() {
+    return [...this.plugin.settings.favorites];
+  }
+  isFavorite(path) {
+    return this.plugin.settings.favorites.includes(path);
+  }
+  async toggleFavorite(path) {
+    const favorites = this.plugin.settings.favorites;
+    const idx = favorites.indexOf(path);
+    if (idx === -1) {
+      favorites.push(path);
+    } else {
+      favorites.splice(idx, 1);
+    }
+    await this.plugin.saveSettings();
+  }
+  /** グレーアウトした「見つからない」項目をユーザーが手動で削除する場合に使用する。 */
+  async removeFavorite(path) {
+    const favorites = this.plugin.settings.favorites;
+    const idx = favorites.indexOf(path);
+    if (idx !== -1) {
+      favorites.splice(idx, 1);
+      await this.plugin.saveSettings();
+    }
+  }
+  // ------------------------------------------------------------
+  // 最近使った
+  // ------------------------------------------------------------
+  getRecent() {
+    return [...this.plugin.settings.recentTemplates];
+  }
+  /** テンプレート生成成功時に呼び出す。重複は先頭へ移動し、最大件数を超えたら古いものを切り詰める。 */
+  async pushRecent(path) {
+    const recent = this.plugin.settings.recentTemplates;
+    const existing = recent.indexOf(path);
+    if (existing !== -1)
+      recent.splice(existing, 1);
+    recent.unshift(path);
+    if (recent.length > MAX_RECENT)
+      recent.length = MAX_RECENT;
+    await this.plugin.saveSettings();
+  }
+  async removeRecent(path) {
+    const recent = this.plugin.settings.recentTemplates;
+    const idx = recent.indexOf(path);
+    if (idx !== -1) {
+      recent.splice(idx, 1);
+      await this.plugin.saveSettings();
+    }
+  }
+  /** 使用履歴をすべて削除する。 */
+  async clearRecent() {
+    if (this.plugin.settings.recentTemplates.length === 0)
+      return;
+    this.plugin.settings.recentTemplates.length = 0;
+    await this.plugin.saveSettings();
+  }
+  // ------------------------------------------------------------
+  // 最後に開いていたタブ
+  // ------------------------------------------------------------
+  getLastTab() {
+    return this.plugin.settings.lastTab;
+  }
+  async setLastTab(tab) {
+    if (this.plugin.settings.lastTab === tab)
+      return;
+    this.plugin.settings.lastTab = tab;
+    await this.plugin.saveSettings();
+  }
+  // ------------------------------------------------------------
+  // リネーム追従（Obsidian 内でのファイル移動・リネームをリアルタイムに反映）
+  // ------------------------------------------------------------
+  async handleRename(oldPath, newPath) {
+    let changed = false;
+    const favorites = this.plugin.settings.favorites;
+    const favIdx = favorites.indexOf(oldPath);
+    if (favIdx !== -1) {
+      favorites[favIdx] = newPath;
+      changed = true;
+    }
+    const recent = this.plugin.settings.recentTemplates;
+    const recentIdx = recent.indexOf(oldPath);
+    if (recentIdx !== -1) {
+      recent[recentIdx] = newPath;
+      changed = true;
+    }
+    if (changed)
+      await this.plugin.saveSettings();
+  }
+  // ------------------------------------------------------------
+  // 存在チェック（表示用の安全網。PCエクスプローラー等での変更・削除を検知する）
+  // ------------------------------------------------------------
+  isMissing(app, path) {
+    return app.vault.getFileByPath(path) === null;
+  }
+  annotate(app, paths) {
+    return paths.map((path) => ({ path, isMissing: this.isMissing(app, path) }));
+  }
+};
+
 // src/main.ts
-var FormBuilderPlugin = class extends import_obsidian6.Plugin {
+var FormBuilderPlugin = class extends import_obsidian8.Plugin {
   onload() {
     void this.loadSettings().then(() => {
+      this.templateStore = new TemplateStore(this);
       this.addSettingTab(new FormBuilderSettingTab(this.app, this));
       this.addCommand({
         id: "create-note-from-template",
@@ -1308,6 +1789,13 @@ var FormBuilderPlugin = class extends import_obsidian6.Plugin {
           void this.openTemplatePicker();
         }
       });
+      this.registerEvent(
+        this.app.vault.on("rename", (file, oldPath) => {
+          if (file instanceof import_obsidian8.TFile && file.extension === "md") {
+            void this.templateStore.handleRename(oldPath, file.path);
+          }
+        })
+      );
     });
   }
   onunload() {
@@ -1319,18 +1807,7 @@ var FormBuilderPlugin = class extends import_obsidian6.Plugin {
       new NoTemplateModal(this.app, this, locale).open();
       return;
     }
-    const mdFiles = folder.children.filter(
-      (f) => f instanceof import_obsidian6.TFile && f.extension === "md"
-    );
-    const templates = [];
-    for (const file of mdFiles) {
-      try {
-        const content = await this.app.vault.read(file);
-        if (FORMBUILDER_BLOCK_RE.test(content))
-          templates.push(file);
-      } catch (e) {
-      }
-    }
+    const templates = await collectTemplateFiles(this.app.vault, folder);
     if (templates.length === 0) {
       new NoTemplateModal(this.app, this, locale).open();
       return;
@@ -1338,7 +1815,7 @@ var FormBuilderPlugin = class extends import_obsidian6.Plugin {
     if (templates.length === 1) {
       await this.openFormForTemplate(templates[0]);
     } else {
-      new TemplateSelectorModal(this.app, templates, locale, (file) => {
+      new TemplatePickerModal(this.app, this, templates, folder.path, locale, (file) => {
         void this.openFormForTemplate(file);
       }).open();
     }
@@ -1350,7 +1827,7 @@ var FormBuilderPlugin = class extends import_obsidian6.Plugin {
     try {
       content = await this.app.vault.read(file);
     } catch (e) {
-      new import_obsidian6.Notice(`${L.noticeReadError}
+      new import_obsidian8.Notice(`${L.noticeReadError}
 "${file.path}"`);
       return;
     }
