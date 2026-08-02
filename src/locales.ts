@@ -33,6 +33,8 @@ export interface Locale {
     noticeRequired:      string;  // 必須未入力
     noticeCreateError:   string;  // ノート作成失敗
     noticeSanitized:     string;  // ファイル名文字置換
+    noticeInvalidNumber: string;  // number フィールドの型/範囲エラー
+    noticeDuplicateFilename: string;  // 同名ファイル存在時の自動リネーム通知（{name} をファイル名に置換）
     noticeFatalHeader:   string;  // 致命的エラーのヘッダー
 
     // ----------------------------------------
@@ -101,6 +103,81 @@ export interface Locale {
     optionRows:   [string, string][];
     variableRows: [string, string][];
     modifierRows: [string, string][];
+
+    // ----------------------------------------
+    // 構文ジェネレーター（Field Generator / FieldGeneratorModal）
+    // ----------------------------------------
+    genModalTitle: string;
+
+    // Generator Type（Field / Meta: Folder / Meta: Filename の切り替え）
+    genTypeLabel:        string;
+    genTypeField:        string;
+    genTypeMetaFolder:   string;
+    genTypeMetaFilename: string;
+
+    genFieldType:  string;
+    /** Field Type ドロップダウンの表示名（キーは FieldType の値と一致） */
+    genFieldTypeOptions: Record<string, string>;
+    /** Field Type ごとの一言説明（キーは FieldType の値と一致。初心者向けヒント表示に使用） */
+    genFieldTypeHints: Record<string, string>;
+
+    genKey:            string;
+    genKeyHint:         string;
+    genLabel:          string;
+    genLabelHint:       string;
+    genDescription:    string;
+    genDescriptionHint: string;
+    genPlaceholder:    string;
+    genPlaceholderHint: string;
+    genDefault:        string;
+    genDefaultHint:     string;
+    genDefaultHintSelect:      string;
+    genDefaultHintMultiselect: string;
+    genDefaultChecked: string;
+    genDefaultCheckedHint: string;
+    genRows:           string;
+    genRowsHint:        string;
+    genMin:            string;
+    genMinHint:         string;
+    genMax:            string;
+    genMaxHint:         string;
+    genList:           string;
+    genListHint:       string;
+    genRequired:       string;
+    genRequiredHint:    string;
+
+    genPreviewTitle:  string;
+    genVariableTitle: string;
+
+    genVarHintDefaultScalar: string;
+    genVarHintDefaultArray:  string;
+    genVarHintList:      string;
+    genVarHintNumbered:  string;
+    genVarHintSeparator: string;
+
+    // Meta（folder / filename）生成
+    genMetaFolderLabel:   string;
+    genMetaFilenameLabel: string;
+    genMetaFolderHint:    string;
+    genMetaFilenameHint:  string;
+    genMetaInsertVariableLabel:      string;
+    genMetaFolderTip:                string;
+    genMetaFilenameOkTip:            string;
+    genMetaFilenameNoVariableWarning: string;
+
+    genWrapInBlockLabel: string;
+    genWrapInBlockHint:  string;
+
+    genCopySyntax:   string;
+    genCopyVariable: string;
+    genCopyBoth:     string;
+    genInsert:       string;
+    genCancel:       string;
+
+    genCopiedNotice:        string;
+    genNoActiveEditor:      string;
+    genInsertOutsideBlock:  string;
+    genInsertedNotice:      string;
 }
 
 // ============================================================
@@ -120,6 +197,8 @@ const en: Locale = {
     noticeRequired:    'Form Builder: Please fill in all required fields.',
     noticeCreateError: 'Form Builder: Failed to create note.',
     noticeSanitized:   'Form Builder: Some invalid characters in the file name were replaced with "_".',
+    noticeInvalidNumber: 'Form Builder: One or more number fields are invalid. Please check the values and the min/max range.',
+    noticeDuplicateFilename: 'Form Builder: A note with this name already existed, so it was saved as "{name}" instead.',
     noticeFatalHeader: 'Form Builder Error:',
 
     // モーダル共通
@@ -275,6 +354,98 @@ $aliases:separator[, ]$`,
         ['$key:list[* ]$',        'Example: unordered list with *'],
         ['$key:list[1. ]$',       'Example: numbered list (auto-numbered only when [] starts with "1.")'],
     ],
+
+    // ---------- 構文ジェネレーター（Field Generator） ----------
+    genModalTitle: 'Syntax Generator',
+
+    genTypeLabel:        'Generator Type',
+    genTypeField:        'Field',
+    genTypeMetaFolder:   'Meta: Folder',
+    genTypeMetaFilename: 'Meta: Filename',
+
+    genFieldType:  'Field Type',
+    genFieldTypeOptions: {
+        text:        'Text',
+        textarea:    'Textarea',
+        number:      'Number',
+        date:        'Date',
+        checkbox:    'Checkbox',
+        select:      'Select',
+        multiselect: 'Multiselect',
+        multilist:   'Multilist',
+    },
+    genFieldTypeHints: {
+        text:        'Single-line text input.',
+        textarea:    'Multi-line text input.',
+        number:      'Numeric input.',
+        date:        'Date picker.',
+        checkbox:    'A single on/off toggle.',
+        select:      'Dropdown — user picks exactly one option.',
+        multiselect: 'Checkboxes — user can pick multiple options.',
+        multilist:   'Free text, one item per line (no fixed option list).',
+    },
+
+    genKey:             'Key',
+    genKeyHint:         'The internal name used in the syntax and as the $key$ variable. Letters, numbers, "_" and "-" only. Not shown to the user filling in the form.',
+    genLabel:           'Label',
+    genLabelHint:       'The text shown above this field on the form. Leave blank to fall back to the key.',
+    genDescription:     'Description',
+    genDescriptionHint: 'Short explanatory text shown below the label on the form. Optional.',
+    genPlaceholder:     'Placeholder',
+    genPlaceholderHint: 'Faint example text shown inside the empty input box. Optional.',
+    genDefault:         'Default',
+    genDefaultHint:     'Value pre-filled when the form opens. Leave blank for no default.',
+    genDefaultHintSelect:      'The option pre-selected when the form opens. Leave blank to select nothing initially.',
+    genDefaultHintMultiselect: 'Options pre-selected when the form opens. For multiple options, separate with ";" (e.g. "a;b"). Leave blank to select nothing initially.',
+    genDefaultChecked:  'Checked by default',
+    genDefaultCheckedHint: 'Whether this checkbox starts turned on when the form opens.',
+    genRows:            'Rows',
+    genRowsHint:        'How many lines tall the input box is. Leave blank for the default size.',
+    genMin:             'Min',
+    genMinHint:         'Smallest number the user is allowed to enter. Optional.',
+    genMax:             'Max',
+    genMaxHint:         'Largest number the user is allowed to enter. Optional.',
+    genList:            'Options',
+    genListHint:        'Enter one option per line.',
+    genRequired:        'Required',
+    genRequiredHint:    'If on, the form cannot be submitted while this field is empty.',
+
+    genPreviewTitle:  'Preview',
+    genVariableTitle: 'Generated Variable',
+
+    genVarHintDefaultScalar: 'Replaced with the value as entered.',
+    genVarHintDefaultArray:  'Joins all values with "," (no space).',
+    genVarHintList:      'Markdown list, each line prefixed with "- ".',
+    genVarHintNumbered:  'Numbered list (1. 2. 3. ...).',
+    genVarHintSeparator: 'Joins all values with "; ".',
+
+    genMetaFolderLabel:   'Folder',
+    genMetaFilenameLabel: 'File name',
+    genMetaFolderHint:
+        'Where the note is saved. Type a fixed name (e.g. "Notes"), a variable (e.g. "$export$" or "%date%"), or mix both (e.g. "out_%date%").',
+    genMetaFilenameHint:
+        'The file name (without ".md"). Same rules as Folder — fixed text, a variable, or a mix (e.g. "$title$-%timestamp%").',
+    genMetaInsertVariableLabel: 'Insert variable:',
+    genMetaFolderTip:
+        'Tip: combining fixed text with a variable (e.g. "out_%date%") keeps notes organized while still being predictable.',
+    genMetaFilenameOkTip:
+        'Good — this file name includes a variable, which helps avoid collisions with existing files.',
+    genMetaFilenameNoVariableWarning:
+        'This file name is entirely fixed text. If a note with the same name already exists in the folder, creating a new note will fail. Consider adding %date%, %timestamp%, or a form variable like $title$.',
+
+    genWrapInBlockLabel: 'Insert formbuilder code block',
+    genWrapInBlockHint:  'Wraps the generated syntax in a new ```formbuilder code block. Your cursor is not currently inside one.',
+
+    genCopySyntax:   'Copy Syntax',
+    genCopyVariable: 'Copy Variable',
+    genCopyBoth:     'Copy Both',
+    genInsert:       'Insert',
+    genCancel:       'Cancel',
+
+    genCopiedNotice:       'Form Builder: Copied to clipboard.',
+    genNoActiveEditor:     'Form Builder: No active editor found.',
+    genInsertOutsideBlock: 'Place the cursor inside a formbuilder code block.',
+    genInsertedNotice:     'Form Builder: Field inserted.',
 };
 
 // ============================================================
@@ -294,6 +465,8 @@ const ja: Locale = {
     noticeRequired:    'Form Builder: 必須フィールドをすべて入力してください。',
     noticeCreateError: 'Form Builder: ノートの作成に失敗しました。',
     noticeSanitized:   'Form Builder: ファイル名に使用できない文字が含まれていたため "_" に置き換えました。',
+    noticeInvalidNumber: 'Form Builder: 数値の入力に誤りがあります。入力内容と最小値・最大値の範囲を確認してください。',
+    noticeDuplicateFilename: 'Form Builder: 同名のノートが既に存在したため、"{name}" として保存しました。',
     noticeFatalHeader: 'Form Builder エラー:',
 
     // モーダル共通
@@ -449,6 +622,98 @@ $aliases:separator[、]$`,
         ['$キー名:list[* ]$',        '例: * 記法のリスト'],
         ['$キー名:list[1. ]$',       '例: 番号付きリスト（[] が "1." で始まる場合のみ自動採番）'],
     ],
+
+    // ---------- 構文ジェネレーター（Field Generator） ----------
+    genModalTitle: '構文ジェネレーター',
+
+    genTypeLabel:        '生成タイプ',
+    genTypeField:        'フィールド',
+    genTypeMetaFolder:   'Meta: フォルダ',
+    genTypeMetaFilename: 'Meta: ファイル名',
+
+    genFieldType:  'フィールドタイプ',
+    genFieldTypeOptions: {
+        text:        'テキスト',
+        textarea:    'テキストエリア',
+        number:      '数値',
+        date:        '日付',
+        checkbox:    'チェックボックス',
+        select:      '単一選択',
+        multiselect: '複数選択',
+        multilist:   '自由記述リスト',
+    },
+    genFieldTypeHints: {
+        text:        '1行の短いテキストを入力する項目です。',
+        textarea:    '複数行のテキストを入力する項目です。',
+        number:      '数値のみを入力する項目です。',
+        date:        '日付を選択する項目です。',
+        checkbox:    'ON/OFFを1つだけ切り替える項目です。',
+        select:      'プルダウンから1つだけ選ぶ項目です。',
+        multiselect: 'チェックボックスから複数選べる項目です。',
+        multilist:   '決まった選択肢を持たず、自由に複数行入力できる項目です。',
+    },
+
+    genKey:             'キー',
+    genKeyHint:         '構文および $キー$ 変数として使われる内部名です。半角英数字・"_"・"-" のみ使用できます。フォーム上には表示されません。',
+    genLabel:           'ラベル',
+    genLabelHint:       'フォーム上でこの項目の見出しとして表示される文字列です。空欄の場合はキーがそのまま表示されます。',
+    genDescription:     '説明',
+    genDescriptionHint: 'ラベルの下に表示される補足説明です。省略できます。',
+    genPlaceholder:     'プレースホルダー',
+    genPlaceholderHint: '未入力時に薄いグレーで表示される入力例です。省略できます。',
+    genDefault:         'デフォルト値',
+    genDefaultHint:     'フォームを開いたときに最初から入力されている値です。空欄なら何も入力されません。',
+    genDefaultHintSelect:      'フォームを開いたときに最初から選択されている値です。空欄なら何も選択されていません。',
+    genDefaultHintMultiselect: 'フォームを開いたときに最初から選択されている項目です。複数指定する場合は ";" で区切ってください（例: "a;b"）。空欄ならどれも選択されません。',
+    genDefaultChecked:  '初期状態でONにする',
+    genDefaultCheckedHint: 'フォームを開いたときに、このチェックボックスを最初からONにするかどうかです。',
+    genRows:            '行数',
+    genRowsHint:        '入力欄の高さ（行数）です。空欄の場合は標準の高さになります。',
+    genMin:             '最小値',
+    genMinHint:         '入力できる最小の数値です。省略できます。',
+    genMax:             '最大値',
+    genMaxHint:         '入力できる最大の数値です。省略できます。',
+    genList:            '選択肢',
+    genListHint:        '1行につき1項目を入力してください。',
+    genRequired:        '必須項目にする',
+    genRequiredHint:    'ONにすると、この項目が未入力のままではノートを作成できなくなります。',
+
+    genPreviewTitle:  'プレビュー',
+    genVariableTitle: '展開用変数',
+
+    genVarHintDefaultScalar: '入力された値がそのまま置き換わります。',
+    genVarHintDefaultArray:  'すべての値を "," （区切り文字なし）で連結します。',
+    genVarHintList:      'Markdown リスト形式（各行の先頭に "- " を付けて展開）。',
+    genVarHintNumbered:  '番号付きリスト（1. 2. 3. …）として展開。',
+    genVarHintSeparator: 'すべての値を "; " で連結します。',
+
+    genMetaFolderLabel:   'フォルダ',
+    genMetaFilenameLabel: 'ファイル名',
+    genMetaFolderHint:
+        'ノートの保存先です。固定名（例: "Notes"）、変数（例: "$export$" や "%date%"）、またはその組み合わせ（例: "out_%date%"）を入力できます。',
+    genMetaFilenameHint:
+        'ファイル名（".md" は不要）です。フォルダと同様に、固定文字・変数・その組み合わせ（例: "$title$-%timestamp%"）を入力できます。',
+    genMetaInsertVariableLabel: '変数を挿入:',
+    genMetaFolderTip:
+        'ヒント: 固定文字と変数を組み合わせる（例: "out_%date%"）と、整理しやすく予測もしやすいフォルダ構成になります。',
+    genMetaFilenameOkTip:
+        '変数が含まれているため、既存ファイルとの重複が起きにくくなっています。',
+    genMetaFilenameNoVariableWarning:
+        'このファイル名は完全に固定文字だけになっています。同じフォルダに同名のファイルが既に存在する場合、ノートの作成に失敗します。%date% や %timestamp%、または $title$ のようなフォーム変数を追加することをおすすめします。',
+
+    genWrapInBlockLabel: 'formbuilder コードブロックを挿入する',
+    genWrapInBlockHint:  '生成される構文を新しい ```formbuilder コードブロックで囲みます。現在カーソルはブロックの外にあります。',
+
+    genCopySyntax:   '構文をコピー',
+    genCopyVariable: '変数をコピー',
+    genCopyBoth:     '両方コピー',
+    genInsert:       '挿入',
+    genCancel:       'キャンセル',
+
+    genCopiedNotice:       'Form Builder: クリップボードにコピーしました。',
+    genNoActiveEditor:     'Form Builder: アクティブなエディタが見つかりません。',
+    genInsertOutsideBlock: 'formbuilder コードブロックの中にカーソルを置いてください。',
+    genInsertedNotice:     'Form Builder: フィールドを挿入しました。',
 };
 
 // ============================================================

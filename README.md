@@ -1,8 +1,8 @@
 # Form Builder
 
-FormBuilder allows you to build input forms by writing simple, custom syntax in templates and to create notes that incorporate the entered values.
+**Form Builder** is a plugin that lets you build input forms by embedding a simple, custom syntax in your templates, and create new notes with the entered values applied to the template. A built-in **Syntax Generator** can also write that syntax for you, so you don't need to memorize it to get started.
 
- 日本語版READMEは [こちら](#日本語説明)
+日本語版READMEは [こちら](#日本語説明)
 
 ---
 
@@ -10,16 +10,16 @@ FormBuilder allows you to build input forms by writing simple, custom syntax in 
 
 ### Install from Community Plugins (recommended)
 
-1. Open **Settings → Community plugins** in Obsidian
-2. Turn off **Restricted Mode** if it isn't already off
-3. Click **Browse** and search for `Form Builder`
-4. Select **Form Builder** and click **Install**
-5. Once installed, click **Enable**
+1. Open **Settings → Community plugins** in Obsidian.
+2. Turn off **Restricted Mode** if it isn't already off.
+3. Click **Browse** and search for `Form Builder`.
+4. Select **Form Builder** and click **Install**.
+5. Once installed, click **Enable**.
 
 ### Manual installation
 
-1. Download the latest `main.js`, `manifest.json`, and `styles.css` from [Releases](https://github.com/p77-don/form-builder/releases)
-2. Place the three files in the following folder inside your Vault
+1. Download the latest `main.js`, `manifest.json`, and `styles.css` from [Releases](https://github.com/p77-don/form-builder/releases).
+2. Place the three files in the following folder inside your Vault.
 
 ```
 {vault}/.obsidian/plugins/form-builder/
@@ -28,7 +28,7 @@ FormBuilder allows you to build input forms by writing simple, custom syntax in 
 └── styles.css
 ```
 
-3. Enable **Form Builder** under **Settings → Community plugins**
+3. Enable **Form Builder** under **Settings → Community plugins**.
 
 ---
 
@@ -53,17 +53,17 @@ The default is `Templates`. Only Markdown files in this folder that contain a `f
 | English | English (default) |
 | 日本語 | Japanese |
 
-Changing this setting instantly updates the settings screen, forms, help, and all notification messages.
+Changing this setting updates the settings screen, forms, Syntax Generator, help, and all notification messages.
 
 ---
 
 ## Basic Usage
 
-1. Create a Markdown file containing a `formbuilder` code block in your template folder
-2. Open the command palette (`Ctrl` / `Cmd` + `P`) and run **Create Note From Template**
-3. If multiple templates exist, the **Template Picker** opens — browse by folder, jump to a favorite, or reuse something from your history (see [Template Picker](#template-picker))
-4. Fill in the form that appears and click **Create Note**
-5. A new note is created in the folder specified by `meta` and automatically opened
+1. Create a Markdown file containing a `formbuilder` code block in your template folder (if you don't want to memorize the syntax, you can assemble it with the [Syntax Generator](#syntax-generator) instead).
+2. Open the command palette (`Ctrl` / `Cmd` + `P`) and run **Create Note From Template**.
+3. If multiple templates exist, the **Template Picker** opens — browse by folder, jump to a favorite, or reuse something from your history (see [Template Picker](#template-picker)).
+4. Fill in the form that appears and click **Create Note**.
+5. A new note is created in the folder specified by `meta` and automatically opened.
 
 ---
 
@@ -131,6 +131,26 @@ This block is not included in the generated note — it's removed automatically.
 
 ![code block](docs/code_block.png)
 
+#### You can split it across multiple formbuilder code blocks
+
+A single template can contain more than one ` ```formbuilder ` code block. The contents of every block are merged into a single form. You can, for example, keep `meta` and your field definitions in separate blocks.
+
+````markdown
+```formbuilder
+{{meta|folder=[folder]}}
+{{meta|filename=[%timestamp%]}}
+```
+
+```formbuilder
+{{text|title|label=[title]|required}}
+{{textarea|description}}
+```
+````
+
+When there are multiple blocks, any Markdown between them is treated as ordinary body content in the generated note. All the blocks themselves are stripped out and never appear in the note.
+
+> **Watch out for duplicate keys:** even when split across blocks, you still can't define the same field key (`$key$`) or the same `meta` key (`folder` / `filename`) more than once. Doing so is an error — see [Errors and Warnings](#errors-and-warnings) for details.
+
 ### Body area
 
 Everything outside the code block is subject to variable expansion.
@@ -145,6 +165,91 @@ For `multiselect` / `multilist` fields, you can control the expanded format with
 > User variables are wrapped in dollar signs `$...$`; system variables are wrapped in percent signs `%...%`.
 
 ![main text](docs/main_text.png)
+
+---
+
+## Syntax Generator
+
+A tool that lets you assemble `{{...}}` syntax, `$key$` variables, and `meta` syntax from a GUI, without having to memorize the custom syntax.
+
+### Opening it
+
+Open the command palette (`Ctrl` / `Cmd` + `P`) and run **Syntax Generator**. A dialog opens.
+
+![FieldGeneratorModal](docs/FieldGeneratorModal.png)
+
+### Generator Type
+
+A dropdown at the top of the dialog lets you choose what to generate.
+
+| Generator Type | Syntax it generates |
+|---|---|
+| Field | `{{type\|key\|option=[value]\|...}}` |
+| Meta: Folder | `{{meta\|folder=[...]}}` |
+| Meta: Filename | `{{meta\|filename=[...]}}` |
+
+### Field mode
+
+The **Field Type** dropdown lets you choose from the 8 field types (`text` / `textarea` / `number` / `date` / `checkbox` / `select` / `multiselect` / `multilist`). The settings shown below it change automatically based on the type you pick.
+
+**Common fields** (shown for every type): `Key`, `Label`, `Description`
+
+**Type-specific fields:**
+
+| Field Type | Fields shown |
+|---|---|
+| `text` / `date` | Placeholder, Default, Required |
+| `textarea` | Placeholder, Default, Rows, Required |
+| `number` | Placeholder, Default, Min, Max, Required |
+| `checkbox` | Just the Default toggle ("Checked by default"). `Required` is meaningless for a checkbox, so it isn't shown. |
+| `select` | Options, Default, Required |
+| `multiselect` | Options, Rows, Default, Required |
+| `multilist` | Placeholder, Rows, Required (no `Default` — the custom syntax can only be parsed one line at a time, so it can't represent a multi-line default) |
+
+Every field shows a short hint so the meaning of each option is clear even the first time you use it. In particular, the hint for `select`'s `Default` explains it's "the option that's selected initially," and `multiselect`'s explains you can specify several with a `;` separator.
+
+**Preview:** shows the generated syntax (`{{...}}`) in real time as you type. It stays empty if the key is missing or contains invalid characters.
+
+**Generated Variable:** shows how to use `$key$` based on your key.
+
+- Scalar types (`text` / `textarea` / `number` / `date` / `checkbox` / `select`): only `$key$` is shown (the value is substituted as-is).
+- Array types (`multiselect` / `multilist`): since `$key$` alone doesn't convey how to use it, all four of the following are shown together.
+
+```
+$key$
+$key:list[- ]$
+$key:list[1. ]$
+$key:separator[; ]$
+```
+
+### Meta mode (Folder / Filename)
+
+A single text field lets you freely combine fixed text, variables (`$key$`, `%date%`, etc.), or both. Below the field, **Insert variable** buttons (`%date%` `%time%` `%timestamp%` `$key$`) insert that token at the current cursor position.
+
+| Folder | Filename |
+|----|----|
+|![meta-folder](docs/meta-folder.png)|![meta-file](docs/meta-file.png)|
+
+**Duplicate-filename warning in Filename mode:** if the value you entered contains no variable (no token with `$` or `%`), a warning is shown: "This file name is entirely fixed text. If a note with the same name already exists in the folder, creating a new note will fail." (In practice note creation won't actually fail, thanks to the [automatic renaming](#metafilename) described below — but the warning still helps you notice an unintended overwrite risk.)
+
+### Insert formbuilder code block
+
+A checkbox labeled **"Insert formbuilder code block"** appears only when the cursor in the active editor is currently **outside** an existing `formbuilder` block.
+
+- **Left unchecked:** only the generated syntax line (`{{...}}` or `{{meta|...}}`) is used for Preview, copying, and inserting, as before. If you click **Insert** while the cursor is outside a block, a "Place the cursor inside a formbuilder code block" notice appears and nothing is inserted.
+- **Checked:** the generated syntax is automatically wrapped in ` ```formbuilder ` / ` ``` `, and the Preview reflects that too. You can then **Copy Syntax** to copy it in that wrapped form, or **Insert** to drop a brand-new code block at the cursor position.
+
+### Buttons
+
+| Button | Action |
+|---|---|
+| Copy Syntax | Copies the generated syntax to the clipboard (wrapped in a code block too, if "Insert formbuilder code block" is on) |
+| Copy Variable | Copies the generated variable(s) to the clipboard (Field mode only; array types copy all 4 patterns together) |
+| Copy Both | Copies both the syntax and the variable(s) (Field mode only) |
+| Insert | Inserts the syntax at the cursor position in the active editor |
+| Cancel | Closes the dialog |
+
+If the key is empty or invalid (Field mode), or the value is empty (Meta mode), all of the Insert/Copy buttons are disabled.
 
 ---
 
@@ -203,7 +308,7 @@ placeholder=[ has a leading space ]
 
 ### meta Syntax
 
-Describes settings for the template as a whole. These aren't shown in the form — they're settings referenced when the note is saved.
+Describes settings for the note that gets generated. These aren't shown in the form — they're settings referenced when the note is generated.
 
 ```
 {{meta|key=[value]}}
@@ -243,16 +348,31 @@ Specifies the file name of the generated note (the `.md` extension is added auto
 {{meta|filename=[Report_%date%]}}
 ```
 
-- You can use `$key$` to reference form input values
-- You can use system variables such as `%timestamp%`, `%date%`, and `%time%`
-- System variables are evaluated when the note is saved
-- Characters not allowed in file names (`/ \ : * ? " < > |`) are automatically replaced with `_`
-- Windows reserved device names (`CON`, `NUL`, `COM1`, etc.) are prefixed with `_`
-- If omitted, the file is named `Untitled.md`
+- You can use `$key$` to reference form input values.
+- You can use system variables such as `%timestamp%`, `%date%`, and `%time%`.
+- System variables are evaluated when the note is saved.
+- Characters not allowed in file names (`/ \ : * ? " < > |`) are automatically replaced with `_`.
+- Windows reserved device names (`CON`, `NUL`, `COM1`, etc.) are prefixed with `_`. This runs automatically and needs no action on your part — see the note below for when it actually matters.
+- If omitted, the file is named `Untitled.md`.
+
+> **About the Windows reserved-name check:** on Windows, a small set of names (`CON`, `PRN`, `AUX`, `NUL`, `COM1`–`COM9`, `LPT1`–`LPT9`) are reserved by the OS itself for device identifiers, so a file with exactly one of those names cannot be created at all — this is a Windows filesystem restriction, not a limitation of Form Builder or Obsidian, and it doesn't affect macOS or Linux. It only matters if a `meta|filename` value (fixed text or a `$key$` value typed by the user) happens to collide with one of these names — for example a template that asks for an equipment or device name. When that happens, Form Builder automatically prefixes the file name with `_` (e.g. `CON` → `_CON.md`) so note creation doesn't silently fail on Windows. You don't need to do anything for this to work.
+
+**If a file with the same name already exists (automatic renaming):** if a file with the same name already exists in the destination folder, the note is saved with a number appended automatically — `note.md` → `note (2).md` → `note (3).md`. When this happens, a notice tells you the actual file name that was used. If the body uses `%filename%`, it reflects the actual, post-renaming file name too.
 
 #### Unknown meta keys
 
 If an undefined key is used, a warning is shown and the key is ignored (form generation continues).
+
+#### Duplicate meta keys are an error
+
+Defining the same `meta` key (`folder` or `filename`) more than once makes it unclear which value actually takes effect and invites mistakes, so it's treated as a **fatal error** that aborts note creation (this is checked across the whole template, even if you've split it across multiple `formbuilder` blocks).
+
+```
+{{meta|folder=[folder-a]}}
+{{meta|folder=[folder-b]}}
+```
+
+If a template like this is selected via `Create Note From Template`, an error is shown immediately and the form doesn't open. See [Errors and Warnings](#errors-and-warnings) for details.
 
 ---
 
@@ -271,6 +391,17 @@ Defines the input fields shown in the form.
 1. `type` (field type) — required
 2. `key` (variable name) — required
 3. Everything after is an option (order doesn't matter)
+
+#### Duplicate field keys are an error
+
+Using the same key (`$key$` variable name) for more than one field makes it unclear which value actually takes effect and invites mistakes, so it's treated as a **fatal error** that aborts note creation (this is checked even across multiple `formbuilder` blocks).
+
+```formbuilder
+{{text|title|label=[title-a]}}
+{{text|title|label=[title-b]}}
+```
+
+If a template like this is selected via `Create Note From Template`, an error is shown immediately and the form doesn't open. See [Errors and Warnings](#errors-and-warnings) for details.
 
 ---
 
@@ -323,7 +454,9 @@ Displays a numeric input field. `min` / `max` can be used to constrain the allow
 
 **Available options:** `label` `placeholder` `description` `default` `required` `min` `max`
 
-**Error condition:** If `min > max`, this is a fatal error and form generation is aborted.
+**Error condition at template-parse time:** if `min > max`, this is a fatal error and form generation is aborted.
+
+**Error condition at submit time:** if the form contains a value that can't be recognized as a number, or a value outside the `min` / `max` range, when you click **Create Note**, the field is highlighted in red and submission is blocked (no note is created).
 
 **Output example:**
 
@@ -438,7 +571,7 @@ Expanded without a modifier (`$tags$`), the selected values are joined with a pl
 
 ```
 $tags$               → Important,Done
-$tags:separator[, ]$ → Important, Done
+$tags:separator[: ]$ → Important: Done
 $tags:list[- ]$      → - Important\n- Done
 ```
 
@@ -446,7 +579,7 @@ See [Variable Modifiers](#variable-modifiers) for details.
 
 ---
 
-#### `multilist` — free-form, multi-value input
+#### `multilist` — free-form list, multi-value input
 
 ```
 {{multilist|aliases}}
@@ -455,18 +588,20 @@ See [Variable Modifiers](#variable-modifiers) for details.
 
 Displays a multi-line text field in the form. **One item per line.** Blank lines are removed automatically when the note is saved.
 
-Unlike `select` or `multiselect`, no predefined options are needed — the user can type any values freely. This is a good fit for cases like Frontmatter `aliases`, where you want to register an arbitrary number of free-text strings.
+Unlike `select` or `multiselect`, no predefined options are needed — the user can type any list of values freely. This is a good fit for cases like Frontmatter `aliases`, where you want to register an arbitrary number of free-text strings.
 
 **Available options:** `label` `placeholder` `description` `default` `required` `rows`
+
+> **`default` cannot contain line breaks:** the custom syntax parses a `formbuilder` block one line at a time, so a `default=[...]` value can't contain an actual line break. Because a multi-line default isn't supported, the [Syntax Generator](#syntax-generator) doesn't offer `default` for `multilist`.
 
 **Controlling the output format:**
 
 As with `multiselect`, the output format is set with a **variable modifier** in the body text.
-Expanded without a modifier (`$aliases$`), the entered values are joined with a plain comma (no space).
+Expanded without a modifier (`$aliases$`), the entered values are output comma-separated (no space).
 
 ```
 $aliases$               → Tokyo Office,main office,HQ
-$aliases:separator[, ]$ → Tokyo Office, main office, HQ
+$aliases:separator[; ]$ → Tokyo Office; main office; HQ
 $aliases:list[- ]$      → - Tokyo Office\n- main office\n- HQ
 ```
 
@@ -479,13 +614,13 @@ See [Variable Modifiers](#variable-modifiers) for details.
 | Option | Value format | Applies to | Description |
 |---|---|---|---|
 | `label=[display name]` | String | All fields | The label shown in the form. Defaults to the key name if omitted |
-| `required` | Flag (no value) | All fields | Requires input. Blocks submission and highlights the field if left empty |
-| `placeholder=[...]` | String | text / textarea / number / multilist | Hint text shown inside the input |
+| `required` | Flag (no value) | All fields (no effect on `checkbox`) | Requires input. Blocks submission and highlights the field if left empty |
+| `placeholder=[...]` | String | text / textarea / number / date / multilist | Hint text shown inside the input |
 | `description=[...]` | String | All fields | Description text shown below the label |
-| `default=[value]` | String | All fields | Initial value shown when the form opens |
+| `default=[value]` | String | All fields | Initial value shown when the form opens (effectively one line only for `multilist`, since it can't contain a line break) |
 | `list=[A;B;C]` | Semicolon-separated string | select / multiselect | The list of options (required for these types) |
-| `min=[number]` | Number | number | Minimum allowed value |
-| `max=[number]` | Number | number | Maximum allowed value |
+| `min=[number]` | Number | number | Minimum allowed value. A value outside the range is an error at submit time |
+| `max=[number]` | Number | number | Maximum allowed value. A value outside the range is an error at submit time |
 | `rows=[count]` | Integer | textarea / multiselect / multilist | Number of visible rows |
 
 ---
@@ -506,7 +641,6 @@ Form Builder has two kinds of variables, distinguished by **which symbol wraps t
 Reference the value entered in the form. They can be used in the template body, Frontmatter, and in `meta`'s `filename` / `folder`.
 
 ```
-$key$
 $title$
 $author$
 $status$
@@ -537,11 +671,12 @@ Variables provided by the plugin. All of them are evaluated **when the note is s
 | `%date%` | Save date | `2026-06-26` |
 | `%time%` | Save time | `15:30:00` |
 | `%folder%` | The note's final output folder (after `meta\|folder` is resolved) | `Characters` |
-| `%filename%` | The note's final file name without the `.md` extension (after `meta\|filename` is resolved and sanitized) | `Alice-20260624153000` |
+| `%filename%` | The note's final file name without the `.md` extension (after `meta\|filename` is resolved, sanitized, and — if it collided with an existing file — renamed) | `Alice-20260624153000` |
 
 > **Note:**
 > system variables are evaluated at **the moment you click Create Note**, not when the form was opened.
 > `%folder%` and `%filename%` can only be used in the body. Using them inside `meta|folder` or `meta|filename` itself would be self-referential, so they are not expanded there.
+> If the file name was renamed automatically because of a collision, `%filename%` reflects the actual, post-renaming name.
 
 #### Variable expansion scope
 
@@ -580,6 +715,8 @@ $key:list[prefix]$           Each item prefixed and joined with line breaks
 ```
 
 If a modifier is used on a field that isn't `multiselect` / `multilist`, a warning is shown and the modifier is ignored.
+
+> **The brackets `[]` are required:** a form like `$key:list$` with the `[]` omitted is invalid. Always give a prefix string inside `[]` (an empty string is fine), e.g. `$key:list[- ]$`.
 
 #### The `separator` modifier
 
@@ -662,17 +799,19 @@ Aliases: The Pragmatic Programmer、The Perfect Programmer
 
 ## Errors and Warnings
 
-### Fatal errors (form generation is aborted)
+### Fatal errors (aborts note creation at template-selection time)
 
-In the following cases, an error notice is shown and the form doesn't open.
+In the following cases, an error notice is shown as soon as you select the template via `Create Note From Template`, and the form doesn't open (no note is created).
 
 | Condition | Example message |
 |---|---|
 | Unknown field type | `Unknown field type: "foo"` |
-| `select` / `multiselect` missing `list` | `"select" requires the "list" option` |
+| `select` / `multiselect` missing `list` | `"select" requires the "list" option in field "${key}"` |
 | `min > max` | `"min" (10) must not exceed "max" (5) in field "count"` |
 | Unmatched `{{` / `}}` | `Unclosed "{{" found on line 3` |
 | Key contains disallowed characters | `Invalid key: "$name$". Keys must match [a-zA-Z0-9_-]` |
+| The same `meta` key (`folder` / `filename`) is defined more than once | `"meta\|folder" is defined more than once (first defined on line 2). Only one "meta\|folder" is allowed per template.` |
+| The same field key is defined more than once | `Key "title" is defined more than once (first defined on line 2). Each field key must be unique within a template.` |
 
 ### Warnings (the form still opens)
 
@@ -695,9 +834,19 @@ If a variable modifier is used incorrectly, a Notice is shown when the note is s
 
 > **Typo suggestions:** for unknown option names, a `Did you mean "..."?` suggestion is shown if the edit distance (Levenshtein distance) to a known option name is 2 or less.
 
-### Submit-time validation
+### Submit-time validation (checked when you click Create Note)
 
-If a field marked `required` is left empty and you click **Create Note**, submission is blocked and the field is highlighted in red.
+Clicking **Create Note** blocks submission and highlights the offending field in red in the following cases. No note is created.
+
+| Condition | Behavior |
+|---|---|
+| A field marked `required` is left empty | The field is highlighted and submission is blocked |
+| A `number` field contains a value that isn't recognized as a number | The field is highlighted and submission is blocked |
+| A `number` field's value is outside the `min` / `max` range | The field is highlighted and submission is blocked |
+
+### If the file name collides (not an error)
+
+If a `.md` file with the same name already exists in the destination folder, this is **not** treated as an error — the note is saved with a number appended automatically, e.g. `note (2).md`. When this happens, a notice tells you the actual file name that was used. See [meta|filename](#metafilename) for details.
 
 ---
 
@@ -797,7 +946,7 @@ Tags: Technical, Reference
 
 ---
 
-### 3. Meeting minutes (auto-generated file name using a system variable)
+### 3. Meeting minutes (auto-generated file name using a system variable, meta and fields split across blocks)
 
 ````markdown
 ---
@@ -807,7 +956,9 @@ date: "%date%"
 ```formbuilder
 {{meta|folder=[Meetings]}}
 {{meta|filename=[Meeting_%date%]}}
+```
 
+```formbuilder
 {{text|project|label=[Project name]|required}}
 {{date|meeting_date|label=[Meeting date]}}
 {{multilist|attendees|label=[Attendees]}}
@@ -834,19 +985,21 @@ $notes$
 $action$
 ````
 
+The `meta` settings and the field definitions are written in separate blocks here, but they're still merged correctly into a single form.
+
 ---
 
 ## FAQ
 
-**Q. A template doesn't show up in the list**
+### Q. A template doesn't show up in the list
 
 Check that the file contains a `formbuilder` code block — a plain Markdown file without one won't appear in the list. Also double-check that **Template folder** in Settings points to the correct folder.
 
-**Q. `$key$` isn't replaced and shows up as-is**
+### Q. `$key$` isn't replaced and shows up as-is
 
 Check that a field with the matching `key` is defined in the form. Keys are case-sensitive (`Title` and `title` are different keys).
 
-**Q. A Frontmatter YAML list isn't expanding correctly**
+### Q. A Frontmatter YAML list isn't expanding correctly
 
 To output an indented YAML list from `multiselect` / `multilist`, use a variable modifier.
 
@@ -857,7 +1010,7 @@ $tags:list[  - ]$
 
 The number of leading spaces inside `[]` becomes the indentation width. To match Obsidian's standard 2-space indentation, write `list[  - ]` (two spaces).
 
-**Q. I want to use a `multiselect` value in a different format in the body vs. in Frontmatter**
+### Q. I want to use a `multiselect` value in a different format in the body vs. in Frontmatter
 
 You can expand the same variable multiple times with different modifiers.
 
@@ -870,7 +1023,7 @@ $tags:list[  - ]$
 In the body: $tags:separator[, ]$
 ```
 
-**Q. What's the difference between `multiselect` and `multilist`?**
+### Q. What's the difference between `multiselect` and `multilist`?
 
 | | `multiselect` | `multilist` |
 |---|---|---|
@@ -880,13 +1033,33 @@ In the body: $tags:separator[, ]$
 
 Both use a modifier (`:separator` / `:list`) to control the output format.
 
-**Q. What happens if I enter a character that isn't allowed in a file name?**
+### Q. What happens if I enter a character that isn't allowed in a file name?
 
 Characters prohibited by the OS (`/ \ : * ? " < > |`) are automatically replaced with `_`, and a notice is shown. Windows reserved device names (`CON`, `NUL`, `COM1`, etc.) are prefixed with `_`.
 
-**Q. Can I specify a nested folder in `meta|folder`?**
+### Q. What happens if a note with the same name already exists?
+
+It's not an error. If `note.md` already exists, the note is saved with an automatic number appended, like `note (2).md` or `note (3).md`. A notice tells you when this happens.
+
+### Q. What happens if I write `meta|folder` or `meta|filename` more than once?
+
+It's an error, and no note is created. In earlier versions, whichever one was written last silently took effect (an overwrite you might not notice) — it's now detected as a fatal error at template-selection time instead, so you don't end up saving to the wrong place without realizing it.
+
+### Q. What happens if I use the same field key more than once?
+
+It's an error, and no note is created, for the same reason as duplicate `meta` keys.
+
+### Q. Can I specify a nested folder in `meta|folder`?
 
 Yes — use `/` as a separator, e.g. `Projects/2026/Notes`. Any missing folders in the path are created automatically.
+
+### Q. Can I split a `formbuilder` code block into several blocks?
+
+Yes. A single template can contain multiple `formbuilder` code blocks, and the contents of all of them are merged into one form. However, if a `meta` key or a field key is duplicated across the blocks, it's an error.
+
+### Q. Can I build a template without memorizing the syntax?
+
+Yes — open the [Syntax Generator](#syntax-generator) (command palette → **Syntax Generator**) to assemble `{{...}}` syntax, `$key$` variables, and `meta` syntax from a GUI, then copy it to the clipboard or insert it directly into the editor.
 
 ---
 
@@ -899,7 +1072,8 @@ MIT
 
 # 日本語説明
 
-FormBuilderは、テンプレートに簡素な独自構文を記述することで、入力用フォームを構築でき、入力された値を反映させたノートを作成することができます。
+
+**Form Builder**は、テンプレートにシンプルな独自構文を組み込むことで入力フォームを構築し、テンプレートに入力値を反映させた新しいノートを作成するプラグインです。また**構文ジェネレーター**で構文を作成することができるため、構文を覚えなくても使うことができます。
 
 ---
 
@@ -907,16 +1081,16 @@ FormBuilderは、テンプレートに簡素な独自構文を記述すること
 
 ### コミュニティプラグインからインストール（推奨）
 
-1. Obsidian の **設定 → コミュニティプラグイン** を開く
-2. **「制限モードをオフにする」** をオフにしていない場合は、オフにする
-3. **「閲覧」** をクリックし、検索欄に `Form Builder` と入力する
-4. **Form Builder** を選択し **「インストール」** をクリックする
-5. インストール完了後、**「有効化」** をクリックする
+1. Obsidian の **設定 → コミュニティプラグイン** を開く。
+2. **「制限モードをオフにする」** をオフにしていない場合は、オフにする。
+3. **「閲覧」** をクリックし、検索欄に `Form Builder` と入力する。
+4. **Form Builder** を選択し **「インストール」** をクリックする。
+5. インストール完了後、**「有効化」** をクリックする。
 
 ### 手動インストール
 
-1. [Releases](https://github.com/p77-don/form-builder/releases) から最新バージョンの `main.js`・`manifest.json`・`styles.css` をダウンロードする
-2. Vault 内の以下のフォルダに3ファイルを配置する
+1. [Releases](https://github.com/p77-don/form-builder/releases) から最新バージョンの `main.js`・`manifest.json`・`styles.css` をダウンロードする。
+2. Vault 内の以下のフォルダに3ファイルを配置する。
 
 ```
 {vault}/.obsidian/plugins/form-builder/
@@ -925,7 +1099,7 @@ FormBuilderは、テンプレートに簡素な独自構文を記述すること
 └── styles.css
 ```
 
-3. Obsidian の **設定 → コミュニティプラグイン** で **Form Builder** を有効化する
+3. Obsidian の **設定 → コミュニティプラグイン** で **Form Builder** を有効化する。
 
 ---
 
@@ -950,23 +1124,23 @@ Templates
 | English | 英語（デフォルト） |
 | 日本語 | 日本語 |
 
-設定を変更すると設定画面・フォーム・ヘルプ・すべての通知メッセージが即座に切り替わります。
+設定を変更すると設定画面・フォーム・構文ジェネレーター・ヘルプ・すべての通知メッセージが切り替わります。
 
 ---
 
 ## 基本的な使い方
 
-1. テンプレートフォルダに `formbuilder` コードブロックを含む Markdown ファイルを作成する
-2. コマンドパレット（`Ctrl` / `Cmd` + `P`）を開き、**Create Note From Template** を実行する
-3. テンプレートが複数ある場合は **テンプレート選択画面** が開く。フォルダから探す、お気に入りから開く、使用履歴から選ぶといった方法が使える（詳しくは[テンプレート選択画面](#テンプレート選択画面)を参照）
-4. 表示されたフォームに入力し、**Create Note** を押す
-5. `meta` で指定したフォルダに新しいノートが生成され、自動的に開く
+1. テンプレートファイル格納フォルダに `formbuilder` コードブロックを含む Markdown ファイルを作成する（構文を覚えていなくても [構文ジェネレーター](#構文ジェネレーターsyntax-generator) で組み立てることができます）。
+2. コマンドパレット（`Ctrl` / `Cmd` + `P`）を開き、**Create Note From Template** を実行する。
+3. テンプレートが複数ある場合は **テンプレート選択画面** が開く。フォルダから探す、お気に入りから開く、使用履歴から選ぶといった方法が使える（詳しくは[テンプレート選択画面](#テンプレート選択画面)を参照）。
+4. 表示されたフォームに入力し、**Create Note** を押す。
+5. `meta` で指定したフォルダに新しいノートが生成され、自動的に開く。
 
 ---
 
 ## テンプレート選択画面
 
-テンプレートが複数ある場合、**Create Note From Template** を実行すると、 **テンプレート選択画面** が開きます。
+テンプレートが複数ある場合、**Create Note From Template** を実行すると、**テンプレート選択画面** が開きます。
 
 ![Template select](docs/select.png)
 
@@ -974,7 +1148,7 @@ Templates
 
 | タブ | 表示内容 |
 |---|---|
-| 📁 フォルダ | テンプレートフォルダ以下のサブフォルダ構造をそのまま表示します。フォルダをクリックすると開閉できます（📂 = 開いている / 📁 = 閉じている）。 |
+| 📁 フォルダ | テンプレートファイル格納フォルダ以下のサブフォルダ構造をそのまま表示します。フォルダをクリックすると開閉できます（📂 = 開いている / 📁 = 閉じている）。 |
 | ★ お気に入り | お気に入り登録したテンプレートのみを表示します。 |
 | 🕒 使用履歴 | 直近で使用したテンプレートを最大20件、新しい順に表示します。 |
 
@@ -1028,6 +1202,26 @@ Templates
 
 ![code block](docs/code_block.png)
 
+#### 複数の formbuilder コードブロックに分けて書くこともできる
+
+1つのテンプレート内に ` ```formbuilder ` コードブロックを複数配置できます。すべてのブロックの内容が1つのフォームとして統合されます。`meta` と各フィールドの定義を別々のブロックに分けて記述することも可能です。
+
+````markdown
+```formbuilder
+{{meta|folder=[folder]}}
+{{meta|filename=[%timestamp%]}}
+```
+
+```formbuilder
+{{text|title|label=[title]|required}}
+{{textarea|description}}
+```
+````
+
+ブロックが複数あっても、ブロックとブロックの間にある本文（Markdown）はそのまま生成されるノートの本文として扱われます。ブロックはすべて自動的に取り除かれ、生成されたノートには含まれません。
+
+> **キーと meta キーの重複に注意：** ブロックを分けて記述していても、同じフィールドキー（`$key$`）や同じ `meta` キー（`folder` / `filename`）を複数回定義することはできません。重複がある場合はエラーになります。詳しくは[エラーと警告](#エラーと警告)を参照してください。
+
 ### 本文領域
 
 コードブロック外のすべての領域が変数展開の対象になります。
@@ -1042,6 +1236,92 @@ Templates
 > ユーザー変数はドル記号 `$...$` で、システム変数はパーセント記号 `%...%` で囲みます。
 
 ![main text](docs/main_text.png)
+
+---
+
+## 構文ジェネレーター（Syntax Generator）
+
+独自構文を覚えていなくても、GUI から `{{...}}` 構文や `$キー名$` 変数、`meta` 構文を組み立てられる機能です。
+
+### 起動方法
+
+コマンドパレット（`Ctrl` / `Cmd` + `P`）を開き、**Syntax Generator** を実行します。ダイアログが表示されます。
+
+![FieldGeneratorModal](docs/FieldGeneratorModal.png)
+
+### Generator Type（生成する内容の切り替え）
+
+ダイアログ上部のドロップダウンで、生成する内容を3種類から選べます。
+
+| Generator Type | 生成される構文 |
+|---|---|
+| フィールド | `{{type\|key\|option=[value]\|...}}` |
+| Meta: フォルダ | `{{meta\|folder=[...]}}` |
+| Meta: ファイル名 | `{{meta\|filename=[...]}}` |
+
+### フィールドモード
+
+**Field Type** ドロップダウンで8種類のフィールドタイプ（`text` / `textarea` / `number` / `date` / `checkbox` / `select` / `multiselect` / `multilist`）から選べます。選んだタイプに応じて、下に表示される設定項目が自動的に切り替わります。
+
+**共通項目**（すべてのタイプで表示）：`キー`・`ラベル`・`説明`
+
+**タイプ別の項目：**
+
+| Field Type | 表示される項目 |
+|---|---|
+| `text` / `date` | プレースホルダー・デフォルト値・必須項目にする |
+| `textarea` | プレースホルダー・デフォルト値・行数・必須項目にする |
+| `number` | プレースホルダー・デフォルト値・最小値・最大値・必須項目にする |
+| `checkbox` | デフォルト値（初期状態でONにする、のトグルのみ。`required` は checkbox には意味を持たないため表示されません） |
+| `select` | 選択肢・デフォルト値・必須項目にする |
+| `multiselect` | 選択肢・行数・デフォルト値・必須項目にする |
+| `multilist` | プレースホルダー・行数・必須項目にする（`default` は独自構文が1行単位でしか扱えず複数行を表現できないため提供していません） |
+
+すべての項目にヒント文が表示されるため、初めて使う場合でもオプションの意味が分かるようになっています。特に `select` の `default` は「選択されている値」、`multiselect` の `default` は「`;` 区切りで複数指定できる」ことをヒントで明示しています。
+
+**Preview：** 入力するたびに、生成される構文（`{{...}}`）をリアルタイムに表示します。キーが未入力・不正な文字を含む場合は生成されません。
+
+**展開用変数：** キーを基にした `$キー名$` の使い方を表示します。
+
+- スカラー型（`text` / `textarea` / `number` / `date` / `checkbox` / `select`）: `$キー名$` のみ表示（入力値がそのまま置き換わります）
+- 配列型（`multiselect` / `multilist`）: `$キー名$` 単体では使い方が分かりにくいため、以下の4パターンをまとめて表示します。
+
+```
+$キー名$
+$キー名:list[- ]$
+$キー名:list[1. ]$
+$キー名:separator[; ]$
+```
+
+### Meta モード（フォルダ / ファイル名）
+
+1つのテキスト入力欄に、固定文字列・変数（`$キー名$` や `%date%` など）・その組み合わせを自由に入力できます。入力欄の下にある **変数を挿入** ボタン（`%date%` `%time%` `%timestamp%` `$key$`）をクリックすると、カーソル位置にそのトークンを挿入できます。
+
+| フォルダ | ファイル |
+|----|----|
+|![meta-folder](docs/meta-folder.png)|![meta-file](docs/meta-file.png)|
+
+
+**ファイル名モードの重複警告：** 入力した値に変数（`$` または `%` を含むトークン）が1つも含まれていない場合、「このファイル名は完全に固定文字だけになっています。同じフォルダに同名のファイルが既に存在する場合、ノートの作成に失敗します」という警告が表示されます（※実際には後述の[自動リネーム機能](#metafilename)により作成自体は失敗しませんが、意図しない上書きに気づけるよう警告しています）。
+
+### formbuilder コードブロックを挿入する
+
+現在アクティブなエディタのカーソル位置が、既存の `formbuilder` コードブロックの**外側**にある場合のみ、「formbuilder コードブロックを挿入する」というチェックボックスが表示されます。
+
+- **チェックを入れない場合：** 従来通り、生成される構文の行（`{{...}}` や `{{meta|...}}`）のみが Preview・コピー・挿入の対象になります。カーソルがブロック外にある状態で **Insert** を押すと、「formbuilder コードブロックの中にカーソルを置いてください」という通知が表示され、挿入は行われません。
+- **チェックを入れた場合：** 生成される構文が ` ```formbuilder ` 〜 ` ``` ` で自動的に囲まれた状態になり、Preview にもその状態で表示されます。この状態のまま **Copy Syntax** でコピーしたり、**Insert** でカーソル位置に新しいコードブロックごと挿入したりできます。
+
+### ボタン
+
+| ボタン | 動作 |
+|---|---|
+| Copy Syntax | 生成された構文をクリップボードにコピー（「formbuilder コードブロックを挿入する」がONの場合はブロックごとコピー） |
+| Copy Variable | 展開用変数をクリップボードにコピー（フィールドモードのみ表示。配列型は4パターンすべてをまとめてコピー） |
+| Copy Both | 構文と展開用変数の両方をコピー（フィールドモードのみ表示） |
+| Insert | アクティブなエディタのカーソル位置に構文を挿入 |
+| Cancel | ダイアログを閉じる |
+
+キーが未入力・不正な場合（フィールドモード）や、値が未入力の場合（Metaモード）は、Insert・Copy 系のボタンはすべて無効化されます。
 
 ---
 
@@ -1100,7 +1380,7 @@ placeholder=[ 先頭にスペースがある ]
 
 ### meta 構文
 
-テンプレート全体の設定を記述します。フォームには表示されず、ノート保存時に参照される設定値です。
+生成されるノートの設定を記述します。フォームには表示されず、ノート生成時に参照される設定値です。
 
 ```
 {{meta|key=[value]}}
@@ -1117,7 +1397,7 @@ placeholder=[ 先頭にスペースがある ]
 {{meta|folder=[Projects/2026]}}
 ```
 
-指定したフォルダに常に保存されます。存在しない場合は自動的に作成されます（多階層も対応）。省略した場合は Vault のルートに保存されます。
+指定したフォルダに常に保存されます。存在しない場合は自動的にフォルダが作成されます（多階層も対応）。省略した場合は Vault のルートに保存されます。
 
 **フォームで保存先を入力させる場合：**
 
@@ -1140,16 +1420,29 @@ placeholder=[ 先頭にスペースがある ]
 {{meta|filename=[Report_%date%]}}
 ```
 
-- `$キー名$` でフォーム入力値を使用できます
-- `%timestamp%`・`%date%`・`%time%` などのシステム変数を使用できます
-- システム変数はノート保存時に評価されます
-- ファイル名に使えない文字（`/ \ : * ? " < > |`）は自動的に `_` に置き換えられます
+- `$キー名$` でフォーム入力値を使用できます。
+- `%timestamp%`・`%date%`・`%time%` などのシステム変数を使用できます。
+- システム変数はノート保存時に評価されます。
+- ファイル名に使えない文字（`/ \ : * ? " < > |`）は自動的に `_` に置き換えられます。
 - Windows の予約デバイス名（`CON`・`NUL`・`COM1` 等）は先頭に `_` が付与されます
-- 省略した場合は `Untitled.md` になります
+- 省略した場合は `Untitled.md` になります。
+
+**同名ファイルが既に存在する場合（自動リネーム）：** 保存先フォルダに同名のファイルが既に存在する場合、`note.md` → `note (2).md` → `note (3).md` のように自動的に連番を付与して保存します。連番が付与された場合は、実際に保存されたファイル名を知らせる通知が表示されます。本文中で `%filename%` を使っている場合も、連番付与後の実際のファイル名が反映されます。
 
 #### 不明な meta キー
 
 定義されていないキーを記述した場合、警告を表示してそのキーを無視します（フォーム生成は継続します）。
+
+#### meta キーの重複はエラーになる
+
+同じ `meta` キー（`folder` または `filename`）を複数回定義すると、どちらの値が使われるか分かりにくく事故につながるため、**致命的エラー**としてノートの作成を中止します（1つのテンプレート内で複数の `formbuilder` ブロックに分けて書いている場合も、テンプレート全体を通してチェックされます）。
+
+```
+{{meta|folder=[folder-a]}}
+{{meta|folder=[folder-b]}}
+```
+
+上記のように記述した場合、`Create Note From Template` でこのテンプレートを選択した時点でエラーが表示され、フォームは開きません。詳しくは[エラーと警告](#エラーと警告)を参照してください。
 
 ---
 
@@ -1168,6 +1461,17 @@ placeholder=[ 先頭にスペースがある ]
 1. `type`（フィールドタイプ）— 必須
 2. `key`（変数名）— 必須
 3. 以降はオプション（順序不問）
+
+#### フィールドキーの重複はエラーになる
+
+同じキー（`$key$` 変数名）を複数のフィールドで使うと、どちらの値が使われるか分かりにくく事故につながるため、**致命的エラー**としてノートの作成を中止します（複数の `formbuilder` ブロックをまたいでいてもチェックされます）。
+
+```formbuilder
+{{text|title|label=[title-a]}}
+{{text|title|label=[title-b]}}
+```
+
+上記のように記述した場合、`Create Note From Template` でこのテンプレートを選択した時点でエラーが表示され、フォームは開きません。詳しくは[エラーと警告](#エラーと警告)を参照してください。
 
 ---
 
@@ -1220,7 +1524,9 @@ placeholder=[ 先頭にスペースがある ]
 
 **使用可能なオプション：** `label` `placeholder` `description` `default` `required` `min` `max`
 
-**エラー条件：** `min > max` の場合、致命的エラーとしてフォーム生成を中止します。
+**テンプレート解析時のエラー条件：** `min > max` の場合、致命的エラーとしてフォーム生成を中止します。
+
+**送信時のエラー条件：** フォームに数値として認識できない値、または `min` / `max` の範囲外の値が入力された状態で **Create Note** を押すと、該当欄が赤くハイライトされ、送信がブロックされます（ノートは作成されません）。
 
 **出力例：**
 
@@ -1335,7 +1641,7 @@ list=[I am a boy;I am a girl]       → 「I am a boy」「I am a girl」の2項
 
 ```
 $tags$               → 重要,完了
-$tags:separator[, ]$ → 重要, 完了
+$tags:separator[: ]$ → 重要: 完了
 $tags:list[- ]$      → - 重要\n- 完了
 ```
 
@@ -1343,7 +1649,7 @@ $tags:list[- ]$      → - 重要\n- 完了
 
 ---
 
-#### `multilist` — 自由記述・複数値入力
+#### `multilist` — 自由記述リスト・複数値入力
 
 ```
 {{multilist|aliases}}
@@ -1352,18 +1658,20 @@ $tags:list[- ]$      → - 重要\n- 完了
 
 フォーム上に複数行テキスト入力欄を表示します。**1行に1項目**を入力します。空行は保存時に自動的に除去されます。
 
-`select` や `multiselect` と異なり、選択肢を事前に定義せず、ユーザーが自由に値を入力できます。Frontmatter の `aliases` のように任意の文字列を複数登録したい場合に適しています。
+`select` や `multiselect` と異なり、選択肢を事前に定義せず、ユーザーが自由にリストを入力できます。Frontmatter の `aliases` のように任意の文字列を複数登録したい場合に適しています。
 
 **使用可能なオプション：** `label` `placeholder` `description` `default` `required` `rows`
+
+> **`default` に改行は含められません：** 独自構文は `formbuilder` ブロックを1行ずつ解析するため、`default=[...]` の値に実際の改行を含めることはできません。複数行の初期値を設定したい場合には対応していないため、[構文ジェネレーター](#構文ジェネレーターsyntax-generator)では `multilist` に `default` を提供していません。
 
 **出力形式の制御：**
 
 `multiselect` と同様に、出力形式は本文中の**変数モディファイア**で指定します。
-モディファイアを省略した場合（`$aliases$`）、入力値はカンマのみで結合されます（スペースなし）。
+モディファイアを省略した場合（`$aliases$`）、入力値はカンマ区切りで出力されます（スペースなし）。
 
 ```
 $aliases$               → 東京オフィス,Tokyo Office,本社
-$aliases:separator[, ]$ → 東京オフィス, Tokyo Office, 本社
+$aliases:separator[; ]$ → 東京オフィス; Tokyo Office; 本社
 $aliases:list[- ]$      → - 東京オフィス\n- Tokyo Office\n- 本社
 ```
 
@@ -1376,13 +1684,13 @@ $aliases:list[- ]$      → - 東京オフィス\n- Tokyo Office\n- 本社
 | オプション | 値の形式 | 適用フィールド | 説明 |
 |---|---|---|---|
 | `label=[表示名]` | 文字列 | 全フィールド | フォーム上のラベル。省略時はキー名をそのまま使用 |
-| `required` | フラグ（値なし） | 全フィールド | 必須入力。未入力での送信をブロックし、フィールドをハイライト |
-| `placeholder=[...]` | 文字列 | text / textarea / number / multilist | 入力欄に表示するヒントテキスト |
+| `required` | フラグ（値なし） | 全フィールド（`checkbox` は指定しても効果なし） | 必須入力。未入力での送信をブロックし、フィールドをハイライト |
+| `placeholder=[...]` | 文字列 | text / textarea / number / date / multilist | 入力欄に表示するヒントテキスト |
 | `description=[...]` | 文字列 | 全フィールド | ラベルの下に表示する説明文 |
-| `default=[値]` | 文字列 | 全フィールド | フォーム表示時の初期値 |
+| `default=[値]` | 文字列 | 全フィールド | フォーム表示時の初期値（`multilist` は改行を含められないため実質的に1行のみ） |
 | `list=[A;B;C]` | セミコロン区切り文字列 | select / multiselect | 選択肢の一覧（これらのタイプでは必須） |
-| `min=[数値]` | 数値 | number | 入力可能な最小値 |
-| `max=[数値]` | 数値 | number | 入力可能な最大値 |
+| `min=[数値]` | 数値 | number | 入力可能な最小値。送信時に範囲外の値はエラーになる |
+| `max=[数値]` | 数値 | number | 入力可能な最大値。送信時に範囲外の値はエラーになる |
 | `rows=[行数]` | 整数 | textarea / multiselect / multilist | 表示行数 |
 
 ---
@@ -1400,10 +1708,9 @@ Form Builder には2種類の変数があり、**囲む記号が異なります*
 
 #### ユーザー変数
 
-フォームへの入力値を参照します。テンプレート本文・Frontmatter・meta の `filename` / `folder` に記述できます。
+フォームへの入力値を参照します。テンプレート本文・Frontmatter・meta の `filename` / `folder` にも記述できます。
 
 ```
-$キー名$
 $title$
 $author$
 $status$
@@ -1434,11 +1741,12 @@ $tags$ → 重要,完了
 | `%date%` | 保存日付 | `2026-06-26` |
 | `%time%` | 保存時刻 | `15:30:00` |
 | `%folder%` | ノートの最終的な出力フォルダ（`meta\|folder` 展開後の値） | `Characters` |
-| `%filename%` | ノートの最終的なファイル名（拡張子 `.md` を除く。`meta\|filename` 展開・サニタイズ後の値） | `アリス-20260624153000` |
+| `%filename%` | ノートの最終的なファイル名（拡張子 `.md` を除く。`meta\|filename` 展開・サニタイズ・重複時の連番付与後の値） | `アリス-20260624153000` |
 
-> **注意：** 
+> **注意：**
 > システム変数はフォームを開いた時刻ではなく、**Create Note ボタンを押した瞬間**の時刻で評価されます。
->`%folder%` と `%filename%` は本文でのみ使用できます。`meta|folder` や `meta|filename` 自身の中で使うと自己参照になってしまうため、そこでは展開されません。
+> `%folder%` と `%filename%` は本文でのみ使用できます。`meta|folder` や `meta|filename` 自身の中で使うと自己参照になってしまうため、そこでは展開されません。
+> 同名ファイルの重複により連番が付与された場合、`%filename%` には連番付与後の実際のファイル名が反映されます。
 
 #### 変数の展開スコープ
 
@@ -1477,6 +1785,8 @@ $key:list[行頭文字列]$       各行に行頭文字列を付けて改行で�
 ```
 
 モディファイアを `multiselect` / `multilist` 以外のフィールドに使用した場合、警告を表示してモディファイアを無視します。
+
+> **角括弧 `[]` は省略できません：** `$key:list$` のように `[]` を省略した書式は無効です。必ず `$key:list[- ]$` のように `[]` 内にプレフィックス文字列（空文字列でも可）を指定してください。
 
 #### `separator` モディファイア
 
@@ -1559,17 +1869,19 @@ tags:
 
 ## エラーと警告
 
-### 致命的エラー（フォーム生成を中止）
+### 致命的エラー（テンプレート選択時にノート作成を中止）
 
-以下の場合、エラー通知を表示してフォームを開きません。
+以下の場合、`Create Note From Template` でテンプレートを選択した時点でエラー通知を表示し、フォームを開きません（ノートは作成されません）。
 
 | 条件 | メッセージ例 |
 |---|---|
 | 未知のフィールドタイプ | `Unknown field type: "foo"` |
-| `select` / `multiselect` に `list` がない | `"select" requires the "list" option` |
+| `select` / `multiselect` に `list` がない | `"select" requires the "list" option in field "${key}"` |
 | `min > max` | `"min" (10) must not exceed "max" (5) in field "count"` |
 | `{{` と `}}` の対応が取れない | `Unclosed "{{" found on line 3` |
 | キーに使用不可文字が含まれる | `Invalid key: "$name$". Keys must match [a-zA-Z0-9_-]` |
+| 同じ `meta` キー（`folder` / `filename`）が複数回定義されている | `"meta\|folder" is defined more than once (first defined on line 2). Only one "meta\|folder" is allowed per template.` |
+| 同じフィールドキーが複数回定義されている | `Key "title" is defined more than once (first defined on line 2). Each field key must be unique within a template.` |
 
 ### 警告（フォームは表示される）
 
@@ -1592,9 +1904,19 @@ tags:
 
 > **タイポ候補表示：** 未知のオプション名については、既知オプション名との編集距離（レーベンシュタイン距離）が 2 以内であれば `Did you mean "..."?` の候補を表示します。
 
-### 送信時バリデーション
+### 送信時バリデーション（Create Note を押した時点でチェック）
 
-`required` を指定したフィールドが未入力のまま **Create Note** を押した場合、送信をブロックして該当フィールドを赤くハイライトします。
+**Create Note** ボタンを押した時点で、以下の場合は送信をブロックして該当フィールドを赤くハイライトします。ノートは作成されません。
+
+| 条件 | 挙動 |
+|---|---|
+| `required` を指定したフィールドが未入力 | 該当フィールドをハイライトし、送信をブロック |
+| `number` フィールドに数値として認識できない値が入力されている | 該当フィールドをハイライトし、送信をブロック |
+| `number` フィールドの値が `min` / `max` の範囲外 | 該当フィールドをハイライトし、送信をブロック |
+
+### ファイル名が重複した場合（エラーにはならない）
+
+保存先フォルダに同名の `.md` ファイルが既に存在する場合はエラーにはならず、`note (2).md` のように自動的に連番を付与して保存されます。連番が付与された場合は、実際に保存されたファイル名を知らせる通知が表示されます。詳しくは [meta|filename](#metafilename) を参照してください。
 
 ---
 
@@ -1694,7 +2016,7 @@ aliases:
 
 ---
 
-### ③ 議事録（システム変数でファイル名を自動生成）
+### ③ 議事録（システム変数でファイル名を自動生成、meta と field を別ブロックに分割）
 
 ````markdown
 ---
@@ -1704,7 +2026,9 @@ date: "%date%"
 ```formbuilder
 {{meta|folder=[Meetings]}}
 {{meta|filename=[Meeting_%date%]}}
+```
 
+```formbuilder
 {{text|project|label=[プロジェクト名]|required}}
 {{date|meeting_date|label=[開催日]}}
 {{multilist|attendees|label=[参加者]}}
@@ -1731,19 +2055,21 @@ $notes$
 $action$
 ````
 
+`meta` 用のブロックとフィールド定義用のブロックを分けて記述していますが、1つのフォームとして正しく統合されます。
+
 ---
 
 ## FAQ
 
-**Q. テンプレートがリストに表示されない**
+### Q. テンプレートがリストに表示されない
 
 `formbuilder` コードブロックが含まれているか確認してください。コードブロックのない通常の Markdown ファイルはリストに表示されません。また、設定の **Template folder** が正しいフォルダ名になっているか確認してください。
 
-**Q. `$キー名$` が置換されずそのまま残る**
+### Q. `$キー名$` が置換されずそのまま残る
 
 フォームのフィールド定義に対応するキー（`key`）が存在するか確認してください。キー名の大文字・小文字は区別されます（`Title` と `title` は別のキーです）。
 
-**Q. Frontmatter の YAML リストが正しく展開されない**
+### Q. Frontmatter の YAML リストが正しく展開されない
 
 `multiselect` / `multilist` で YAML リスト形式（インデント付き）を出力するには、変数モディファイアを使用します。
 
@@ -1754,7 +2080,7 @@ $tags:list[  - ]$
 
 `[]` 内の先頭スペースの数がインデント幅になります。Obsidian 標準の2スペースに合わせるには `list[  - ]`（スペース2つ）と記述してください。
 
-**Q. `multiselect` の値を本文とFrontmatterで別々の形式で使いたい**
+### Q. `multiselect` の値を本文とFrontmatterで別々の形式で使いたい
 
 同じ変数を異なるモディファイアで複数回展開できます。
 
@@ -1767,7 +2093,7 @@ $tags:list[  - ]$
 本文内: $tags:separator[、]$
 ```
 
-**Q. `multiselect` と `multilist` の違いは？**
+### Q. `multiselect` と `multilist` の違いは？
 
 | | `multiselect` | `multilist` |
 |---|---|---|
@@ -1777,13 +2103,33 @@ $tags:list[  - ]$
 
 どちらも出力形式はモディファイア（`:separator` / `:list`）で指定します。
 
-**Q. ファイル名に使えない文字を入力したらどうなる？**
+### Q. ファイル名に使えない文字を入力したらどうなる？
 
 OS の禁止文字（`/ \ : * ? " < > |`）は自動的に `_` に置き換えられ、通知メッセージが表示されます。また、Windows の予約デバイス名（`CON`・`NUL`・`COM1` 等）は先頭に `_` が付与されます。
 
-**Q. 多階層のフォルダを `meta|folder` で指定できる？**
+### Q. 同じ名前のノートが既に存在する場合はどうなる？
+
+エラーにはなりません。`note.md` が既に存在する場合、自動的に `note (2).md`・`note (3).md` のように連番を付与して保存されます。連番が付与されたことは通知で知らされます。
+
+### Q. `meta|folder` や `meta|filename` を複数回書いたらどうなる？
+
+エラーになり、ノートは作成されません。以前のバージョンでは後に書いた方が使われる（上書きされる）挙動でしたが、意図しない上書きに気づけないため、現在は致命的エラーとしてテンプレート選択時に検出されるようになっています。
+
+### Q. 同じフィールドキーを複数回使ったらどうなる？
+
+エラーになり、ノートは作成されません。`meta` の重複と同様の理由です。
+
+### Q. 多階層のフォルダを `meta|folder` で指定できる？
 
 はい。`Projects/2026/Notes` のように `/` で区切って指定できます。存在しない階層は自動的に作成されます。
+
+### Q. `formbuilder` コードブロックを複数に分けて書ける？
+
+はい。1つのテンプレート内に複数の `formbuilder` コードブロックを配置できます。すべてのブロックの内容が1つのフォームとして統合されます。ただし、`meta` キーやフィールドキーが複数のブロックにまたがって重複している場合はエラーになります。
+
+### Q. 構文を覚えていなくてもテンプレートを作れる？
+
+[構文ジェネレーター](#構文ジェネレーターsyntax-generator)（コマンドパレット → **Syntax Generator**）を使うと、GUI から `{{...}}` 構文・`$キー名$` 変数・`meta` 構文を組み立てて、クリップボードにコピーまたはエディタに直接挿入できます。
 
 ---
 

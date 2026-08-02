@@ -22,7 +22,7 @@ __export(main_exports, {
   default: () => FormBuilderPlugin
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian8 = require("obsidian");
+var import_obsidian9 = require("obsidian");
 
 // src/settings.ts
 var import_obsidian = require("obsidian");
@@ -45,6 +45,8 @@ var en = {
   noticeRequired: "Form Builder: Please fill in all required fields.",
   noticeCreateError: "Form Builder: Failed to create note.",
   noticeSanitized: 'Form Builder: Some invalid characters in the file name were replaced with "_".',
+  noticeInvalidNumber: "Form Builder: One or more number fields are invalid. Please check the values and the min/max range.",
+  noticeDuplicateFilename: 'Form Builder: A note with this name already existed, so it was saved as "{name}" instead.',
   noticeFatalHeader: "Form Builder Error:",
   // モーダル共通
   btnClose: "Close",
@@ -187,7 +189,84 @@ $aliases:separator[, ]$`,
     ["$key:list[  - ]$", "Example: 2-space indented list (useful for Frontmatter aliases / tags)"],
     ["$key:list[* ]$", "Example: unordered list with *"],
     ["$key:list[1. ]$", 'Example: numbered list (auto-numbered only when [] starts with "1.")']
-  ]
+  ],
+  // ---------- 構文ジェネレーター（Field Generator） ----------
+  genModalTitle: "Syntax Generator",
+  genTypeLabel: "Generator Type",
+  genTypeField: "Field",
+  genTypeMetaFolder: "Meta: Folder",
+  genTypeMetaFilename: "Meta: Filename",
+  genFieldType: "Field Type",
+  genFieldTypeOptions: {
+    text: "Text",
+    textarea: "Textarea",
+    number: "Number",
+    date: "Date",
+    checkbox: "Checkbox",
+    select: "Select",
+    multiselect: "Multiselect",
+    multilist: "Multilist"
+  },
+  genFieldTypeHints: {
+    text: "Single-line text input.",
+    textarea: "Multi-line text input.",
+    number: "Numeric input.",
+    date: "Date picker.",
+    checkbox: "A single on/off toggle.",
+    select: "Dropdown \u2014 user picks exactly one option.",
+    multiselect: "Checkboxes \u2014 user can pick multiple options.",
+    multilist: "Free text, one item per line (no fixed option list)."
+  },
+  genKey: "Key",
+  genKeyHint: 'The internal name used in the syntax and as the $key$ variable. Letters, numbers, "_" and "-" only. Not shown to the user filling in the form.',
+  genLabel: "Label",
+  genLabelHint: "The text shown above this field on the form. Leave blank to fall back to the key.",
+  genDescription: "Description",
+  genDescriptionHint: "Short explanatory text shown below the label on the form. Optional.",
+  genPlaceholder: "Placeholder",
+  genPlaceholderHint: "Faint example text shown inside the empty input box. Optional.",
+  genDefault: "Default",
+  genDefaultHint: "Value pre-filled when the form opens. Leave blank for no default.",
+  genDefaultHintSelect: "The option pre-selected when the form opens. Leave blank to select nothing initially.",
+  genDefaultHintMultiselect: 'Options pre-selected when the form opens. For multiple options, separate with ";" (e.g. "a;b"). Leave blank to select nothing initially.',
+  genDefaultChecked: "Checked by default",
+  genDefaultCheckedHint: "Whether this checkbox starts turned on when the form opens.",
+  genRows: "Rows",
+  genRowsHint: "How many lines tall the input box is. Leave blank for the default size.",
+  genMin: "Min",
+  genMinHint: "Smallest number the user is allowed to enter. Optional.",
+  genMax: "Max",
+  genMaxHint: "Largest number the user is allowed to enter. Optional.",
+  genList: "Options",
+  genListHint: "Enter one option per line.",
+  genRequired: "Required",
+  genRequiredHint: "If on, the form cannot be submitted while this field is empty.",
+  genPreviewTitle: "Preview",
+  genVariableTitle: "Generated Variable",
+  genVarHintDefaultScalar: "Replaced with the value as entered.",
+  genVarHintDefaultArray: 'Joins all values with "," (no space).',
+  genVarHintList: 'Markdown list, each line prefixed with "- ".',
+  genVarHintNumbered: "Numbered list (1. 2. 3. ...).",
+  genVarHintSeparator: 'Joins all values with "; ".',
+  genMetaFolderLabel: "Folder",
+  genMetaFilenameLabel: "File name",
+  genMetaFolderHint: 'Where the note is saved. Type a fixed name (e.g. "Notes"), a variable (e.g. "$export$" or "%date%"), or mix both (e.g. "out_%date%").',
+  genMetaFilenameHint: 'The file name (without ".md"). Same rules as Folder \u2014 fixed text, a variable, or a mix (e.g. "$title$-%timestamp%").',
+  genMetaInsertVariableLabel: "Insert variable:",
+  genMetaFolderTip: 'Tip: combining fixed text with a variable (e.g. "out_%date%") keeps notes organized while still being predictable.',
+  genMetaFilenameOkTip: "Good \u2014 this file name includes a variable, which helps avoid collisions with existing files.",
+  genMetaFilenameNoVariableWarning: "This file name is entirely fixed text. If a note with the same name already exists in the folder, creating a new note will fail. Consider adding %date%, %timestamp%, or a form variable like $title$.",
+  genWrapInBlockLabel: "Insert formbuilder code block",
+  genWrapInBlockHint: "Wraps the generated syntax in a new ```formbuilder code block. Your cursor is not currently inside one.",
+  genCopySyntax: "Copy Syntax",
+  genCopyVariable: "Copy Variable",
+  genCopyBoth: "Copy Both",
+  genInsert: "Insert",
+  genCancel: "Cancel",
+  genCopiedNotice: "Form Builder: Copied to clipboard.",
+  genNoActiveEditor: "Form Builder: No active editor found.",
+  genInsertOutsideBlock: "Place the cursor inside a formbuilder code block.",
+  genInsertedNotice: "Form Builder: Field inserted."
 };
 var ja = {
   // 設定画面
@@ -202,6 +281,8 @@ var ja = {
   noticeRequired: "Form Builder: \u5FC5\u9808\u30D5\u30A3\u30FC\u30EB\u30C9\u3092\u3059\u3079\u3066\u5165\u529B\u3057\u3066\u304F\u3060\u3055\u3044\u3002",
   noticeCreateError: "Form Builder: \u30CE\u30FC\u30C8\u306E\u4F5C\u6210\u306B\u5931\u6557\u3057\u307E\u3057\u305F\u3002",
   noticeSanitized: 'Form Builder: \u30D5\u30A1\u30A4\u30EB\u540D\u306B\u4F7F\u7528\u3067\u304D\u306A\u3044\u6587\u5B57\u304C\u542B\u307E\u308C\u3066\u3044\u305F\u305F\u3081 "_" \u306B\u7F6E\u304D\u63DB\u3048\u307E\u3057\u305F\u3002',
+  noticeInvalidNumber: "Form Builder: \u6570\u5024\u306E\u5165\u529B\u306B\u8AA4\u308A\u304C\u3042\u308A\u307E\u3059\u3002\u5165\u529B\u5185\u5BB9\u3068\u6700\u5C0F\u5024\u30FB\u6700\u5927\u5024\u306E\u7BC4\u56F2\u3092\u78BA\u8A8D\u3057\u3066\u304F\u3060\u3055\u3044\u3002",
+  noticeDuplicateFilename: 'Form Builder: \u540C\u540D\u306E\u30CE\u30FC\u30C8\u304C\u65E2\u306B\u5B58\u5728\u3057\u305F\u305F\u3081\u3001"{name}" \u3068\u3057\u3066\u4FDD\u5B58\u3057\u307E\u3057\u305F\u3002',
   noticeFatalHeader: "Form Builder \u30A8\u30E9\u30FC:",
   // モーダル共通
   btnClose: "\u9589\u3058\u308B",
@@ -344,7 +425,84 @@ $aliases:separator[\u3001]$`,
     ["$\u30AD\u30FC\u540D:list[  - ]$", "\u4F8B: 2\u30B9\u30DA\u30FC\u30B9\u30A4\u30F3\u30C7\u30F3\u30C8\u4ED8\u304D\u30EA\u30B9\u30C8\uFF08Frontmatter \u306E aliases / tags \u306B\u9069\u3057\u3066\u3044\u307E\u3059\uFF09"],
     ["$\u30AD\u30FC\u540D:list[* ]$", "\u4F8B: * \u8A18\u6CD5\u306E\u30EA\u30B9\u30C8"],
     ["$\u30AD\u30FC\u540D:list[1. ]$", '\u4F8B: \u756A\u53F7\u4ED8\u304D\u30EA\u30B9\u30C8\uFF08[] \u304C "1." \u3067\u59CB\u307E\u308B\u5834\u5408\u306E\u307F\u81EA\u52D5\u63A1\u756A\uFF09']
-  ]
+  ],
+  // ---------- 構文ジェネレーター（Field Generator） ----------
+  genModalTitle: "\u69CB\u6587\u30B8\u30A7\u30CD\u30EC\u30FC\u30BF\u30FC",
+  genTypeLabel: "\u751F\u6210\u30BF\u30A4\u30D7",
+  genTypeField: "\u30D5\u30A3\u30FC\u30EB\u30C9",
+  genTypeMetaFolder: "Meta: \u30D5\u30A9\u30EB\u30C0",
+  genTypeMetaFilename: "Meta: \u30D5\u30A1\u30A4\u30EB\u540D",
+  genFieldType: "\u30D5\u30A3\u30FC\u30EB\u30C9\u30BF\u30A4\u30D7",
+  genFieldTypeOptions: {
+    text: "\u30C6\u30AD\u30B9\u30C8",
+    textarea: "\u30C6\u30AD\u30B9\u30C8\u30A8\u30EA\u30A2",
+    number: "\u6570\u5024",
+    date: "\u65E5\u4ED8",
+    checkbox: "\u30C1\u30A7\u30C3\u30AF\u30DC\u30C3\u30AF\u30B9",
+    select: "\u5358\u4E00\u9078\u629E",
+    multiselect: "\u8907\u6570\u9078\u629E",
+    multilist: "\u81EA\u7531\u8A18\u8FF0\u30EA\u30B9\u30C8"
+  },
+  genFieldTypeHints: {
+    text: "1\u884C\u306E\u77ED\u3044\u30C6\u30AD\u30B9\u30C8\u3092\u5165\u529B\u3059\u308B\u9805\u76EE\u3067\u3059\u3002",
+    textarea: "\u8907\u6570\u884C\u306E\u30C6\u30AD\u30B9\u30C8\u3092\u5165\u529B\u3059\u308B\u9805\u76EE\u3067\u3059\u3002",
+    number: "\u6570\u5024\u306E\u307F\u3092\u5165\u529B\u3059\u308B\u9805\u76EE\u3067\u3059\u3002",
+    date: "\u65E5\u4ED8\u3092\u9078\u629E\u3059\u308B\u9805\u76EE\u3067\u3059\u3002",
+    checkbox: "ON/OFF\u30921\u3064\u3060\u3051\u5207\u308A\u66FF\u3048\u308B\u9805\u76EE\u3067\u3059\u3002",
+    select: "\u30D7\u30EB\u30C0\u30A6\u30F3\u304B\u30891\u3064\u3060\u3051\u9078\u3076\u9805\u76EE\u3067\u3059\u3002",
+    multiselect: "\u30C1\u30A7\u30C3\u30AF\u30DC\u30C3\u30AF\u30B9\u304B\u3089\u8907\u6570\u9078\u3079\u308B\u9805\u76EE\u3067\u3059\u3002",
+    multilist: "\u6C7A\u307E\u3063\u305F\u9078\u629E\u80A2\u3092\u6301\u305F\u305A\u3001\u81EA\u7531\u306B\u8907\u6570\u884C\u5165\u529B\u3067\u304D\u308B\u9805\u76EE\u3067\u3059\u3002"
+  },
+  genKey: "\u30AD\u30FC",
+  genKeyHint: '\u69CB\u6587\u304A\u3088\u3073 $\u30AD\u30FC$ \u5909\u6570\u3068\u3057\u3066\u4F7F\u308F\u308C\u308B\u5185\u90E8\u540D\u3067\u3059\u3002\u534A\u89D2\u82F1\u6570\u5B57\u30FB"_"\u30FB"-" \u306E\u307F\u4F7F\u7528\u3067\u304D\u307E\u3059\u3002\u30D5\u30A9\u30FC\u30E0\u4E0A\u306B\u306F\u8868\u793A\u3055\u308C\u307E\u305B\u3093\u3002',
+  genLabel: "\u30E9\u30D9\u30EB",
+  genLabelHint: "\u30D5\u30A9\u30FC\u30E0\u4E0A\u3067\u3053\u306E\u9805\u76EE\u306E\u898B\u51FA\u3057\u3068\u3057\u3066\u8868\u793A\u3055\u308C\u308B\u6587\u5B57\u5217\u3067\u3059\u3002\u7A7A\u6B04\u306E\u5834\u5408\u306F\u30AD\u30FC\u304C\u305D\u306E\u307E\u307E\u8868\u793A\u3055\u308C\u307E\u3059\u3002",
+  genDescription: "\u8AAC\u660E",
+  genDescriptionHint: "\u30E9\u30D9\u30EB\u306E\u4E0B\u306B\u8868\u793A\u3055\u308C\u308B\u88DC\u8DB3\u8AAC\u660E\u3067\u3059\u3002\u7701\u7565\u3067\u304D\u307E\u3059\u3002",
+  genPlaceholder: "\u30D7\u30EC\u30FC\u30B9\u30DB\u30EB\u30C0\u30FC",
+  genPlaceholderHint: "\u672A\u5165\u529B\u6642\u306B\u8584\u3044\u30B0\u30EC\u30FC\u3067\u8868\u793A\u3055\u308C\u308B\u5165\u529B\u4F8B\u3067\u3059\u3002\u7701\u7565\u3067\u304D\u307E\u3059\u3002",
+  genDefault: "\u30C7\u30D5\u30A9\u30EB\u30C8\u5024",
+  genDefaultHint: "\u30D5\u30A9\u30FC\u30E0\u3092\u958B\u3044\u305F\u3068\u304D\u306B\u6700\u521D\u304B\u3089\u5165\u529B\u3055\u308C\u3066\u3044\u308B\u5024\u3067\u3059\u3002\u7A7A\u6B04\u306A\u3089\u4F55\u3082\u5165\u529B\u3055\u308C\u307E\u305B\u3093\u3002",
+  genDefaultHintSelect: "\u30D5\u30A9\u30FC\u30E0\u3092\u958B\u3044\u305F\u3068\u304D\u306B\u6700\u521D\u304B\u3089\u9078\u629E\u3055\u308C\u3066\u3044\u308B\u5024\u3067\u3059\u3002\u7A7A\u6B04\u306A\u3089\u4F55\u3082\u9078\u629E\u3055\u308C\u3066\u3044\u307E\u305B\u3093\u3002",
+  genDefaultHintMultiselect: '\u30D5\u30A9\u30FC\u30E0\u3092\u958B\u3044\u305F\u3068\u304D\u306B\u6700\u521D\u304B\u3089\u9078\u629E\u3055\u308C\u3066\u3044\u308B\u9805\u76EE\u3067\u3059\u3002\u8907\u6570\u6307\u5B9A\u3059\u308B\u5834\u5408\u306F ";" \u3067\u533A\u5207\u3063\u3066\u304F\u3060\u3055\u3044\uFF08\u4F8B: "a;b"\uFF09\u3002\u7A7A\u6B04\u306A\u3089\u3069\u308C\u3082\u9078\u629E\u3055\u308C\u307E\u305B\u3093\u3002',
+  genDefaultChecked: "\u521D\u671F\u72B6\u614B\u3067ON\u306B\u3059\u308B",
+  genDefaultCheckedHint: "\u30D5\u30A9\u30FC\u30E0\u3092\u958B\u3044\u305F\u3068\u304D\u306B\u3001\u3053\u306E\u30C1\u30A7\u30C3\u30AF\u30DC\u30C3\u30AF\u30B9\u3092\u6700\u521D\u304B\u3089ON\u306B\u3059\u308B\u304B\u3069\u3046\u304B\u3067\u3059\u3002",
+  genRows: "\u884C\u6570",
+  genRowsHint: "\u5165\u529B\u6B04\u306E\u9AD8\u3055\uFF08\u884C\u6570\uFF09\u3067\u3059\u3002\u7A7A\u6B04\u306E\u5834\u5408\u306F\u6A19\u6E96\u306E\u9AD8\u3055\u306B\u306A\u308A\u307E\u3059\u3002",
+  genMin: "\u6700\u5C0F\u5024",
+  genMinHint: "\u5165\u529B\u3067\u304D\u308B\u6700\u5C0F\u306E\u6570\u5024\u3067\u3059\u3002\u7701\u7565\u3067\u304D\u307E\u3059\u3002",
+  genMax: "\u6700\u5927\u5024",
+  genMaxHint: "\u5165\u529B\u3067\u304D\u308B\u6700\u5927\u306E\u6570\u5024\u3067\u3059\u3002\u7701\u7565\u3067\u304D\u307E\u3059\u3002",
+  genList: "\u9078\u629E\u80A2",
+  genListHint: "1\u884C\u306B\u3064\u304D1\u9805\u76EE\u3092\u5165\u529B\u3057\u3066\u304F\u3060\u3055\u3044\u3002",
+  genRequired: "\u5FC5\u9808\u9805\u76EE\u306B\u3059\u308B",
+  genRequiredHint: "ON\u306B\u3059\u308B\u3068\u3001\u3053\u306E\u9805\u76EE\u304C\u672A\u5165\u529B\u306E\u307E\u307E\u3067\u306F\u30CE\u30FC\u30C8\u3092\u4F5C\u6210\u3067\u304D\u306A\u304F\u306A\u308A\u307E\u3059\u3002",
+  genPreviewTitle: "\u30D7\u30EC\u30D3\u30E5\u30FC",
+  genVariableTitle: "\u5C55\u958B\u7528\u5909\u6570",
+  genVarHintDefaultScalar: "\u5165\u529B\u3055\u308C\u305F\u5024\u304C\u305D\u306E\u307E\u307E\u7F6E\u304D\u63DB\u308F\u308A\u307E\u3059\u3002",
+  genVarHintDefaultArray: '\u3059\u3079\u3066\u306E\u5024\u3092 "," \uFF08\u533A\u5207\u308A\u6587\u5B57\u306A\u3057\uFF09\u3067\u9023\u7D50\u3057\u307E\u3059\u3002',
+  genVarHintList: 'Markdown \u30EA\u30B9\u30C8\u5F62\u5F0F\uFF08\u5404\u884C\u306E\u5148\u982D\u306B "- " \u3092\u4ED8\u3051\u3066\u5C55\u958B\uFF09\u3002',
+  genVarHintNumbered: "\u756A\u53F7\u4ED8\u304D\u30EA\u30B9\u30C8\uFF081. 2. 3. \u2026\uFF09\u3068\u3057\u3066\u5C55\u958B\u3002",
+  genVarHintSeparator: '\u3059\u3079\u3066\u306E\u5024\u3092 "; " \u3067\u9023\u7D50\u3057\u307E\u3059\u3002',
+  genMetaFolderLabel: "\u30D5\u30A9\u30EB\u30C0",
+  genMetaFilenameLabel: "\u30D5\u30A1\u30A4\u30EB\u540D",
+  genMetaFolderHint: '\u30CE\u30FC\u30C8\u306E\u4FDD\u5B58\u5148\u3067\u3059\u3002\u56FA\u5B9A\u540D\uFF08\u4F8B: "Notes"\uFF09\u3001\u5909\u6570\uFF08\u4F8B: "$export$" \u3084 "%date%"\uFF09\u3001\u307E\u305F\u306F\u305D\u306E\u7D44\u307F\u5408\u308F\u305B\uFF08\u4F8B: "out_%date%"\uFF09\u3092\u5165\u529B\u3067\u304D\u307E\u3059\u3002',
+  genMetaFilenameHint: '\u30D5\u30A1\u30A4\u30EB\u540D\uFF08".md" \u306F\u4E0D\u8981\uFF09\u3067\u3059\u3002\u30D5\u30A9\u30EB\u30C0\u3068\u540C\u69D8\u306B\u3001\u56FA\u5B9A\u6587\u5B57\u30FB\u5909\u6570\u30FB\u305D\u306E\u7D44\u307F\u5408\u308F\u305B\uFF08\u4F8B: "$title$-%timestamp%"\uFF09\u3092\u5165\u529B\u3067\u304D\u307E\u3059\u3002',
+  genMetaInsertVariableLabel: "\u5909\u6570\u3092\u633F\u5165:",
+  genMetaFolderTip: '\u30D2\u30F3\u30C8: \u56FA\u5B9A\u6587\u5B57\u3068\u5909\u6570\u3092\u7D44\u307F\u5408\u308F\u305B\u308B\uFF08\u4F8B: "out_%date%"\uFF09\u3068\u3001\u6574\u7406\u3057\u3084\u3059\u304F\u4E88\u6E2C\u3082\u3057\u3084\u3059\u3044\u30D5\u30A9\u30EB\u30C0\u69CB\u6210\u306B\u306A\u308A\u307E\u3059\u3002',
+  genMetaFilenameOkTip: "\u5909\u6570\u304C\u542B\u307E\u308C\u3066\u3044\u308B\u305F\u3081\u3001\u65E2\u5B58\u30D5\u30A1\u30A4\u30EB\u3068\u306E\u91CD\u8907\u304C\u8D77\u304D\u306B\u304F\u304F\u306A\u3063\u3066\u3044\u307E\u3059\u3002",
+  genMetaFilenameNoVariableWarning: "\u3053\u306E\u30D5\u30A1\u30A4\u30EB\u540D\u306F\u5B8C\u5168\u306B\u56FA\u5B9A\u6587\u5B57\u3060\u3051\u306B\u306A\u3063\u3066\u3044\u307E\u3059\u3002\u540C\u3058\u30D5\u30A9\u30EB\u30C0\u306B\u540C\u540D\u306E\u30D5\u30A1\u30A4\u30EB\u304C\u65E2\u306B\u5B58\u5728\u3059\u308B\u5834\u5408\u3001\u30CE\u30FC\u30C8\u306E\u4F5C\u6210\u306B\u5931\u6557\u3057\u307E\u3059\u3002%date% \u3084 %timestamp%\u3001\u307E\u305F\u306F $title$ \u306E\u3088\u3046\u306A\u30D5\u30A9\u30FC\u30E0\u5909\u6570\u3092\u8FFD\u52A0\u3059\u308B\u3053\u3068\u3092\u304A\u3059\u3059\u3081\u3057\u307E\u3059\u3002",
+  genWrapInBlockLabel: "formbuilder \u30B3\u30FC\u30C9\u30D6\u30ED\u30C3\u30AF\u3092\u633F\u5165\u3059\u308B",
+  genWrapInBlockHint: "\u751F\u6210\u3055\u308C\u308B\u69CB\u6587\u3092\u65B0\u3057\u3044 ```formbuilder \u30B3\u30FC\u30C9\u30D6\u30ED\u30C3\u30AF\u3067\u56F2\u307F\u307E\u3059\u3002\u73FE\u5728\u30AB\u30FC\u30BD\u30EB\u306F\u30D6\u30ED\u30C3\u30AF\u306E\u5916\u306B\u3042\u308A\u307E\u3059\u3002",
+  genCopySyntax: "\u69CB\u6587\u3092\u30B3\u30D4\u30FC",
+  genCopyVariable: "\u5909\u6570\u3092\u30B3\u30D4\u30FC",
+  genCopyBoth: "\u4E21\u65B9\u30B3\u30D4\u30FC",
+  genInsert: "\u633F\u5165",
+  genCancel: "\u30AD\u30E3\u30F3\u30BB\u30EB",
+  genCopiedNotice: "Form Builder: \u30AF\u30EA\u30C3\u30D7\u30DC\u30FC\u30C9\u306B\u30B3\u30D4\u30FC\u3057\u307E\u3057\u305F\u3002",
+  genNoActiveEditor: "Form Builder: \u30A2\u30AF\u30C6\u30A3\u30D6\u306A\u30A8\u30C7\u30A3\u30BF\u304C\u898B\u3064\u304B\u308A\u307E\u305B\u3093\u3002",
+  genInsertOutsideBlock: "formbuilder \u30B3\u30FC\u30C9\u30D6\u30ED\u30C3\u30AF\u306E\u4E2D\u306B\u30AB\u30FC\u30BD\u30EB\u3092\u7F6E\u3044\u3066\u304F\u3060\u3055\u3044\u3002",
+  genInsertedNotice: "Form Builder: \u30D5\u30A3\u30FC\u30EB\u30C9\u3092\u633F\u5165\u3057\u307E\u3057\u305F\u3002"
 };
 var LOCALES = { en, ja };
 function getLocale(lang) {
@@ -365,39 +523,15 @@ var FormBuilderSettingTab = class extends import_obsidian.PluginSettingTab {
     super(app, plugin);
     this.plugin = plugin;
   }
-  // v1.13.0+ 向け宣言的 API。
-  // Obsidian は getSettingDefinitions() が配列を返す場合に display() をバイパスするため、
-  // 両メソッドを実装することで v1.13.0 未満との後方互換を保つ（デュアルサポートパターン）。
-  getSettingDefinitions() {
-    const localeOptions = Object.fromEntries(
-      Object.entries(LOCALE_LABELS)
-    );
-    return [
-      {
-        name: "Form Builder"
-      },
-      {
-        name: "Template folder",
-        desc: "Folder where your formbuilder template files are stored.",
-        control: {
-          type: "folder",
-          key: "templateFolder",
-          placeholder: "Templates",
-          includeRoot: false
-        }
-      },
-      {
-        name: "Language",
-        desc: "Language used in forms, notices, and the settings page.",
-        control: {
-          type: "dropdown",
-          key: "locale",
-          options: localeOptions
-        }
-      }
-    ];
-  }
-  // v1.13.0 未満の Obsidian 向けフォールバック。
+  // 回避策: v1.13.0+ の宣言的 API（getSettingDefinitions() / update()）は、
+  // locale を変更した際に「変更元の行（Language 自身）の name / desc だけ
+  // 再描画されない」という不具合が確認されたため、あえて使用しない。
+  //
+  // ドキュメント上、getSettingDefinitions() が「非空配列」を返した場合のみ
+  // display() がバイパスされる仕様になっているため、このメソッド自体を
+  // 定義しない（基底クラスの既定実装が空配列を返す）ことで、
+  // 常に下の display()（レガシーAPI）が使われるようにする。
+  // display() 側は日本語切り替え時の再描画も含めて正しく動作することを確認済み。
   display() {
     const { containerEl } = this;
     containerEl.empty();
@@ -663,6 +797,34 @@ function renderList(containerEl, field, values, multilistHint) {
   textarea.rows = field.rows && field.rows > 0 ? field.rows : 4;
   textarea.addEventListener("input", () => values.set(field.key, textarea.value));
 }
+function validateNumberFields(containerEl, fields, values) {
+  const errors = [];
+  for (const field of fields) {
+    if (field.type !== "number")
+      continue;
+    const raw = values.get(field.key);
+    if (raw === void 0 || raw === "")
+      continue;
+    if (typeof raw !== "string")
+      continue;
+    const num = Number(raw);
+    let reason = null;
+    if (Number.isNaN(num)) {
+      reason = "invalid";
+    } else if (field.min !== void 0 && num < field.min) {
+      reason = "min";
+    } else if (field.max !== void 0 && num > field.max) {
+      reason = "max";
+    }
+    if (reason) {
+      errors.push({ key: field.key, reason });
+      const el = containerEl.querySelector(`[data-form-key="${field.key}"]`);
+      if (el)
+        el.addClass("fb-error");
+    }
+  }
+  return errors;
+}
 function highlightRequiredErrors(containerEl, fields, values) {
   containerEl.querySelectorAll(".fb-error").forEach((el) => el.removeClass("fb-error"));
   const missing = [];
@@ -682,7 +844,7 @@ function highlightRequiredErrors(containerEl, fields, values) {
 }
 
 // src/generator/NoteGenerator.ts
-var import_obsidian3 = require("obsidian");
+var import_obsidian4 = require("obsidian");
 
 // src/generator/VariableResolver.ts
 function pad2(n) {
@@ -786,6 +948,18 @@ function resolveSystemVariables(template, location) {
   return result;
 }
 
+// src/ui/ErrorNotice.ts
+var import_obsidian3 = require("obsidian");
+var NOTICE_DURATION = 8e3;
+function showFatalError(errors, header) {
+  const messages = errors.map((e) => {
+    const lineInfo = e.line ? ` (line ${e.line})` : "";
+    return `\u2022 ${e.message}${lineInfo}`;
+  }).join("\n");
+  new import_obsidian3.Notice(`${header}
+${messages}`, NOTICE_DURATION);
+}
+
 // src/generator/NoteGenerator.ts
 var INVALID_FILENAME_CHARS = /[/\\:*?"<>|]/g;
 var WINDOWS_RESERVED_NAMES = /^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(\.|$)/i;
@@ -799,7 +973,7 @@ function sanitizeFileName(name, sanitizedNotice) {
   if (!sanitized)
     sanitized = "Untitled";
   if (sanitized !== name) {
-    new import_obsidian3.Notice(sanitizedNotice);
+    new import_obsidian4.Notice(sanitizedNotice);
   }
   return sanitized;
 }
@@ -815,7 +989,25 @@ async function ensureFolder(app, folderPath) {
     }
   }
 }
-async function generateNote(app, bodyTemplate, values, fields, meta, sanitizedNotice) {
+function resolveUniqueFilePath(app, folder, filenameWithExt) {
+  const EXT = ".md";
+  const base = filenameWithExt.endsWith(EXT) ? filenameWithExt.slice(0, -EXT.length) : filenameWithExt;
+  let candidateName = filenameWithExt;
+  let counter = 2;
+  let renamed = false;
+  for (let i = 0; i < 1e3; i++) {
+    const path = folder ? (0, import_obsidian4.normalizePath)(`${folder}/${candidateName}`) : (0, import_obsidian4.normalizePath)(candidateName);
+    if (!app.vault.getAbstractFileByPath(path)) {
+      return { path, finalNameWithExt: candidateName, renamed };
+    }
+    candidateName = `${base} (${counter})${EXT}`;
+    counter++;
+    renamed = true;
+  }
+  const fallbackPath = folder ? (0, import_obsidian4.normalizePath)(`${folder}/${candidateName}`) : (0, import_obsidian4.normalizePath)(candidateName);
+  return { path: fallbackPath, finalNameWithExt: candidateName, renamed };
+}
+async function generateNote(app, bodyTemplate, values, fields, meta, sanitizedNotice, duplicateRenamedNotice) {
   var _a, _b;
   const rawFilename = (_a = meta.filename) != null ? _a : "Untitled";
   const { result: filename0 } = resolveUserVariables(rawFilename, values, fields);
@@ -824,30 +1016,22 @@ async function generateNote(app, bodyTemplate, values, fields, meta, sanitizedNo
   const rawFolder = (_b = meta.folder) != null ? _b : "";
   const { result: folder0 } = resolveUserVariables(rawFolder, values, fields);
   const resolvedFolder = resolveSystemVariables(folder0);
-  const { result: content0, warnings: bodyWarnings } = resolveUserVariables(bodyTemplate, values, fields);
-  const content = resolveSystemVariables(content0, { folder: resolvedFolder, filename: resolvedFilename });
-  for (const w of bodyWarnings) {
-    new import_obsidian3.Notice(`Form Builder: ${w.message}`, 6e3);
-  }
   const filenameWithExt = resolvedFilename.endsWith(".md") ? resolvedFilename : `${resolvedFilename}.md`;
   await ensureFolder(app, resolvedFolder);
-  const filePath = resolvedFolder ? (0, import_obsidian3.normalizePath)(`${resolvedFolder}/${filenameWithExt}`) : (0, import_obsidian3.normalizePath)(filenameWithExt);
+  const { path: filePath, finalNameWithExt, renamed } = resolveUniqueFilePath(app, resolvedFolder, filenameWithExt);
+  const finalNameNoExt = finalNameWithExt.endsWith(".md") ? finalNameWithExt.slice(0, -3) : finalNameWithExt;
+  const { result: content0, warnings: bodyWarnings } = resolveUserVariables(bodyTemplate, values, fields);
+  const content = resolveSystemVariables(content0, { folder: resolvedFolder, filename: finalNameNoExt });
+  for (const w of bodyWarnings) {
+    new import_obsidian4.Notice(`Form Builder: ${w.message}`, 6e3);
+  }
+  if (renamed) {
+    new import_obsidian4.Notice(duplicateRenamedNotice.replace("{name}", finalNameWithExt), NOTICE_DURATION);
+  }
   await app.vault.create(filePath, content);
   const file = app.vault.getFileByPath(filePath);
   if (file)
     await app.workspace.getLeaf().openFile(file);
-}
-
-// src/ui/ErrorNotice.ts
-var import_obsidian4 = require("obsidian");
-var NOTICE_DURATION = 8e3;
-function showFatalError(errors, header) {
-  const messages = errors.map((e) => {
-    const lineInfo = e.line ? ` (line ${e.line})` : "";
-    return `\u2022 ${e.message}${lineInfo}`;
-  }).join("\n");
-  new import_obsidian4.Notice(`${header}
-${messages}`, NOTICE_DURATION);
 }
 
 // src/form/FormModal.ts
@@ -899,10 +1083,13 @@ var FormModal = class extends import_obsidian5.Modal {
     const L = getLocale(this.locale);
     const root = this.contentEl.querySelector(".fb-modal");
     const missing = highlightRequiredErrors(root, this.parseResult.fields, this.values);
-    if (missing.length > 0) {
+    const numberErrors = validateNumberFields(root, this.parseResult.fields, this.values);
+    if (missing.length > 0)
       new import_obsidian5.Notice(L.noticeRequired);
+    if (numberErrors.length > 0)
+      new import_obsidian5.Notice(L.noticeInvalidNumber);
+    if (missing.length > 0 || numberErrors.length > 0)
       return;
-    }
     try {
       await generateNote(
         this.app,
@@ -910,7 +1097,8 @@ var FormModal = class extends import_obsidian5.Modal {
         this.values,
         this.parseResult.fields,
         this.parseResult.meta,
-        L.noticeSanitized
+        L.noticeSanitized,
+        L.noticeDuplicateFilename
       );
       this.close();
     } catch (e) {
@@ -1322,6 +1510,597 @@ var TemplatePickerModal = class extends import_obsidian6.Modal {
   }
 };
 
+// src/form/FieldGeneratorModal.ts
+var import_obsidian7 = require("obsidian");
+
+// src/generator/FieldSyntaxBuilder.ts
+function createEmptyState() {
+  return {
+    key: "",
+    label: "",
+    description: "",
+    required: false,
+    placeholder: "",
+    default: "",
+    checked: false,
+    rows: "",
+    min: "",
+    max: "",
+    listRaw: ""
+  };
+}
+function toSemicolonList(raw) {
+  return raw.split("\n").map((s) => s.trim()).filter((s) => s !== "").join(";");
+}
+function hasPlaceholderOption(type) {
+  return type === "text" || type === "textarea" || type === "number" || type === "date" || type === "multilist";
+}
+function hasRowsOption(type) {
+  return type === "textarea" || type === "multiselect" || type === "multilist";
+}
+function buildOptions(type, state) {
+  const opts = [];
+  if (state.label.trim())
+    opts.push({ key: "label", value: state.label.trim() });
+  if (state.description.trim())
+    opts.push({ key: "description", value: state.description.trim() });
+  if (hasPlaceholderOption(type) && state.placeholder.trim()) {
+    opts.push({ key: "placeholder", value: state.placeholder.trim() });
+  }
+  if (type === "checkbox") {
+    if (state.checked)
+      opts.push({ key: "default", value: "true" });
+  } else if (type === "select" || type === "multiselect") {
+    const list = toSemicolonList(state.listRaw);
+    if (list)
+      opts.push({ key: "list", value: list });
+    if (state.default.trim())
+      opts.push({ key: "default", value: state.default.trim() });
+  } else if (type === "multilist") {
+  } else {
+    if (state.default.trim())
+      opts.push({ key: "default", value: state.default.trim() });
+  }
+  if (hasRowsOption(type) && state.rows.trim()) {
+    opts.push({ key: "rows", value: state.rows.trim() });
+  }
+  if (type === "number") {
+    if (state.min.trim())
+      opts.push({ key: "min", value: state.min.trim() });
+    if (state.max.trim())
+      opts.push({ key: "max", value: state.max.trim() });
+  }
+  if (state.required)
+    opts.push({ key: "required", value: null });
+  return opts;
+}
+function buildFieldSyntax(type, state) {
+  const key = state.key.trim();
+  if (!key)
+    return "";
+  const opts = buildOptions(type, state);
+  const tokens = [
+    type,
+    key,
+    ...opts.map((o) => o.value === null ? o.key : `${o.key}=[${o.value}]`)
+  ];
+  return `{{${tokens.join("|")}}}`;
+}
+function buildVariableExamples(type, state, hints) {
+  const key = state.key.trim();
+  if (!key)
+    return [];
+  const examples = [
+    { code: `$${key}$`, hint: hints.default }
+  ];
+  if (type === "multiselect" || type === "multilist") {
+    examples.push({ code: `$${key}:list[- ]$`, hint: hints.list });
+    examples.push({ code: `$${key}:list[1. ]$`, hint: hints.numbered });
+    examples.push({ code: `$${key}:separator[; ]$`, hint: hints.separator });
+  }
+  return examples;
+}
+function buildVariableClipboardText(type, state, hints) {
+  return buildVariableExamples(type, state, hints).map((e) => e.code).join("\n");
+}
+function buildMetaSyntax(kind, rawValue) {
+  const value = rawValue.trim();
+  if (!value)
+    return "";
+  return `{{meta|${kind}=[${value}]}}`;
+}
+function containsVariableToken(value) {
+  return /\$[^$]+\$/.test(value) || /%[^%]+%/.test(value);
+}
+function wrapInFormbuilderBlock(syntax) {
+  if (!syntax)
+    return "";
+  return "```formbuilder\n" + syntax + "\n```";
+}
+
+// src/form/FieldGeneratorModal.ts
+var FIELD_TYPES = [
+  "text",
+  "textarea",
+  "number",
+  "date",
+  "checkbox",
+  "select",
+  "multiselect",
+  "multilist"
+];
+var VALID_KEY = /^[a-zA-Z0-9_-]+$/;
+function isCursorInFormbuilderBlock(content, cursorLine) {
+  const lines = content.split("\n");
+  let inBlock = false;
+  for (let i = 0; i < lines.length; i++) {
+    const trimmed = lines[i].trim();
+    if (!inBlock && /^```formbuilder\s*$/.test(trimmed)) {
+      inBlock = true;
+      continue;
+    }
+    if (inBlock && /^```\s*$/.test(trimmed)) {
+      inBlock = false;
+      continue;
+    }
+    if (inBlock && i === cursorLine)
+      return true;
+  }
+  return false;
+}
+var FieldGeneratorModal = class extends import_obsidian7.Modal {
+  constructor(app, locale) {
+    super(app);
+    this.mode = "field";
+    this.type = "text";
+    this.state = createEmptyState();
+    this.metaFolderValue = "";
+    this.metaFilenameValue = "";
+    // カーソルが既存の formbuilder ブロックの中にあるかどうか（モーダルを開いた時点で1回判定する）。
+    // ブロックの外側にある場合のみ「formbuilder コードブロックを挿入する」チェックボックスを表示する。
+    this.cursorInBlock = false;
+    this.wrapInBlock = false;
+    this.actionButtons = [];
+    this.locale = locale;
+  }
+  onOpen() {
+    this.modalEl.addClass("fb-modal-root");
+    this.modalEl.addClass("fb-gen-modal");
+    const { contentEl } = this;
+    contentEl.empty();
+    const L = getLocale(this.locale);
+    this.setTitle(L.genModalTitle);
+    this.cursorInBlock = this.detectCursorInBlock();
+    const root = contentEl.createDiv({ cls: "fb-modal" });
+    this.renderModeSelect(root);
+    this.bodyEl = root.createDiv({ cls: "fb-gen-settings" });
+    this.previewEl = root.createDiv({ cls: "fb-gen-preview" });
+    this.sideEl = root.createDiv({ cls: "fb-gen-variables" });
+    if (!this.cursorInBlock) {
+      this.renderWrapToggle(root);
+    }
+    this.buttonsRowEl = root.createDiv({ cls: "fb-btn-row" });
+    this.renderBody();
+    this.renderButtons();
+    this.updatePreview();
+  }
+  /** アクティブなエディタのカーソルが、既存の formbuilder ブロックの中にあるかどうかを判定する。 */
+  detectCursorInBlock() {
+    const view = this.app.workspace.getActiveViewOfType(import_obsidian7.MarkdownView);
+    if (!view)
+      return false;
+    const editor = view.editor;
+    return isCursorInFormbuilderBlock(editor.getValue(), editor.getCursor().line);
+  }
+  renderWrapToggle(root) {
+    const L = getLocale(this.locale);
+    this.addToggle(root, L.genWrapInBlockLabel, L.genWrapInBlockHint, this.wrapInBlock, (v) => {
+      this.wrapInBlock = v;
+      this.updatePreview();
+    });
+  }
+  onClose() {
+    this.contentEl.empty();
+  }
+  // ---------------------------------------------------------------
+  // Generator Type（Field / Meta: Folder / Meta: Filename）
+  // ---------------------------------------------------------------
+  renderModeSelect(root) {
+    const L = getLocale(this.locale);
+    const card = root.createDiv({ cls: "fb-field" });
+    const labelRow = card.createDiv({ cls: "fb-label-row" });
+    labelRow.createSpan({ cls: "fb-label", text: L.genTypeLabel });
+    const select = card.createEl("select", { cls: "fb-select" });
+    const options = [
+      ["field", L.genTypeField],
+      ["meta-folder", L.genTypeMetaFolder],
+      ["meta-filename", L.genTypeMetaFilename]
+    ];
+    for (const [value, label] of options) {
+      const opt = select.createEl("option");
+      opt.value = value;
+      opt.textContent = label;
+    }
+    select.value = this.mode;
+    select.addEventListener("change", () => {
+      this.mode = select.value;
+      this.renderBody();
+      this.renderButtons();
+      this.updatePreview();
+    });
+  }
+  // ---------------------------------------------------------------
+  // 本体（Field Type + 設定 / Meta 値入力）の出し分け
+  // ---------------------------------------------------------------
+  renderBody() {
+    this.bodyEl.empty();
+    if (this.mode === "field") {
+      this.renderFieldTypeSelect(this.bodyEl);
+      this.renderFieldSettings(this.bodyEl);
+    } else {
+      const kind = this.mode === "meta-folder" ? "folder" : "filename";
+      this.renderMetaInput(this.bodyEl, kind);
+    }
+  }
+  renderFieldTypeSelect(container) {
+    var _a, _b;
+    const L = getLocale(this.locale);
+    const card = container.createDiv({ cls: "fb-field fb-gen-row" });
+    const labelRow = card.createDiv({ cls: "fb-label-row" });
+    labelRow.createSpan({ cls: "fb-label", text: L.genFieldType });
+    card.createDiv({ cls: "fb-desc", text: (_a = L.genFieldTypeHints[this.type]) != null ? _a : "" });
+    const select = card.createEl("select", { cls: "fb-select" });
+    for (const t of FIELD_TYPES) {
+      const opt = select.createEl("option");
+      opt.value = t;
+      opt.textContent = (_b = L.genFieldTypeOptions[t]) != null ? _b : t;
+    }
+    select.value = this.type;
+    select.addEventListener("change", () => {
+      this.type = select.value;
+      this.bodyEl.empty();
+      this.renderFieldTypeSelect(this.bodyEl);
+      this.renderFieldSettings(this.bodyEl);
+      this.updatePreview();
+    });
+  }
+  renderFieldSettings(container) {
+    const L = getLocale(this.locale);
+    this.keyInputEl = this.addTextInput(
+      container,
+      L.genKey,
+      L.genKeyHint,
+      this.state.key,
+      true,
+      (v) => {
+        this.state.key = v;
+        this.updatePreview();
+      }
+    );
+    this.addTextInput(container, L.genLabel, L.genLabelHint, this.state.label, false, (v) => {
+      this.state.label = v;
+      this.updatePreview();
+    });
+    this.addTextInput(container, L.genDescription, L.genDescriptionHint, this.state.description, false, (v) => {
+      this.state.description = v;
+      this.updatePreview();
+    });
+    const hasPlaceholder = this.type === "text" || this.type === "textarea" || this.type === "number" || this.type === "date" || this.type === "multilist";
+    if (hasPlaceholder) {
+      this.addTextInput(container, L.genPlaceholder, L.genPlaceholderHint, this.state.placeholder, false, (v) => {
+        this.state.placeholder = v;
+        this.updatePreview();
+      });
+    }
+    if (this.type === "checkbox") {
+      this.addToggle(container, L.genDefaultChecked, L.genDefaultCheckedHint, this.state.checked, (v) => {
+        this.state.checked = v;
+        this.updatePreview();
+      });
+    } else if (this.type === "select") {
+      this.addTextarea(container, L.genList, this.state.listRaw, L.genListHint, (v) => {
+        this.state.listRaw = v;
+        this.updatePreview();
+      });
+      this.addTextInput(container, L.genDefault, L.genDefaultHintSelect, this.state.default, false, (v) => {
+        this.state.default = v;
+        this.updatePreview();
+      });
+    } else if (this.type === "multiselect") {
+      this.addTextarea(container, L.genList, this.state.listRaw, L.genListHint, (v) => {
+        this.state.listRaw = v;
+        this.updatePreview();
+      });
+      this.addTextInput(container, L.genRows, L.genRowsHint, this.state.rows, false, (v) => {
+        this.state.rows = v;
+        this.updatePreview();
+      });
+      this.addTextInput(container, L.genDefault, L.genDefaultHintMultiselect, this.state.default, false, (v) => {
+        this.state.default = v;
+        this.updatePreview();
+      });
+    } else if (this.type === "multilist") {
+      this.addTextInput(container, L.genRows, L.genRowsHint, this.state.rows, false, (v) => {
+        this.state.rows = v;
+        this.updatePreview();
+      });
+    } else {
+      this.addTextInput(container, L.genDefault, L.genDefaultHint, this.state.default, false, (v) => {
+        this.state.default = v;
+        this.updatePreview();
+      });
+      if (this.type === "textarea") {
+        this.addTextInput(container, L.genRows, L.genRowsHint, this.state.rows, false, (v) => {
+          this.state.rows = v;
+          this.updatePreview();
+        });
+      }
+    }
+    if (this.type === "number") {
+      this.addTextInput(container, L.genMin, L.genMinHint, this.state.min, false, (v) => {
+        this.state.min = v;
+        this.updatePreview();
+      });
+      this.addTextInput(container, L.genMax, L.genMaxHint, this.state.max, false, (v) => {
+        this.state.max = v;
+        this.updatePreview();
+      });
+    }
+    if (this.type !== "checkbox") {
+      this.addToggle(container, L.genRequired, L.genRequiredHint, this.state.required, (v) => {
+        this.state.required = v;
+        this.updatePreview();
+      });
+    }
+  }
+  // ---------------------------------------------------------------
+  // Meta（folder / filename）入力
+  // ---------------------------------------------------------------
+  renderMetaInput(container, kind) {
+    const L = getLocale(this.locale);
+    const label = kind === "folder" ? L.genMetaFolderLabel : L.genMetaFilenameLabel;
+    const hint = kind === "folder" ? L.genMetaFolderHint : L.genMetaFilenameHint;
+    const value = kind === "folder" ? this.metaFolderValue : this.metaFilenameValue;
+    const card = container.createDiv({ cls: "fb-field fb-gen-row" });
+    const labelRow = card.createDiv({ cls: "fb-label-row" });
+    labelRow.createSpan({ cls: "fb-label", text: label });
+    card.createDiv({ cls: "fb-desc", text: hint });
+    const input = card.createEl("input", { cls: "fb-input" });
+    input.type = "text";
+    input.value = value;
+    input.addEventListener("input", () => {
+      if (kind === "folder")
+        this.metaFolderValue = input.value;
+      else
+        this.metaFilenameValue = input.value;
+      this.updatePreview();
+    });
+    const insertRow = card.createDiv({ cls: "fb-gen-var-insert-row" });
+    insertRow.createSpan({ cls: "fb-desc", text: L.genMetaInsertVariableLabel });
+    const tokens = ["%date%", "%time%", "%timestamp%", "$key$"];
+    for (const token of tokens) {
+      const btn = insertRow.createEl("button", { cls: "fb-btn fb-btn-chip", text: token });
+      btn.addEventListener("click", (ev) => {
+        ev.preventDefault();
+        this.insertTokenAtCursor(input, token, kind);
+      });
+    }
+  }
+  insertTokenAtCursor(input, token, kind) {
+    var _a, _b;
+    const start = (_a = input.selectionStart) != null ? _a : input.value.length;
+    const end = (_b = input.selectionEnd) != null ? _b : input.value.length;
+    const newValue = input.value.slice(0, start) + token + input.value.slice(end);
+    input.value = newValue;
+    if (kind === "folder")
+      this.metaFolderValue = newValue;
+    else
+      this.metaFilenameValue = newValue;
+    const newPos = start + token.length;
+    input.focus();
+    input.setSelectionRange(newPos, newPos);
+    this.updatePreview();
+  }
+  // ---------------------------------------------------------------
+  // 入力ヘルパー（既存 FieldRenderer と同じクラス名を再利用し見た目を統一）
+  // ---------------------------------------------------------------
+  addTextInput(container, label, hint, value, required, onInput) {
+    const card = container.createDiv({ cls: "fb-field fb-gen-row" });
+    const labelRow = card.createDiv({ cls: "fb-label-row" });
+    labelRow.createSpan({ cls: "fb-label", text: label });
+    if (required)
+      labelRow.createSpan({ cls: "fb-required-mark", text: "*" });
+    if (hint)
+      card.createDiv({ cls: "fb-desc", text: hint });
+    const input = card.createEl("input", { cls: "fb-input" });
+    input.type = "text";
+    input.value = value;
+    input.addEventListener("input", () => onInput(input.value));
+    return input;
+  }
+  addTextarea(container, label, value, hint, onInput) {
+    const card = container.createDiv({ cls: "fb-field fb-gen-row" });
+    const labelRow = card.createDiv({ cls: "fb-label-row" });
+    labelRow.createSpan({ cls: "fb-label", text: label });
+    card.createDiv({ cls: "fb-desc", text: hint });
+    const textarea = card.createEl("textarea", { cls: "fb-textarea" });
+    textarea.value = value;
+    textarea.rows = 4;
+    textarea.addEventListener("input", () => onInput(textarea.value));
+  }
+  addToggle(container, label, hint, checked, onChange) {
+    const card = container.createDiv({ cls: "fb-field fb-gen-row" });
+    const labelRow = card.createDiv({ cls: "fb-label-row" });
+    labelRow.createSpan({ cls: "fb-label", text: label });
+    if (hint)
+      card.createDiv({ cls: "fb-desc", text: hint });
+    const wrap = card.createDiv({ cls: "fb-toggle-wrap" });
+    const toggleLabel = wrap.createEl("label", { cls: "fb-toggle" });
+    const input = toggleLabel.createEl("input");
+    input.type = "checkbox";
+    input.checked = checked;
+    toggleLabel.createDiv({ cls: "fb-toggle-track" });
+    toggleLabel.createDiv({ cls: "fb-toggle-thumb" });
+    input.addEventListener("change", () => onChange(input.checked));
+  }
+  // ---------------------------------------------------------------
+  // Preview / 補助パネル（入力のたびにリアルタイム更新）
+  // ---------------------------------------------------------------
+  currentSyntax() {
+    if (this.mode === "field") {
+      const key = this.state.key.trim();
+      const keyValid = key !== "" && VALID_KEY.test(key);
+      return keyValid ? buildFieldSyntax(this.type, this.state) : "";
+    }
+    const kind = this.mode === "meta-folder" ? "folder" : "filename";
+    const value = this.mode === "meta-folder" ? this.metaFolderValue : this.metaFilenameValue;
+    return buildMetaSyntax(kind, value);
+  }
+  /**
+   * 実際にコピー・挿入される構文。
+   * 「formbuilder コードブロックを挿入する」がオンの場合は ```formbuilder で囲む。
+   * このチェックボックスはカーソルがブロック外のときにしか表示されないため、
+   * オンになっている時点でラップして問題ない。
+   */
+  renderedSyntax() {
+    const raw = this.currentSyntax();
+    if (!raw)
+      return "";
+    return this.wrapInBlock ? wrapInFormbuilderBlock(raw) : raw;
+  }
+  updatePreview() {
+    const L = getLocale(this.locale);
+    let enabled = false;
+    if (this.mode === "field") {
+      const key = this.state.key.trim();
+      const keyValid = key !== "" && VALID_KEY.test(key);
+      enabled = keyValid;
+      if (this.keyInputEl)
+        this.keyInputEl.toggleClass("fb-error", key !== "" && !keyValid);
+    } else {
+      enabled = this.currentSyntax() !== "";
+    }
+    const syntax = this.renderedSyntax();
+    this.previewEl.empty();
+    this.previewEl.createDiv({ cls: "fb-label", text: L.genPreviewTitle });
+    this.previewEl.createEl("pre", { cls: "fb-example-block fb-gen-code" }).createEl("code", { text: syntax || "\u2014" });
+    this.renderSidePanel(syntax, enabled);
+    for (const btn of this.actionButtons) {
+      btn.toggleAttribute("disabled", !enabled);
+    }
+  }
+  variableHints(L) {
+    const isArray = this.type === "multiselect" || this.type === "multilist";
+    return {
+      default: isArray ? L.genVarHintDefaultArray : L.genVarHintDefaultScalar,
+      list: L.genVarHintList,
+      numbered: L.genVarHintNumbered,
+      separator: L.genVarHintSeparator
+    };
+  }
+  renderSidePanel(syntax, enabled) {
+    const L = getLocale(this.locale);
+    this.sideEl.empty();
+    if (this.mode === "field") {
+      this.sideEl.createDiv({ cls: "fb-label", text: L.genVariableTitle });
+      const examples = enabled ? buildVariableExamples(this.type, this.state, this.variableHints(L)) : [];
+      if (examples.length === 0) {
+        this.sideEl.createEl("pre", { cls: "fb-example-block fb-gen-code" }).createEl("code", { text: "\u2014" });
+      } else {
+        for (const ex of examples) {
+          const row = this.sideEl.createDiv({ cls: "fb-gen-var-row" });
+          row.createEl("code", { cls: "fb-gen-var-code", text: ex.code });
+          row.createSpan({ cls: "fb-desc", text: ex.hint });
+        }
+      }
+      return;
+    }
+    if (this.mode === "meta-folder") {
+      this.sideEl.createDiv({ cls: "fb-desc", text: L.genMetaFolderTip });
+      return;
+    }
+    const value = this.metaFilenameValue.trim();
+    if (value === "")
+      return;
+    if (!containsVariableToken(value)) {
+      const block = this.sideEl.createDiv({ cls: "fb-warning-block" });
+      block.createDiv({ cls: "fb-warning", text: L.genMetaFilenameNoVariableWarning });
+    } else {
+      this.sideEl.createDiv({ cls: "fb-desc", text: L.genMetaFilenameOkTip });
+    }
+  }
+  // ---------------------------------------------------------------
+  // ボタン（モードに応じて Copy Variable / Copy Both の有無を出し分け）
+  // ---------------------------------------------------------------
+  renderButtons() {
+    const L = getLocale(this.locale);
+    this.buttonsRowEl.empty();
+    this.actionButtons = [];
+    const copySyntaxBtn = this.buttonsRowEl.createEl("button", { cls: "fb-btn", text: L.genCopySyntax });
+    copySyntaxBtn.addEventListener("click", () => {
+      void this.copyToClipboard(this.renderedSyntax(), L);
+    });
+    this.actionButtons.push(copySyntaxBtn);
+    if (this.mode === "field") {
+      const copyVarBtn = this.buttonsRowEl.createEl("button", { cls: "fb-btn", text: L.genCopyVariable });
+      copyVarBtn.addEventListener("click", () => {
+        const variableText = buildVariableClipboardText(this.type, this.state, this.variableHints(L));
+        void this.copyToClipboard(variableText, L);
+      });
+      this.actionButtons.push(copyVarBtn);
+      const copyBothBtn = this.buttonsRowEl.createEl("button", { cls: "fb-btn", text: L.genCopyBoth });
+      copyBothBtn.addEventListener("click", () => {
+        const variableText = buildVariableClipboardText(this.type, this.state, this.variableHints(L));
+        void this.copyToClipboard(`${this.renderedSyntax()}
+${variableText}`, L);
+      });
+      this.actionButtons.push(copyBothBtn);
+    }
+    const insertBtn = this.buttonsRowEl.createEl("button", { cls: "fb-btn fb-btn-accent", text: L.genInsert });
+    insertBtn.addEventListener("click", () => this.handleInsert(L));
+    this.actionButtons.push(insertBtn);
+    const cancelBtn = this.buttonsRowEl.createEl("button", { cls: "fb-btn", text: L.genCancel });
+    cancelBtn.addEventListener("click", () => this.close());
+  }
+  async copyToClipboard(text, L) {
+    if (!text)
+      return;
+    try {
+      await navigator.clipboard.writeText(text);
+      new import_obsidian7.Notice(L.genCopiedNotice);
+    } catch (e) {
+      console.error("Form Builder: Failed to copy to clipboard", e);
+      new import_obsidian7.Notice(L.noticeCreateError, NOTICE_DURATION);
+    }
+  }
+  handleInsert(L) {
+    const raw = this.currentSyntax();
+    if (!raw)
+      return;
+    const view = this.app.workspace.getActiveViewOfType(import_obsidian7.MarkdownView);
+    if (!view) {
+      new import_obsidian7.Notice(L.genNoActiveEditor);
+      return;
+    }
+    const editor = view.editor;
+    if (this.wrapInBlock) {
+      editor.replaceRange(wrapInFormbuilderBlock(raw), editor.getCursor());
+      new import_obsidian7.Notice(L.genInsertedNotice);
+      this.close();
+      return;
+    }
+    const cursor = editor.getCursor();
+    const content = editor.getValue();
+    if (!isCursorInFormbuilderBlock(content, cursor.line)) {
+      new import_obsidian7.Notice(L.genInsertOutsideBlock);
+      return;
+    }
+    editor.replaceRange(raw, cursor);
+    new import_obsidian7.Notice(L.genInsertedNotice);
+    this.close();
+  }
+};
+
 // src/parser/SyntaxValidator.ts
 var KNOWN_FIELD_TYPES = /* @__PURE__ */ new Set([
   "text",
@@ -1343,7 +2122,7 @@ var KNOWN_FIELD_OPTIONS = {
   multiselect: ["required", "label", "description", "default", "list", "rows"],
   multilist: ["required", "label", "placeholder", "description", "default", "rows"]
 };
-var VALID_KEY = /^[a-zA-Z0-9_-]+$/;
+var VALID_KEY2 = /^[a-zA-Z0-9_-]+$/;
 function levenshtein(a, b) {
   const m = a.length, n = b.length;
   const dp = Array.from(
@@ -1376,7 +2155,7 @@ function validateFieldType(type, line) {
   return null;
 }
 function validateKey(key, line) {
-  if (!VALID_KEY.test(key)) {
+  if (!VALID_KEY2.test(key)) {
     return { message: `Invalid key: "${key}". Keys must match [a-zA-Z0-9_-]`, line };
   }
   return null;
@@ -1486,7 +2265,7 @@ function parseOptionToken(token) {
     return { key: token, value: null };
   return null;
 }
-function parseMetaLine(tokens, meta, warnings, lineNum) {
+function parseMetaLine(tokens, meta, metaKeyLines, errors, warnings, lineNum) {
   for (let i = 1; i < tokens.length; i++) {
     const opt = parseOptionToken(tokens[i]);
     if (!opt)
@@ -1496,9 +2275,20 @@ function parseMetaLine(tokens, meta, warnings, lineNum) {
       warnings.push(metaWarning);
       continue;
     }
-    if (opt.key === "folder" && opt.value !== null)
+    if (opt.value === null)
+      continue;
+    const firstLine = metaKeyLines.get(opt.key);
+    if (firstLine !== void 0) {
+      errors.push({
+        message: `"meta|${opt.key}" is defined more than once (first defined on line ${firstLine}). Only one "meta|${opt.key}" is allowed per template.`,
+        line: lineNum
+      });
+      continue;
+    }
+    metaKeyLines.set(opt.key, lineNum);
+    if (opt.key === "folder")
       meta.folder = opt.value;
-    else if (opt.key === "filename" && opt.value !== null)
+    else if (opt.key === "filename")
       meta.filename = opt.value;
   }
 }
@@ -1600,61 +2390,99 @@ function parseFieldLine(tokens, errors, warnings, lineNum) {
       return null;
   }
 }
+function findFormbuilderBlocks(templateContent) {
+  const re = new RegExp(FORMBUILDER_BLOCK_RE.source, "gm");
+  const matches = [];
+  let m;
+  while ((m = re.exec(templateContent)) !== null) {
+    matches.push(m);
+    if (m[0].length === 0)
+      re.lastIndex++;
+  }
+  return matches;
+}
+function lineNumberAt(templateContent, index) {
+  var _a;
+  return ((_a = templateContent.slice(0, index).match(/\n/g)) != null ? _a : []).length + 1;
+}
 function parseTemplate(templateContent) {
   var _a, _b;
   const errors = [];
   const warnings = [];
   const meta = {};
   const fields = [];
-  const blockMatch = FORMBUILDER_BLOCK_RE.exec(templateContent);
-  if (!blockMatch) {
+  const metaKeyLines = /* @__PURE__ */ new Map();
+  const fieldKeyLines = /* @__PURE__ */ new Map();
+  const blockMatches = findFormbuilderBlocks(templateContent);
+  if (blockMatches.length === 0) {
     return { meta, fields, bodyTemplate: templateContent, errors, warnings };
   }
-  const blockContent = blockMatch[1];
-  const bodyTemplate = templateContent.replace(blockMatch[0], "").replace(/^\n/, "");
-  const lines = blockContent.split("\n");
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
-    const lineNum = i + 1;
-    if (line === "")
-      continue;
-    const openCount = ((_a = line.match(/\{\{/g)) != null ? _a : []).length;
-    const closeCount = ((_b = line.match(/\}\}/g)) != null ? _b : []).length;
-    if (openCount !== closeCount) {
-      errors.push({ message: `Unclosed "{{" found on line ${lineNum}`, line: lineNum });
-      continue;
-    }
-    const syntaxMatch = FIELD_SYNTAX_RE.exec(line);
-    if (!syntaxMatch)
-      continue;
-    const tokens = splitTokens(syntaxMatch[1]);
-    if (tokens.length === 0 || tokens[0] === "")
-      continue;
-    if (tokens[0] === "meta") {
-      parseMetaLine(tokens, meta, warnings, lineNum);
-    } else {
-      const field = parseFieldLine(tokens, errors, warnings, lineNum);
-      if (field) {
-        const vr = validateField(field, lineNum);
-        errors.push(...vr.errors);
-        warnings.push(...vr.warnings);
-        if (vr.errors.length === 0)
-          fields.push(field);
+  for (const blockMatch of blockMatches) {
+    const blockContent = blockMatch[1];
+    const blockStartLine = lineNumberAt(templateContent, blockMatch.index) + 1;
+    const lines = blockContent.split("\n");
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      const lineNum = blockStartLine + i;
+      if (line === "")
+        continue;
+      const openCount = ((_a = line.match(/\{\{/g)) != null ? _a : []).length;
+      const closeCount = ((_b = line.match(/\}\}/g)) != null ? _b : []).length;
+      if (openCount !== closeCount) {
+        errors.push({ message: `Unclosed "{{" found on line ${lineNum}`, line: lineNum });
+        continue;
+      }
+      const syntaxMatch = FIELD_SYNTAX_RE.exec(line);
+      if (!syntaxMatch)
+        continue;
+      const tokens = splitTokens(syntaxMatch[1]);
+      if (tokens.length === 0 || tokens[0] === "")
+        continue;
+      if (tokens[0] === "meta") {
+        parseMetaLine(tokens, meta, metaKeyLines, errors, warnings, lineNum);
+      } else {
+        const field = parseFieldLine(tokens, errors, warnings, lineNum);
+        if (field) {
+          const vr = validateField(field, lineNum);
+          errors.push(...vr.errors);
+          warnings.push(...vr.warnings);
+          if (vr.errors.length === 0) {
+            const firstLine = fieldKeyLines.get(field.key);
+            if (firstLine !== void 0) {
+              errors.push({
+                message: `Key "${field.key}" is defined more than once (first defined on line ${firstLine}). Each field key must be unique within a template.`,
+                line: lineNum
+              });
+            } else {
+              fieldKeyLines.set(field.key, lineNum);
+              fields.push(field);
+            }
+          }
+        }
       }
     }
   }
+  let bodyTemplate = templateContent;
+  for (let i = blockMatches.length - 1; i >= 0; i--) {
+    const blockMatch = blockMatches[i];
+    const start = blockMatch.index;
+    const end = start + blockMatch[0].length;
+    const removeEnd = bodyTemplate[end] === "\n" ? end + 1 : end;
+    bodyTemplate = bodyTemplate.slice(0, start) + bodyTemplate.slice(removeEnd);
+  }
+  bodyTemplate = bodyTemplate.replace(/^\n+/, "");
   return { meta, fields, bodyTemplate, errors, warnings };
 }
 
 // src/template/TemplateScanner.ts
-var import_obsidian7 = require("obsidian");
+var import_obsidian8 = require("obsidian");
 async function collectTemplateFiles(vault, folder) {
   const result = [];
   for (const child of folder.children) {
-    if (child instanceof import_obsidian7.TFolder) {
+    if (child instanceof import_obsidian8.TFolder) {
       const nested = await collectTemplateFiles(vault, child);
       result.push(...nested);
-    } else if (child instanceof import_obsidian7.TFile && child.extension === "md") {
+    } else if (child instanceof import_obsidian8.TFile && child.extension === "md") {
       try {
         const content = await vault.read(child);
         if (FORMBUILDER_BLOCK_RE.test(content)) {
@@ -1777,7 +2605,7 @@ var TemplateStore = class {
 };
 
 // src/main.ts
-var FormBuilderPlugin = class extends import_obsidian8.Plugin {
+var FormBuilderPlugin = class extends import_obsidian9.Plugin {
   onload() {
     void this.loadSettings().then(() => {
       this.templateStore = new TemplateStore(this);
@@ -1789,9 +2617,16 @@ var FormBuilderPlugin = class extends import_obsidian8.Plugin {
           void this.openTemplatePicker();
         }
       });
+      this.addCommand({
+        id: "insert-field",
+        name: "Syntax Generator",
+        callback: () => {
+          new FieldGeneratorModal(this.app, this.settings.locale).open();
+        }
+      });
       this.registerEvent(
         this.app.vault.on("rename", (file, oldPath) => {
-          if (file instanceof import_obsidian8.TFile && file.extension === "md") {
+          if (file instanceof import_obsidian9.TFile && file.extension === "md") {
             void this.templateStore.handleRename(oldPath, file.path);
           }
         })
@@ -1827,7 +2662,7 @@ var FormBuilderPlugin = class extends import_obsidian8.Plugin {
     try {
       content = await this.app.vault.read(file);
     } catch (e) {
-      new import_obsidian8.Notice(`${L.noticeReadError}
+      new import_obsidian9.Notice(`${L.noticeReadError}
 "${file.path}"`);
       return;
     }

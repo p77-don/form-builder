@@ -774,3 +774,76 @@
 .fb-template-missing .fb-fav-toggle {
     color: var(--fb-danger);
 }
+
+/* =============================================
+   構文ジェネレーター（FieldGeneratorModal）専用レイアウト
+   見た目は共通フラットデザインを踏襲しつつ、
+   Preview / Generated Variable 表示欄のみ追加で定義する。
+   ============================================= */
+
+.modal.fb-modal-root.fb-gen-modal {
+    width: 520px;
+    max-width: min(520px, 92vw);
+}
+
+/* 設定項目カード群（Field Type に応じて動的に出し分けられる） */
+.fb-gen-settings {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.fb-gen-row {
+    padding: 10px 16px;
+}
+
+/* Preview / Generated Variable の見出し＋コード表示 */
+.fb-gen-preview,
+.fb-gen-variables {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.fb-gen-code {
+    margin: 0;
+}
+
+.fb-gen-var-row {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: 6px 2px;
+    border-bottom: 1px solid var(--fb-border);
+}
+
+.fb-gen-var-row:last-child {
+    border-bottom: none;
+}
+
+.fb-gen-var-code {
+    flex-shrink: 0;
+    font-family: var(--font-monospace, monospace);
+    font-size: 0.82rem;
+    color: var(--fb-accent);
+    background: var(--fb-bg-inset);
+    border-radius: var(--fb-radius-sm);
+    padding: 2px 8px;
+}
+
+/* Meta（folder / filename）入力欄の変数クイック挿入ボタン */
+.fb-gen-var-insert-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 2px;
+}
+
+.fb-btn-chip {
+    padding: 3px 10px;
+    font-size: 0.74rem;
+    font-family: var(--font-monospace, monospace);
+    font-weight: 500;
+}

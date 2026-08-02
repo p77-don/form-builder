@@ -3,7 +3,7 @@ import type { ParseResult, ValueStore } from '../model/FieldModel';
 import type { SupportedLocale } from '../locales';
 import { getLocale } from '../locales';
 import { HelpModal } from './help';
-import { renderField, highlightRequiredErrors } from './FieldRenderer';
+import { renderField, highlightRequiredErrors, validateNumberFields } from './FieldRenderer';
 import { generateNote } from '../generator/NoteGenerator';
 import { NOTICE_DURATION } from '../ui/ErrorNotice';
 import type FormBuilderPlugin from '../main';
@@ -71,11 +71,11 @@ export class FormModal extends Modal {
         const L = getLocale(this.locale);
         const root = this.contentEl.querySelector('.fb-modal') as HTMLElement;
         const missing = highlightRequiredErrors(root, this.parseResult.fields, this.values);
+        const numberErrors = validateNumberFields(root, this.parseResult.fields, this.values);
 
-        if (missing.length > 0) {
-            new Notice(L.noticeRequired);
-            return;
-        }
+        if (missing.length > 0) new Notice(L.noticeRequired);
+        if (numberErrors.length > 0) new Notice(L.noticeInvalidNumber);
+        if (missing.length > 0 || numberErrors.length > 0) return;
 
         try {
             await generateNote(
@@ -84,7 +84,8 @@ export class FormModal extends Modal {
                 this.values,
                 this.parseResult.fields,
                 this.parseResult.meta,
-                L.noticeSanitized
+                L.noticeSanitized,
+                L.noticeDuplicateFilename
             );
             this.close();
         } catch (e) {

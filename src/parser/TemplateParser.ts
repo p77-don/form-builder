@@ -67,6 +67,8 @@ function parseOptionToken(token: string): ParsedOption | null {
 function parseMetaLine(
     tokens: string[],
     meta: MetaConfig,
+    metaKeyLines: Map<string, number>,
+    errors: ParseError[],
     warnings: ParseWarning[],
     lineNum: number
 ): void {
@@ -75,8 +77,23 @@ function parseMetaLine(
         if (!opt) continue;
         const metaWarning = validateMetaKey(opt.key, lineNum);
         if (metaWarning) { warnings.push(metaWarning); continue; }
-        if (opt.key === 'folder' && opt.value !== null) meta.folder = opt.value;
-        else if (opt.key === 'filename' && opt.value !== null) meta.filename = opt.value;
+        if (opt.value === null) continue;
+
+        // 同じ meta キー（folder / filename）が複数回指定された場合、
+        // どちらが有効になるか分かりにくく事故につながるため、警告ではなく
+        // エラーとして扱い、ノートが作成されないようにする。
+        const firstLine = metaKeyLines.get(opt.key);
+        if (firstLine !== undefined) {
+            errors.push({
+                message: `"meta|${opt.key}" is defined more than once (first defined on line ${firstLine}). Only one "meta|${opt.key}" is allowed per template.`,
+                line: lineNum,
+            });
+            continue;
+        }
+        metaKeyLines.set(opt.key, lineNum);
+
+        if (opt.key === 'folder') meta.folder = opt.value;
+        else if (opt.key === 'filename') meta.filename = opt.value;
     }
 }
 
@@ -186,51 +203,109 @@ function parseFieldLine(
     }
 }
 
+/**
+ * テンプレート本文中の全ての formbuilder ブロックを検出する。
+ * FORMBUILDER_BLOCK_RE（存在確認用に他所でも使われる非 global な正規表現）とは別に、
+ * ここでは複数ブロックを列挙するために毎回新しい global 正規表現インスタンスを作る
+ * （global な正規表現はインスタンスの状態（lastIndex）を持つため、共有定数を
+ * そのまま使い回すと呼び出し順序によって不具合が起きるおそれがある）。
+ */
+function findFormbuilderBlocks(templateContent: string): RegExpExecArray[] {
+    const re = new RegExp(FORMBUILDER_BLOCK_RE.source, 'gm');
+    const matches: RegExpExecArray[] = [];
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(templateContent)) !== null) {
+        matches.push(m);
+        // ゼロ幅マッチで無限ループするのを防ぐための保険（このパターンでは通常発生しない）
+        if (m[0].length === 0) re.lastIndex++;
+    }
+    return matches;
+}
+
+/** テンプレート先頭からその位置までの改行数を数え、1始まりの行番号を返す。 */
+function lineNumberAt(templateContent: string, index: number): number {
+    return (templateContent.slice(0, index).match(/\n/g) ?? []).length + 1;
+}
+
 export function parseTemplate(templateContent: string): ParseResult {
     const errors:   ParseError[]   = [];
     const warnings: ParseWarning[] = [];
     const meta:     MetaConfig     = {};
     const fields:   FormField[]    = [];
+    const metaKeyLines: Map<string, number> = new Map();
+    const fieldKeyLines: Map<string, number> = new Map();
 
-    const blockMatch = FORMBUILDER_BLOCK_RE.exec(templateContent);
-    if (!blockMatch) {
+    const blockMatches = findFormbuilderBlocks(templateContent);
+    if (blockMatches.length === 0) {
         return { meta, fields, bodyTemplate: templateContent, errors, warnings };
     }
 
-    const blockContent = blockMatch[1];
-    const bodyTemplate = templateContent.replace(blockMatch[0], '').replace(/^\n/, '');
-    const lines = blockContent.split('\n');
+    for (const blockMatch of blockMatches) {
+        const blockContent = blockMatch[1];
+        // ブロック先頭（```formbuilder の行）の行番号 + 1 が、ブロック内容の1行目の
+        // テンプレート全体での実際の行番号になる。
+        const blockStartLine = lineNumberAt(templateContent, blockMatch.index) + 1;
+        const lines = blockContent.split('\n');
 
-    for (let i = 0; i < lines.length; i++) {
-        const line    = lines[i].trim();
-        const lineNum = i + 1;
-        if (line === '') continue;
+        for (let i = 0; i < lines.length; i++) {
+            const line    = lines[i].trim();
+            const lineNum = blockStartLine + i;
+            if (line === '') continue;
 
-        const openCount  = (line.match(/\{\{/g) ?? []).length;
-        const closeCount = (line.match(/\}\}/g) ?? []).length;
-        if (openCount !== closeCount) {
-            errors.push({ message: `Unclosed "{{" found on line ${lineNum}`, line: lineNum });
-            continue;
-        }
+            const openCount  = (line.match(/\{\{/g) ?? []).length;
+            const closeCount = (line.match(/\}\}/g) ?? []).length;
+            if (openCount !== closeCount) {
+                errors.push({ message: `Unclosed "{{" found on line ${lineNum}`, line: lineNum });
+                continue;
+            }
 
-        const syntaxMatch = FIELD_SYNTAX_RE.exec(line);
-        if (!syntaxMatch) continue;
+            const syntaxMatch = FIELD_SYNTAX_RE.exec(line);
+            if (!syntaxMatch) continue;
 
-        const tokens     = splitTokens(syntaxMatch[1]);
-        if (tokens.length === 0 || tokens[0] === '') continue;
+            const tokens = splitTokens(syntaxMatch[1]);
+            if (tokens.length === 0 || tokens[0] === '') continue;
 
-        if (tokens[0] === 'meta') {
-            parseMetaLine(tokens, meta, warnings, lineNum);
-        } else {
-            const field = parseFieldLine(tokens, errors, warnings, lineNum);
-            if (field) {
-                const vr = validateField(field, lineNum);
-                errors.push(...vr.errors);
-                warnings.push(...vr.warnings);
-                if (vr.errors.length === 0) fields.push(field);
+            if (tokens[0] === 'meta') {
+                parseMetaLine(tokens, meta, metaKeyLines, errors, warnings, lineNum);
+            } else {
+                const field = parseFieldLine(tokens, errors, warnings, lineNum);
+                if (field) {
+                    const vr = validateField(field, lineNum);
+                    errors.push(...vr.errors);
+                    warnings.push(...vr.warnings);
+                    if (vr.errors.length === 0) {
+                        // 同じキー（$key$ 変数名）が複数のフィールドで使われていると、
+                        // どちらの値が使われるか分かりにくく事故につながるため、
+                        // meta の重複と同様にエラーとして扱いノート作成を止める。
+                        const firstLine = fieldKeyLines.get(field.key);
+                        if (firstLine !== undefined) {
+                            errors.push({
+                                message: `Key "${field.key}" is defined more than once (first defined on line ${firstLine}). Each field key must be unique within a template.`,
+                                line: lineNum,
+                            });
+                        } else {
+                            fieldKeyLines.set(field.key, lineNum);
+                            fields.push(field);
+                        }
+                    }
+                }
             }
         }
     }
+
+    // 本文（bodyTemplate）から全ての formbuilder ブロックを取り除く。
+    // 後ろのブロックから順に取り除くことで、前のブロックの位置（index）が
+    // ずれないようにする。ブロック直後の改行も1つだけ一緒に取り除き、
+    // ブロックがあった場所に空行が残らないようにする。
+    let bodyTemplate = templateContent;
+    for (let i = blockMatches.length - 1; i >= 0; i--) {
+        const blockMatch = blockMatches[i];
+        const start = blockMatch.index;
+        const end = start + blockMatch[0].length;
+        const removeEnd = bodyTemplate[end] === '\n' ? end + 1 : end;
+        bodyTemplate = bodyTemplate.slice(0, start) + bodyTemplate.slice(removeEnd);
+    }
+    bodyTemplate = bodyTemplate.replace(/^\n+/, '');
 
     return { meta, fields, bodyTemplate, errors, warnings };
 }

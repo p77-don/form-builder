@@ -30,41 +30,16 @@ export class FormBuilderSettingTab extends PluginSettingTab {
         this.plugin = plugin;
     }
 
-    // v1.13.0+ 向け宣言的 API。
-    // Obsidian は getSettingDefinitions() が配列を返す場合に display() をバイパスするため、
-    // 両メソッドを実装することで v1.13.0 未満との後方互換を保つ（デュアルサポートパターン）。
-    getSettingDefinitions() {
-        const localeOptions = Object.fromEntries(
-            Object.entries(LOCALE_LABELS) as [SupportedLocale, string][]
-        );
+    // 回避策: v1.13.0+ の宣言的 API（getSettingDefinitions() / update()）は、
+    // locale を変更した際に「変更元の行（Language 自身）の name / desc だけ
+    // 再描画されない」という不具合が確認されたため、あえて使用しない。
+    //
+    // ドキュメント上、getSettingDefinitions() が「非空配列」を返した場合のみ
+    // display() がバイパスされる仕様になっているため、このメソッド自体を
+    // 定義しない（基底クラスの既定実装が空配列を返す）ことで、
+    // 常に下の display()（レガシーAPI）が使われるようにする。
+    // display() 側は日本語切り替え時の再描画も含めて正しく動作することを確認済み。
 
-        return [
-            {
-                name: 'Form Builder',
-            },
-            {
-                name: 'Template folder',
-                desc: 'Folder where your formbuilder template files are stored.',
-                control: {
-                    type: 'folder' as const,
-                    key: 'templateFolder' as const,
-                    placeholder: 'Templates',
-                    includeRoot: false,
-                },
-            },
-            {
-                name: 'Language',
-                desc: 'Language used in forms, notices, and the settings page.',
-                control: {
-                    type: 'dropdown' as const,
-                    key: 'locale' as const,
-                    options: localeOptions,
-                },
-            },
-        ];
-    }
-
-    // v1.13.0 未満の Obsidian 向けフォールバック。
     display(): void {
         const { containerEl } = this;
         containerEl.empty();

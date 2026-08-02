@@ -3,6 +3,7 @@ import { FormBuilderSettingTab, DEFAULT_SETTINGS } from './settings';
 import type { FormBuilderSettings } from './settings';
 import { FormModal, NoTemplateModal } from './form/FormModal';
 import { TemplatePickerModal } from './form/TemplatePickerModal';
+import { FieldGeneratorModal } from './form/FieldGeneratorModal';
 import { parseTemplate } from './parser/TemplateParser';
 import { collectTemplateFiles } from './template/TemplateScanner';
 import { TemplateStore } from './template/TemplateStore';
@@ -23,6 +24,14 @@ export default class FormBuilderPlugin extends Plugin {
                 id: 'create-note-from-template',
                 name: 'Create Note From Template',
                 callback: () => { void this.openTemplatePicker(); },
+            });
+
+            this.addCommand({
+                id: 'insert-field',
+                name: 'Syntax Generator',
+                callback: () => {
+                    new FieldGeneratorModal(this.app, this.settings.locale).open();
+                },
             });
 
             // ファイルのリネーム・移動を検知し、お気に入り・履歴のパスを追従させる。

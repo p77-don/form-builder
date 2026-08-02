@@ -1,6 +1,7 @@
 import { App, normalizePath, Notice } from 'obsidian';
 import type { FormField, MetaConfig, ValueStore } from '../model/FieldModel';
 import { resolveUserVariables, resolveSystemVariables } from './VariableResolver';
+import { NOTICE_DURATION } from '../ui/ErrorNotice';
 
 const INVALID_FILENAME_CHARS = /[/\\:*?"<>|]/g;
 
@@ -56,13 +57,56 @@ async function ensureFolder(app: App, folderPath: string): Promise<void> {
     }
 }
 
+/**
+ * 指定フォルダ内で衝突しないファイルパスを求める。
+ * 同名ファイル（同名フォルダも含む）が既に存在する場合は
+ * "note.md" → "note (2).md" → "note (3).md" ... の形式で自動的に連番を付与する。
+ * 戻り値の path は必ず衝突しない状態になっている。
+ */
+function resolveUniqueFilePath(
+    app: App,
+    folder: string,
+    filenameWithExt: string
+): { path: string; finalNameWithExt: string; renamed: boolean } {
+    const EXT = '.md';
+    const base = filenameWithExt.endsWith(EXT)
+        ? filenameWithExt.slice(0, -EXT.length)
+        : filenameWithExt;
+
+    let candidateName = filenameWithExt;
+    let counter = 2;
+    let renamed = false;
+
+    // 無限ループ防止のための安全上限（実運用でここまで衝突することは想定していない）
+    for (let i = 0; i < 1000; i++) {
+        const path = folder
+            ? normalizePath(`${folder}/${candidateName}`)
+            : normalizePath(candidateName);
+
+        if (!app.vault.getAbstractFileByPath(path)) {
+            return { path, finalNameWithExt: candidateName, renamed };
+        }
+
+        candidateName = `${base} (${counter})${EXT}`;
+        counter++;
+        renamed = true;
+    }
+
+    // 安全上限に達した場合は最後の候補をそのまま返す（呼び出し元で create が失敗し得る）
+    const fallbackPath = folder
+        ? normalizePath(`${folder}/${candidateName}`)
+        : normalizePath(candidateName);
+    return { path: fallbackPath, finalNameWithExt: candidateName, renamed };
+}
+
 export async function generateNote(
     app: App,
     bodyTemplate: string,
     values: ValueStore,
     fields: FormField[],
     meta: MetaConfig,
-    sanitizedNotice: string
+    sanitizedNotice: string,
+    duplicateRenamedNotice: string
 ): Promise<void> {
     // ファイル名の変数展開（%folder% / %filename% はまだ使えない。自己参照になるため）
     const rawFilename = meta.filename ?? 'Untitled';
@@ -75,22 +119,27 @@ export async function generateNote(
     const { result: folder0 } = resolveUserVariables(rawFolder, values, fields);
     const resolvedFolder = resolveSystemVariables(folder0);
 
-    // 本文の変数展開。ここで初めて %folder% / %filename%（拡張子なし）を本文中に展開できる
+    const filenameWithExt = resolvedFilename.endsWith('.md') ? resolvedFilename : `${resolvedFilename}.md`;
+
+    await ensureFolder(app, resolvedFolder);
+
+    // 同名ファイルが既に存在する場合は " (2)" のように連番を付与して衝突を回避する
+    const { path: filePath, finalNameWithExt, renamed } = resolveUniqueFilePath(app, resolvedFolder, filenameWithExt);
+    const finalNameNoExt = finalNameWithExt.endsWith('.md') ? finalNameWithExt.slice(0, -3) : finalNameWithExt;
+
+    // 本文の変数展開。ここで初めて %folder% / %filename%（拡張子なし）を本文中に展開できる。
+    // %filename% には（連番が付与された場合は）実際に保存される最終的なファイル名を使う。
     const { result: content0, warnings: bodyWarnings } = resolveUserVariables(bodyTemplate, values, fields);
-    const content = resolveSystemVariables(content0, { folder: resolvedFolder, filename: resolvedFilename });
+    const content = resolveSystemVariables(content0, { folder: resolvedFolder, filename: finalNameNoExt });
 
     // モディファイア警告を Notice で表示
     for (const w of bodyWarnings) {
         new Notice(`Form Builder: ${w.message}`, 6000);
     }
 
-    const filenameWithExt = resolvedFilename.endsWith('.md') ? resolvedFilename : `${resolvedFilename}.md`;
-
-    await ensureFolder(app, resolvedFolder);
-
-    const filePath = resolvedFolder
-        ? normalizePath(`${resolvedFolder}/${filenameWithExt}`)
-        : normalizePath(filenameWithExt);
+    if (renamed) {
+        new Notice(duplicateRenamedNotice.replace('{name}', finalNameWithExt), NOTICE_DURATION);
+    }
 
     await app.vault.create(filePath, content);
 

@@ -197,6 +197,60 @@ function renderList(
     textarea.addEventListener('input', () => values.set(field.key, textarea.value));
 }
 
+// ---------- number バリデーション（型 + min/max 範囲） ----------
+
+export type NumberFieldErrorReason = 'invalid' | 'min' | 'max';
+
+export interface NumberFieldError {
+    key: string;
+    reason: NumberFieldErrorReason;
+}
+
+/**
+ * number フィールドの入力値を検証する。
+ * - 数値として解釈できない場合（空文字は対象外。空欄の必須チェックは highlightRequiredErrors が担当）
+ * - min / max の範囲外の場合
+ * にエラーとして扱い、該当する入力欄に fb-error クラスを付与する。
+ *
+ * 注意: このメソッドは highlightRequiredErrors とは異なり、呼び出し時に .fb-error を
+ * 一括リセットしない。同一送信フローの中で highlightRequiredErrors の後に呼び出し、
+ * 両方のチェック結果を重ねて表示できるようにするための設計。
+ */
+export function validateNumberFields(
+    containerEl: HTMLElement,
+    fields: FormField[],
+    values: ValueStore
+): NumberFieldError[] {
+    const errors: NumberFieldError[] = [];
+
+    for (const field of fields) {
+        if (field.type !== 'number') continue;
+
+        const raw = values.get(field.key);
+        if (raw === undefined || raw === '') continue; // 空欄は required 側の担当
+        if (typeof raw !== 'string') continue;
+
+        const num = Number(raw);
+        let reason: NumberFieldErrorReason | null = null;
+
+        if (Number.isNaN(num)) {
+            reason = 'invalid';
+        } else if (field.min !== undefined && num < field.min) {
+            reason = 'min';
+        } else if (field.max !== undefined && num > field.max) {
+            reason = 'max';
+        }
+
+        if (reason) {
+            errors.push({ key: field.key, reason });
+            const el = containerEl.querySelector(`[data-form-key="${field.key}"]`);
+            if (el) el.addClass('fb-error');
+        }
+    }
+
+    return errors;
+}
+
 // ---------- required バリデーション ----------
 
 export function highlightRequiredErrors(
