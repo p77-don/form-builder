@@ -97,6 +97,10 @@ export interface Locale {
     subVariables: string;
     subModifiers: string;
     multilistHint: string;
+    /** folder オプション付き text フィールドの、選択ボタンの title（ツールチップ） */
+    folderPickerBtnLabel: string;
+    /** フォルダ選択モーダルの検索ボックス placeholder */
+    folderPickerPlaceholder: string;
 
     metaRows:     [string, string][];
     fieldRows:    [string, string][];
@@ -145,6 +149,8 @@ export interface Locale {
     genListHint:       string;
     genRequired:       string;
     genRequiredHint:    string;
+    genFolder:         string;
+    genFolderHint:      string;
 
     genPreviewTitle:  string;
     genVariableTitle: string;
@@ -307,6 +313,8 @@ $summary$
 $aliases:separator[, ]$`,
 
     multilistHint: 'Enter one item per line. Blank lines are ignored.',
+    folderPickerBtnLabel: 'Choose folder',
+    folderPickerPlaceholder: 'Type to search folders...',
     subMeta:      'Meta Options',
     subFields:    'Field Types',
     subOptions:   'Common Options',
@@ -337,6 +345,7 @@ $aliases:separator[, ]$`,
         ['list=[A;B;C]',         'Options for select / multiselect (semicolon-separated)'],
         ['min=[0]|max=[100]',    'Min / Max value for number fields'],
         ['rows=[5]',             'Visible rows for textarea / multiselect / multilist'],
+        ['folder',               'text only. Shows a folder-picker button next to the input (flag, no value)'],
     ],
     variableRows: [
         ['$key$',       'User variable — replaced with the form input value. Surrounded by dollar signs $...$. For multiselect / multilist, values are joined with "," (no space) by default.'],
@@ -409,6 +418,8 @@ $aliases:separator[, ]$`,
     genListHint:        'Enter one option per line.',
     genRequired:        'Required',
     genRequiredHint:    'If on, the form cannot be submitted while this field is empty.',
+    genFolder:          'Folder',
+    genFolderHint:      'If on, a folder-picker button is shown next to the input. The value is still plain text, so the user can freely edit it (e.g. to type a new subfolder) after choosing.',
 
     genPreviewTitle:  'Preview',
     genVariableTitle: 'Generated Variable',
@@ -575,6 +586,8 @@ $summary$
 $aliases:separator[、]$`,
 
     multilistHint: '1行につき1項目を入力してください。空行は無視されます。',
+    folderPickerBtnLabel: 'フォルダを選択',
+    folderPickerPlaceholder: 'フォルダを検索...',
     subMeta:      'meta オプション',
     subFields:    'フィールドタイプ',
     subOptions:   '主なオプション',
@@ -605,6 +618,7 @@ $aliases:separator[、]$`,
         ['list=[A;B;C]',         '選択肢（セミコロン区切り）'],
         ['min=[0]|max=[100]',    'number フィールドの最小・最大値'],
         ['rows=[5]',             'textarea / multiselect / multilist の表示行数'],
+        ['folder',               'text 専用。入力欄の横にフォルダ選択ボタンを表示する（フラグ、値なし）'],
     ],
     variableRows: [
         ['$キー名$',     'ユーザー変数。ドル記号 $...$ で囲みます。フォームの入力値に置き換わります。multiselect / multilist はデフォルトでカンマのみで結合（スペースなし）。'],
@@ -677,6 +691,8 @@ $aliases:separator[、]$`,
     genListHint:        '1行につき1項目を入力してください。',
     genRequired:        '必須項目にする',
     genRequiredHint:    'ONにすると、この項目が未入力のままではノートを作成できなくなります。',
+    genFolder:          'フォルダ選択ボタンを表示する',
+    genFolderHint:      'ONにすると、入力欄の横に Vault 内のフォルダを選択するボタンが表示されます。値はあくまで通常の文字列のため、選択後も自由に編集できます（例: 選択後に新しいサブフォルダ名を追記するなど）。',
 
     genPreviewTitle:  'プレビュー',
     genVariableTitle: '展開用変数',

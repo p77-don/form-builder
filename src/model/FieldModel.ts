@@ -14,6 +14,8 @@ export interface BaseField {
 
 export interface TextField extends BaseField {
     type: 'text';
+    /** true の場合、フォーム上に Vault フォルダ選択ボタンを表示する（値自体は通常の文字列） */
+    folder?: boolean;
 }
 
 export interface TextareaField extends BaseField {

@@ -1,20 +1,30 @@
+import type { App } from 'obsidian';
 import type { FormField, ValueStore } from '../model/FieldModel';
+import { FolderSuggestModal } from './FolderSuggestModal';
+
+/** renderField / renderText が folder ピッカーを描画するために必要な文言・依存先。 */
+export interface FieldRenderContext {
+    app: App;
+    multilistHint: string;
+    folderPickerBtnLabel: string;
+    folderPickerPlaceholder: string;
+}
 
 export function renderField(
     containerEl: HTMLElement,
     field: FormField,
     values: ValueStore,
-    multilistHint: string
+    ctx: FieldRenderContext
 ): void {
     switch (field.type) {
-        case 'text':        renderText(containerEl, field, values); break;
+        case 'text':        renderText(containerEl, field, values, ctx); break;
         case 'textarea':    renderTextarea(containerEl, field, values); break;
         case 'number':      renderNumber(containerEl, field, values); break;
         case 'date':        renderDate(containerEl, field, values); break;
         case 'checkbox':    renderCheckbox(containerEl, field, values); break;
         case 'select':      renderSelect(containerEl, field, values); break;
         case 'multiselect': renderMultiselect(containerEl, field, values); break;
-        case 'multilist':   renderList(containerEl, field, values, multilistHint); break;
+        case 'multilist':   renderList(containerEl, field, values, ctx.multilistHint); break;
         default: {
             // TypeScript の網羅性チェック: FieldType に新しい型を追加した際にコンパイルエラーで検出する
             const _exhaustive: never = field;
@@ -44,15 +54,45 @@ function appendLabelRow(card: HTMLElement, field: FormField): void {
 
 // ---------- text ----------
 
-function renderText(containerEl: HTMLElement, field: FormField, values: ValueStore): void {
+function renderText(
+    containerEl: HTMLElement,
+    field: FormField,
+    values: ValueStore,
+    ctx: FieldRenderContext
+): void {
+    if (field.type !== 'text') return;
     values.set(field.key, field.default ?? '');
     const card = createCard(containerEl, field);
     appendLabelRow(card, field);
-    const input = card.createEl('input', { cls: 'fb-input' });
+
+    // folder オプションがない場合は従来通り input のみを表示する
+    if (!field.folder) {
+        const input = card.createEl('input', { cls: 'fb-input' });
+        input.type = 'text';
+        input.value = field.default ?? '';
+        if (field.placeholder) input.placeholder = field.placeholder;
+        input.addEventListener('input', () => values.set(field.key, input.value));
+        return;
+    }
+
+    // folder オプションあり: input の隣にフォルダ選択ボタンを表示する。
+    // 値自体はあくまで通常の文字列のため、選択後も自由に手入力で編集できる。
+    const row = card.createDiv({ cls: 'fb-input-row' });
+    const input = row.createEl('input', { cls: 'fb-input' });
     input.type = 'text';
     input.value = field.default ?? '';
     if (field.placeholder) input.placeholder = field.placeholder;
     input.addEventListener('input', () => values.set(field.key, input.value));
+
+    const pickBtn = row.createEl('button', { cls: 'fb-folder-picker-btn', text: '📁' });
+    pickBtn.type = 'button';
+    pickBtn.title = ctx.folderPickerBtnLabel;
+    pickBtn.addEventListener('click', () => {
+        new FolderSuggestModal(ctx.app, input.value, ctx.folderPickerPlaceholder, (folder) => {
+            input.value = folder.path;
+            values.set(field.key, folder.path);
+        }).open();
+    });
 }
 
 // ---------- textarea ----------

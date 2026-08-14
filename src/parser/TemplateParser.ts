@@ -143,7 +143,7 @@ function parseFieldLine(
 
     switch (type) {
         case 'text':
-            return { type: 'text', ...base };
+            return { type: 'text', ...base, folder: optMap.has('folder') };
 
         case 'textarea': {
             const rows = parseRows(optMap.get('rows'));

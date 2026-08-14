@@ -1,4 +1,5 @@
-import { App, PluginSettingTab, Setting } from 'obsidian';
+import { App, PluginSettingTab } from 'obsidian';
+import type { SettingDefinitionItem } from 'obsidian';
 import type FormBuilderPlugin from './main';
 import { type SupportedLocale, LOCALE_LABELS, getLocale } from './locales';
 import type { TabType } from './model/TemplateEntry';
@@ -30,50 +31,69 @@ export class FormBuilderSettingTab extends PluginSettingTab {
         this.plugin = plugin;
     }
 
-    // 回避策: v1.13.0+ の宣言的 API（getSettingDefinitions() / update()）は、
-    // locale を変更した際に「変更元の行（Language 自身）の name / desc だけ
-    // 再描画されない」という不具合が確認されたため、あえて使用しない。
+    // v1.13.0+ の宣言的設定 API。getSettingDefinitions() は設定タブが
+    // 開かれるたび・update() が呼ばれるたびに再評価されるため、
+    // name / desc に現在のロケール（L）の文字列をそのまま使えば
+    // 言語切り替え時に全行を再描画できる … はずだったが、実際には
+    // update() が既存の行の DOM を可能な限り再利用しようとする挙動があり、
+    // 「変更操作を行った行自身（Language 行）」だけ name/desc が
+    // 更新されないことを確認した（Obsidian フォーラムにも 1.13 系の
+    // 宣言的設定 API で update() 後に行が正しく再構築されない、という
+    // 趣旨の不具合報告が複数ある）。
     //
-    // ドキュメント上、getSettingDefinitions() が「非空配列」を返した場合のみ
-    // display() がバイパスされる仕様になっているため、このメソッド自体を
-    // 定義しない（基底クラスの既定実装が空配列を返す）ことで、
-    // 常に下の display()（レガシーAPI）が使われるようにする。
-    // display() 側は日本語切り替え時の再描画も含めて正しく動作することを確認済み。
-
-    display(): void {
-        const { containerEl } = this;
-        containerEl.empty();
-
+    // 対処として、setControlValue() 側で update() を呼ぶ前に
+    // containerEl.empty() を挟み、再利用できる既存行を残さないようにする。
+    // これはレガシー版の display()（毎回 containerEl.empty() してから
+    // 全行を作り直す）と同じ考え方で、実際にレガシー版では発生しなかった
+    // 挙動であることからも有効と判断した。
+    getSettingDefinitions(): SettingDefinitionItem[] {
         const L = getLocale(this.plugin.settings.locale);
 
-        new Setting(containerEl)
-            .setHeading()
-            .setName(L.settingHeading);
+        return [
+            {
+                name: L.settingFolderName,
+                desc: L.settingFolderDesc,
+                control: {
+                    type: 'text',
+                    key: 'templateFolder',
+                    placeholder: L.settingFolderPlaceholder,
+                },
+            },
+            {
+                name: L.settingLanguageName,
+                desc: L.settingLanguageDesc,
+                control: {
+                    type: 'dropdown',
+                    key: 'locale',
+                    defaultValue: DEFAULT_SETTINGS.locale,
+                    options: LOCALE_LABELS,
+                },
+            },
+        ];
+    }
 
-        new Setting(containerEl)
-            .setName(L.settingFolderName)
-            .setDesc(L.settingFolderDesc)
-            .addText(text => text
-                .setPlaceholder(L.settingFolderPlaceholder)
-                .setValue(this.plugin.settings.templateFolder)
-                .onChange(async (value) => {
-                    this.plugin.settings.templateFolder = value.trim();
-                    await this.plugin.saveSettings();
-                }));
+    getControlValue(key: string): unknown {
+        return (this.plugin.settings as unknown as Record<string, unknown>)[key];
+    }
 
-        new Setting(containerEl)
-            .setName(L.settingLanguageName)
-            .setDesc(L.settingLanguageDesc)
-            .addDropdown(drop => {
-                for (const [key, label] of Object.entries(LOCALE_LABELS)) {
-                    drop.addOption(key, label);
-                }
-                drop.setValue(this.plugin.settings.locale);
-                drop.onChange(async (value) => {
-                    this.plugin.settings.locale = value as SupportedLocale;
-                    await this.plugin.saveSettings();
-                    this.display();
-                });
-            });
+    async setControlValue(key: string, value: unknown): Promise<void> {
+        // Template folder はレガシー版と同様、前後の空白を除去してから保存する。
+        // （入力欄の表示自体は setValue() で書き戻さない限り変わらないため、
+        //   タイピング中に勝手に空白が消えることはない）
+        if (key === 'templateFolder' && typeof value === 'string') {
+            value = value.trim();
+        }
+
+        (this.plugin.settings as unknown as Record<string, unknown>)[key] = value;
+        await this.plugin.saveSettings();
+
+        // locale はすべての行の name / desc に影響するうえ、update() だけでは
+        // 変更操作を行った行（Language 行）自身の DOM が再利用されてしまい
+        // name/desc が更新されないため、containerEl を明示的に空にしてから
+        // update() を呼び、全行を確実に作り直す。
+        if (key === 'locale') {
+            this.containerEl.empty();
+            this.update();
+        }
     }
 }

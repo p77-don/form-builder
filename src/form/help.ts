@@ -1,6 +1,7 @@
 import { App, Modal } from 'obsidian';
 import type { SupportedLocale } from '../locales';
 import { getLocale } from '../locales';
+import { applyMobileModalBehavior } from '../ui/MobileModal';
 
 export class HelpModal extends Modal {
     private locale: SupportedLocale;
@@ -38,6 +39,8 @@ export class HelpModal extends Modal {
         const btnRow = root.createDiv({ cls: 'fb-btn-row' });
         btnRow.createEl('button', { cls: 'fb-btn fb-btn-accent', text: L.btnClose })
             .addEventListener('click', () => this.close());
+
+        applyMobileModalBehavior(this);
     }
 
     onClose(): void {

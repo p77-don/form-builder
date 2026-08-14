@@ -8,6 +8,7 @@ import {
 } from '../generator/FieldSyntaxBuilder';
 import type { FieldGeneratorState, MetaKind, VariableExampleHints } from '../generator/FieldSyntaxBuilder';
 import { NOTICE_DURATION } from '../ui/ErrorNotice';
+import { applyMobileModalBehavior } from '../ui/MobileModal';
 
 const FIELD_TYPES: FieldType[] = [
     'text', 'textarea', 'number', 'date', 'checkbox', 'select', 'multiselect', 'multilist',
@@ -94,6 +95,7 @@ export class FieldGeneratorModal extends Modal {
         this.renderBody();
         this.renderButtons();
         this.updatePreview();
+        applyMobileModalBehavior(this);
     }
 
     /** アクティブなエディタのカーソルが、既存の formbuilder ブロックの中にあるかどうかを判定する。 */
@@ -263,6 +265,13 @@ export class FieldGeneratorModal extends Modal {
             if (this.type === 'textarea') {
                 this.addTextInput(container, L.genRows, L.genRowsHint, this.state.rows, false, (v) => {
                     this.state.rows = v;
+                    this.updatePreview();
+                });
+            }
+            if (this.type === 'text') {
+                // folder は text 専用オプション（Vault フォルダ選択ボタンの表示有無）
+                this.addToggle(container, L.genFolder, L.genFolderHint, this.state.folder, (v) => {
+                    this.state.folder = v;
                     this.updatePreview();
                 });
             }

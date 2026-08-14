@@ -4,6 +4,7 @@ import { getLocale } from '../locales';
 import { HelpModal } from './help';
 import { buildTemplateTree } from '../template/TemplateTreeBuilder';
 import type { TabType, TemplateEntry, TemplateFolderNode } from '../model/TemplateEntry';
+import { applyMobileModalBehavior } from '../ui/MobileModal';
 import type FormBuilderPlugin from '../main';
 
 /**
@@ -91,6 +92,7 @@ export class TemplatePickerModal extends Modal {
             .addEventListener('click', () => new HelpModal(this.app, this.locale).open());
 
         this.updateActionButtons();
+        applyMobileModalBehavior(this);
     }
 
     onClose(): void {

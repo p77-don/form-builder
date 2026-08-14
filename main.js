@@ -22,7 +22,7 @@ __export(main_exports, {
   default: () => FormBuilderPlugin
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian9 = require("obsidian");
+var import_obsidian11 = require("obsidian");
 
 // src/settings.ts
 var import_obsidian = require("obsidian");
@@ -144,6 +144,8 @@ $summary$
 ## Aliases
 $aliases:separator[, ]$`,
   multilistHint: "Enter one item per line. Blank lines are ignored.",
+  folderPickerBtnLabel: "Choose folder",
+  folderPickerPlaceholder: "Type to search folders...",
   subMeta: "Meta Options",
   subFields: "Field Types",
   subOptions: "Common Options",
@@ -172,7 +174,8 @@ $aliases:separator[, ]$`,
     ["default=[Value]", "Default value"],
     ["list=[A;B;C]", "Options for select / multiselect (semicolon-separated)"],
     ["min=[0]|max=[100]", "Min / Max value for number fields"],
-    ["rows=[5]", "Visible rows for textarea / multiselect / multilist"]
+    ["rows=[5]", "Visible rows for textarea / multiselect / multilist"],
+    ["folder", "text only. Shows a folder-picker button next to the input (flag, no value)"]
   ],
   variableRows: [
     ["$key$", 'User variable \u2014 replaced with the form input value. Surrounded by dollar signs $...$. For multiselect / multilist, values are joined with "," (no space) by default.'],
@@ -241,6 +244,8 @@ $aliases:separator[, ]$`,
   genListHint: "Enter one option per line.",
   genRequired: "Required",
   genRequiredHint: "If on, the form cannot be submitted while this field is empty.",
+  genFolder: "Folder",
+  genFolderHint: "If on, a folder-picker button is shown next to the input. The value is still plain text, so the user can freely edit it (e.g. to type a new subfolder) after choosing.",
   genPreviewTitle: "Preview",
   genVariableTitle: "Generated Variable",
   genVarHintDefaultScalar: "Replaced with the value as entered.",
@@ -380,6 +385,8 @@ $summary$
 ## \u30A8\u30A4\u30EA\u30A2\u30B9
 $aliases:separator[\u3001]$`,
   multilistHint: "1\u884C\u306B\u3064\u304D1\u9805\u76EE\u3092\u5165\u529B\u3057\u3066\u304F\u3060\u3055\u3044\u3002\u7A7A\u884C\u306F\u7121\u8996\u3055\u308C\u307E\u3059\u3002",
+  folderPickerBtnLabel: "\u30D5\u30A9\u30EB\u30C0\u3092\u9078\u629E",
+  folderPickerPlaceholder: "\u30D5\u30A9\u30EB\u30C0\u3092\u691C\u7D22...",
   subMeta: "meta \u30AA\u30D7\u30B7\u30E7\u30F3",
   subFields: "\u30D5\u30A3\u30FC\u30EB\u30C9\u30BF\u30A4\u30D7",
   subOptions: "\u4E3B\u306A\u30AA\u30D7\u30B7\u30E7\u30F3",
@@ -408,7 +415,8 @@ $aliases:separator[\u3001]$`,
     ["default=[\u65E2\u5B9A\u5024]", "\u30C7\u30D5\u30A9\u30EB\u30C8\u5024"],
     ["list=[A;B;C]", "\u9078\u629E\u80A2\uFF08\u30BB\u30DF\u30B3\u30ED\u30F3\u533A\u5207\u308A\uFF09"],
     ["min=[0]|max=[100]", "number \u30D5\u30A3\u30FC\u30EB\u30C9\u306E\u6700\u5C0F\u30FB\u6700\u5927\u5024"],
-    ["rows=[5]", "textarea / multiselect / multilist \u306E\u8868\u793A\u884C\u6570"]
+    ["rows=[5]", "textarea / multiselect / multilist \u306E\u8868\u793A\u884C\u6570"],
+    ["folder", "text \u5C02\u7528\u3002\u5165\u529B\u6B04\u306E\u6A2A\u306B\u30D5\u30A9\u30EB\u30C0\u9078\u629E\u30DC\u30BF\u30F3\u3092\u8868\u793A\u3059\u308B\uFF08\u30D5\u30E9\u30B0\u3001\u5024\u306A\u3057\uFF09"]
   ],
   variableRows: [
     ["$\u30AD\u30FC\u540D$", "\u30E6\u30FC\u30B6\u30FC\u5909\u6570\u3002\u30C9\u30EB\u8A18\u53F7 $...$ \u3067\u56F2\u307F\u307E\u3059\u3002\u30D5\u30A9\u30FC\u30E0\u306E\u5165\u529B\u5024\u306B\u7F6E\u304D\u63DB\u308F\u308A\u307E\u3059\u3002multiselect / multilist \u306F\u30C7\u30D5\u30A9\u30EB\u30C8\u3067\u30AB\u30F3\u30DE\u306E\u307F\u3067\u7D50\u5408\uFF08\u30B9\u30DA\u30FC\u30B9\u306A\u3057\uFF09\u3002"],
@@ -477,6 +485,8 @@ $aliases:separator[\u3001]$`,
   genListHint: "1\u884C\u306B\u3064\u304D1\u9805\u76EE\u3092\u5165\u529B\u3057\u3066\u304F\u3060\u3055\u3044\u3002",
   genRequired: "\u5FC5\u9808\u9805\u76EE\u306B\u3059\u308B",
   genRequiredHint: "ON\u306B\u3059\u308B\u3068\u3001\u3053\u306E\u9805\u76EE\u304C\u672A\u5165\u529B\u306E\u307E\u307E\u3067\u306F\u30CE\u30FC\u30C8\u3092\u4F5C\u6210\u3067\u304D\u306A\u304F\u306A\u308A\u307E\u3059\u3002",
+  genFolder: "\u30D5\u30A9\u30EB\u30C0\u9078\u629E\u30DC\u30BF\u30F3\u3092\u8868\u793A\u3059\u308B",
+  genFolderHint: "ON\u306B\u3059\u308B\u3068\u3001\u5165\u529B\u6B04\u306E\u6A2A\u306B Vault \u5185\u306E\u30D5\u30A9\u30EB\u30C0\u3092\u9078\u629E\u3059\u308B\u30DC\u30BF\u30F3\u304C\u8868\u793A\u3055\u308C\u307E\u3059\u3002\u5024\u306F\u3042\u304F\u307E\u3067\u901A\u5E38\u306E\u6587\u5B57\u5217\u306E\u305F\u3081\u3001\u9078\u629E\u5F8C\u3082\u81EA\u7531\u306B\u7DE8\u96C6\u3067\u304D\u307E\u3059\uFF08\u4F8B: \u9078\u629E\u5F8C\u306B\u65B0\u3057\u3044\u30B5\u30D6\u30D5\u30A9\u30EB\u30C0\u540D\u3092\u8FFD\u8A18\u3059\u308B\u306A\u3069\uFF09\u3002",
   genPreviewTitle: "\u30D7\u30EC\u30D3\u30E5\u30FC",
   genVariableTitle: "\u5C55\u958B\u7528\u5909\u6570",
   genVarHintDefaultScalar: "\u5165\u529B\u3055\u308C\u305F\u5024\u304C\u305D\u306E\u307E\u307E\u7F6E\u304D\u63DB\u308F\u308A\u307E\u3059\u3002",
@@ -523,44 +533,110 @@ var FormBuilderSettingTab = class extends import_obsidian.PluginSettingTab {
     super(app, plugin);
     this.plugin = plugin;
   }
-  // 回避策: v1.13.0+ の宣言的 API（getSettingDefinitions() / update()）は、
-  // locale を変更した際に「変更元の行（Language 自身）の name / desc だけ
-  // 再描画されない」という不具合が確認されたため、あえて使用しない。
+  // v1.13.0+ の宣言的設定 API。getSettingDefinitions() は設定タブが
+  // 開かれるたび・update() が呼ばれるたびに再評価されるため、
+  // name / desc に現在のロケール（L）の文字列をそのまま使えば
+  // 言語切り替え時に全行を再描画できる … はずだったが、実際には
+  // update() が既存の行の DOM を可能な限り再利用しようとする挙動があり、
+  // 「変更操作を行った行自身（Language 行）」だけ name/desc が
+  // 更新されないことを確認した（Obsidian フォーラムにも 1.13 系の
+  // 宣言的設定 API で update() 後に行が正しく再構築されない、という
+  // 趣旨の不具合報告が複数ある）。
   //
-  // ドキュメント上、getSettingDefinitions() が「非空配列」を返した場合のみ
-  // display() がバイパスされる仕様になっているため、このメソッド自体を
-  // 定義しない（基底クラスの既定実装が空配列を返す）ことで、
-  // 常に下の display()（レガシーAPI）が使われるようにする。
-  // display() 側は日本語切り替え時の再描画も含めて正しく動作することを確認済み。
-  display() {
-    const { containerEl } = this;
-    containerEl.empty();
+  // 対処として、setControlValue() 側で update() を呼ぶ前に
+  // containerEl.empty() を挟み、再利用できる既存行を残さないようにする。
+  // これはレガシー版の display()（毎回 containerEl.empty() してから
+  // 全行を作り直す）と同じ考え方で、実際にレガシー版では発生しなかった
+  // 挙動であることからも有効と判断した。
+  getSettingDefinitions() {
     const L = getLocale(this.plugin.settings.locale);
-    new import_obsidian.Setting(containerEl).setHeading().setName(L.settingHeading);
-    new import_obsidian.Setting(containerEl).setName(L.settingFolderName).setDesc(L.settingFolderDesc).addText((text) => text.setPlaceholder(L.settingFolderPlaceholder).setValue(this.plugin.settings.templateFolder).onChange(async (value) => {
-      this.plugin.settings.templateFolder = value.trim();
-      await this.plugin.saveSettings();
-    }));
-    new import_obsidian.Setting(containerEl).setName(L.settingLanguageName).setDesc(L.settingLanguageDesc).addDropdown((drop) => {
-      for (const [key, label] of Object.entries(LOCALE_LABELS)) {
-        drop.addOption(key, label);
+    return [
+      {
+        name: L.settingFolderName,
+        desc: L.settingFolderDesc,
+        control: {
+          type: "text",
+          key: "templateFolder",
+          placeholder: L.settingFolderPlaceholder
+        }
+      },
+      {
+        name: L.settingLanguageName,
+        desc: L.settingLanguageDesc,
+        control: {
+          type: "dropdown",
+          key: "locale",
+          defaultValue: DEFAULT_SETTINGS.locale,
+          options: LOCALE_LABELS
+        }
       }
-      drop.setValue(this.plugin.settings.locale);
-      drop.onChange(async (value) => {
-        this.plugin.settings.locale = value;
-        await this.plugin.saveSettings();
-        this.display();
-      });
-    });
+    ];
+  }
+  getControlValue(key) {
+    return this.plugin.settings[key];
+  }
+  async setControlValue(key, value) {
+    if (key === "templateFolder" && typeof value === "string") {
+      value = value.trim();
+    }
+    this.plugin.settings[key] = value;
+    await this.plugin.saveSettings();
+    if (key === "locale") {
+      this.containerEl.empty();
+      this.update();
+    }
   }
 };
 
 // src/form/FormModal.ts
-var import_obsidian5 = require("obsidian");
+var import_obsidian7 = require("obsidian");
 
 // src/form/help.ts
+var import_obsidian3 = require("obsidian");
+
+// src/ui/MobileModal.ts
 var import_obsidian2 = require("obsidian");
-var HelpModal = class extends import_obsidian2.Modal {
+var KEYBOARD_PADDING_RATIO = 0.45;
+function applyMobileModalBehavior(modal) {
+  if (!import_obsidian2.Platform.isMobile)
+    return;
+  const { containerEl, modalEl, contentEl } = modal;
+  containerEl.addClass("fb-modal-container-top");
+  modalEl.addEventListener("click", (evt) => {
+    const target = evt.target;
+    if (target.closest("input, textarea, select, button, a, label"))
+      return;
+    const active = document.activeElement;
+    if (active && contentEl.contains(active) && typeof active.blur === "function") {
+      active.blur();
+    }
+  });
+  contentEl.addEventListener("focusin", (evt) => {
+    const target = evt.target;
+    if (!target.matches("input, textarea, select"))
+      return;
+    contentEl.style.setProperty("padding-bottom", `${Math.round(window.innerHeight * KEYBOARD_PADDING_RATIO)}px`);
+    const scrollToField = () => {
+      const active = document.activeElement;
+      if (active === target) {
+        target.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      }
+    };
+    window.setTimeout(scrollToField, 300);
+    window.setTimeout(scrollToField, 450);
+  });
+  contentEl.addEventListener("focusout", () => {
+    window.setTimeout(() => {
+      const active = document.activeElement;
+      if (!active || !contentEl.contains(active) || !active.matches("input, textarea, select")) {
+        contentEl.style.removeProperty("padding-bottom");
+      }
+    }, 50);
+  });
+}
+
+// src/form/help.ts
+var HelpModal = class extends import_obsidian3.Modal {
   constructor(app, locale) {
     super(app);
     this.locale = locale;
@@ -589,6 +665,7 @@ var HelpModal = class extends import_obsidian2.Modal {
     this.section(root, L.sec4Title, L.sec4Paragraphs);
     const btnRow = root.createDiv({ cls: "fb-btn-row" });
     btnRow.createEl("button", { cls: "fb-btn fb-btn-accent", text: L.btnClose }).addEventListener("click", () => this.close());
+    applyMobileModalBehavior(this);
   }
   onClose() {
     this.contentEl.empty();
@@ -616,11 +693,53 @@ var HelpModal = class extends import_obsidian2.Modal {
   }
 };
 
+// src/form/FolderSuggestModal.ts
+var import_obsidian4 = require("obsidian");
+var FolderSuggestModal = class extends import_obsidian4.FuzzySuggestModal {
+  constructor(app, currentValue, placeholder, onChoose) {
+    super(app);
+    this.onChoose = onChoose;
+    this.startFolder = this.resolveStartFolder(currentValue);
+    this.setPlaceholder(placeholder);
+  }
+  resolveStartFolder(currentValue) {
+    const trimmed = currentValue.trim();
+    if (!trimmed)
+      return null;
+    const folder = this.app.vault.getFolderByPath(trimmed);
+    if (!folder || folder.isRoot())
+      return null;
+    return folder;
+  }
+  getItems() {
+    if (this.startFolder) {
+      return this.collectSubtree(this.startFolder);
+    }
+    return this.app.vault.getAllFolders(false);
+  }
+  getItemText(folder) {
+    return folder.path;
+  }
+  onChooseItem(folder) {
+    this.onChoose(folder);
+  }
+  /** startFolder 自身と、その配下のフォルダをすべて集める。 */
+  collectSubtree(root) {
+    const result = [root];
+    for (const child of root.children) {
+      if (child instanceof import_obsidian4.TFolder) {
+        result.push(...this.collectSubtree(child));
+      }
+    }
+    return result;
+  }
+};
+
 // src/form/FieldRenderer.ts
-function renderField(containerEl, field, values, multilistHint) {
+function renderField(containerEl, field, values, ctx) {
   switch (field.type) {
     case "text":
-      renderText(containerEl, field, values);
+      renderText(containerEl, field, values, ctx);
       break;
     case "textarea":
       renderTextarea(containerEl, field, values);
@@ -641,7 +760,7 @@ function renderField(containerEl, field, values, multilistHint) {
       renderMultiselect(containerEl, field, values);
       break;
     case "multilist":
-      renderList(containerEl, field, values, multilistHint);
+      renderList(containerEl, field, values, ctx.multilistHint);
       break;
     default: {
       const _exhaustive = field;
@@ -665,17 +784,38 @@ function appendLabelRow(card, field) {
     card.createDiv({ cls: "fb-desc", text: field.description });
   }
 }
-function renderText(containerEl, field, values) {
-  var _a, _b;
+function renderText(containerEl, field, values, ctx) {
+  var _a, _b, _c;
+  if (field.type !== "text")
+    return;
   values.set(field.key, (_a = field.default) != null ? _a : "");
   const card = createCard(containerEl, field);
   appendLabelRow(card, field);
-  const input = card.createEl("input", { cls: "fb-input" });
+  if (!field.folder) {
+    const input2 = card.createEl("input", { cls: "fb-input" });
+    input2.type = "text";
+    input2.value = (_b = field.default) != null ? _b : "";
+    if (field.placeholder)
+      input2.placeholder = field.placeholder;
+    input2.addEventListener("input", () => values.set(field.key, input2.value));
+    return;
+  }
+  const row = card.createDiv({ cls: "fb-input-row" });
+  const input = row.createEl("input", { cls: "fb-input" });
   input.type = "text";
-  input.value = (_b = field.default) != null ? _b : "";
+  input.value = (_c = field.default) != null ? _c : "";
   if (field.placeholder)
     input.placeholder = field.placeholder;
   input.addEventListener("input", () => values.set(field.key, input.value));
+  const pickBtn = row.createEl("button", { cls: "fb-folder-picker-btn", text: "\u{1F4C1}" });
+  pickBtn.type = "button";
+  pickBtn.title = ctx.folderPickerBtnLabel;
+  pickBtn.addEventListener("click", () => {
+    new FolderSuggestModal(ctx.app, input.value, ctx.folderPickerPlaceholder, (folder) => {
+      input.value = folder.path;
+      values.set(field.key, folder.path);
+    }).open();
+  });
 }
 function renderTextarea(containerEl, field, values) {
   var _a, _b;
@@ -844,7 +984,7 @@ function highlightRequiredErrors(containerEl, fields, values) {
 }
 
 // src/generator/NoteGenerator.ts
-var import_obsidian4 = require("obsidian");
+var import_obsidian6 = require("obsidian");
 
 // src/generator/VariableResolver.ts
 function pad2(n) {
@@ -949,14 +1089,14 @@ function resolveSystemVariables(template, location) {
 }
 
 // src/ui/ErrorNotice.ts
-var import_obsidian3 = require("obsidian");
+var import_obsidian5 = require("obsidian");
 var NOTICE_DURATION = 8e3;
 function showFatalError(errors, header) {
   const messages = errors.map((e) => {
     const lineInfo = e.line ? ` (line ${e.line})` : "";
     return `\u2022 ${e.message}${lineInfo}`;
   }).join("\n");
-  new import_obsidian3.Notice(`${header}
+  new import_obsidian5.Notice(`${header}
 ${messages}`, NOTICE_DURATION);
 }
 
@@ -965,7 +1105,11 @@ var INVALID_FILENAME_CHARS = /[/\\:*?"<>|]/g;
 var WINDOWS_RESERVED_NAMES = /^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(\.|$)/i;
 function sanitizeFileName(name, sanitizedNotice) {
   let sanitized = name.replace(INVALID_FILENAME_CHARS, "_");
-  sanitized = sanitized.replace(/[\u0000-\u001F]/gu, "");
+  sanitized = Array.from(sanitized).filter((ch) => {
+    var _a;
+    const code = (_a = ch.codePointAt(0)) != null ? _a : 0;
+    return code > 31;
+  }).join("");
   if (WINDOWS_RESERVED_NAMES.test(sanitized)) {
     sanitized = "_" + sanitized;
   }
@@ -973,7 +1117,7 @@ function sanitizeFileName(name, sanitizedNotice) {
   if (!sanitized)
     sanitized = "Untitled";
   if (sanitized !== name) {
-    new import_obsidian4.Notice(sanitizedNotice);
+    new import_obsidian6.Notice(sanitizedNotice);
   }
   return sanitized;
 }
@@ -996,7 +1140,7 @@ function resolveUniqueFilePath(app, folder, filenameWithExt) {
   let counter = 2;
   let renamed = false;
   for (let i = 0; i < 1e3; i++) {
-    const path = folder ? (0, import_obsidian4.normalizePath)(`${folder}/${candidateName}`) : (0, import_obsidian4.normalizePath)(candidateName);
+    const path = folder ? (0, import_obsidian6.normalizePath)(`${folder}/${candidateName}`) : (0, import_obsidian6.normalizePath)(candidateName);
     if (!app.vault.getAbstractFileByPath(path)) {
       return { path, finalNameWithExt: candidateName, renamed };
     }
@@ -1004,7 +1148,7 @@ function resolveUniqueFilePath(app, folder, filenameWithExt) {
     counter++;
     renamed = true;
   }
-  const fallbackPath = folder ? (0, import_obsidian4.normalizePath)(`${folder}/${candidateName}`) : (0, import_obsidian4.normalizePath)(candidateName);
+  const fallbackPath = folder ? (0, import_obsidian6.normalizePath)(`${folder}/${candidateName}`) : (0, import_obsidian6.normalizePath)(candidateName);
   return { path: fallbackPath, finalNameWithExt: candidateName, renamed };
 }
 async function generateNote(app, bodyTemplate, values, fields, meta, sanitizedNotice, duplicateRenamedNotice) {
@@ -1023,10 +1167,10 @@ async function generateNote(app, bodyTemplate, values, fields, meta, sanitizedNo
   const { result: content0, warnings: bodyWarnings } = resolveUserVariables(bodyTemplate, values, fields);
   const content = resolveSystemVariables(content0, { folder: resolvedFolder, filename: finalNameNoExt });
   for (const w of bodyWarnings) {
-    new import_obsidian4.Notice(`Form Builder: ${w.message}`, 6e3);
+    new import_obsidian6.Notice(`Form Builder: ${w.message}`, 6e3);
   }
   if (renamed) {
-    new import_obsidian4.Notice(duplicateRenamedNotice.replace("{name}", finalNameWithExt), NOTICE_DURATION);
+    new import_obsidian6.Notice(duplicateRenamedNotice.replace("{name}", finalNameWithExt), NOTICE_DURATION);
   }
   await app.vault.create(filePath, content);
   const file = app.vault.getFileByPath(filePath);
@@ -1038,7 +1182,7 @@ async function generateNote(app, bodyTemplate, values, fields, meta, sanitizedNo
 function openObsidianSettings(app) {
   app.setting.open();
 }
-var FormModal = class extends import_obsidian5.Modal {
+var FormModal = class extends import_obsidian7.Modal {
   constructor(app, parseResult, locale) {
     super(app);
     this.values = /* @__PURE__ */ new Map();
@@ -1054,6 +1198,7 @@ var FormModal = class extends import_obsidian5.Modal {
     this.renderWarnings(root);
     this.renderFields(root);
     this.renderSubmitButton(root, L.btnCreateNote);
+    applyMobileModalBehavior(this);
   }
   onClose() {
     this.contentEl.empty();
@@ -1068,8 +1213,14 @@ var FormModal = class extends import_obsidian5.Modal {
   }
   renderFields(root) {
     const L = getLocale(this.locale);
+    const ctx = {
+      app: this.app,
+      multilistHint: L.multilistHint,
+      folderPickerBtnLabel: L.folderPickerBtnLabel,
+      folderPickerPlaceholder: L.folderPickerPlaceholder
+    };
     for (const field of this.parseResult.fields) {
-      renderField(root, field, this.values, L.multilistHint);
+      renderField(root, field, this.values, ctx);
     }
   }
   renderSubmitButton(root, label) {
@@ -1085,9 +1236,9 @@ var FormModal = class extends import_obsidian5.Modal {
     const missing = highlightRequiredErrors(root, this.parseResult.fields, this.values);
     const numberErrors = validateNumberFields(root, this.parseResult.fields, this.values);
     if (missing.length > 0)
-      new import_obsidian5.Notice(L.noticeRequired);
+      new import_obsidian7.Notice(L.noticeRequired);
     if (numberErrors.length > 0)
-      new import_obsidian5.Notice(L.noticeInvalidNumber);
+      new import_obsidian7.Notice(L.noticeInvalidNumber);
     if (missing.length > 0 || numberErrors.length > 0)
       return;
     try {
@@ -1104,12 +1255,12 @@ var FormModal = class extends import_obsidian5.Modal {
     } catch (e) {
       console.error("Form Builder: Failed to create note", e);
       const message = e instanceof Error ? e.message : String(e);
-      new import_obsidian5.Notice(`${L.noticeCreateError}
+      new import_obsidian7.Notice(`${L.noticeCreateError}
 ${message}`, NOTICE_DURATION);
     }
   }
 };
-var NoTemplateModal = class extends import_obsidian5.Modal {
+var NoTemplateModal = class extends import_obsidian7.Modal {
   constructor(app, plugin, locale) {
     super(app);
     this.plugin = plugin;
@@ -1131,6 +1282,7 @@ var NoTemplateModal = class extends import_obsidian5.Modal {
       openObsidianSettings(this.app);
     });
     btnRow.createEl("button", { cls: "fb-btn", text: L.btnClose }).addEventListener("click", () => this.close());
+    applyMobileModalBehavior(this);
   }
   onClose() {
     this.contentEl.empty();
@@ -1138,7 +1290,7 @@ var NoTemplateModal = class extends import_obsidian5.Modal {
 };
 
 // src/form/TemplatePickerModal.ts
-var import_obsidian6 = require("obsidian");
+var import_obsidian8 = require("obsidian");
 
 // src/template/TemplateTreeBuilder.ts
 function buildTemplateTree(rootPath, files, ascending = true) {
@@ -1176,7 +1328,7 @@ function sortNode(node, ascending) {
 }
 
 // src/form/TemplatePickerModal.ts
-var TemplatePickerModal = class extends import_obsidian6.Modal {
+var TemplatePickerModal = class extends import_obsidian8.Modal {
   constructor(app, plugin, allTemplates, templateFolderPath, locale, onSelect) {
     super(app);
     this.searchQuery = "";
@@ -1208,6 +1360,7 @@ var TemplatePickerModal = class extends import_obsidian6.Modal {
     this.renderSortToggle(btnRow, L);
     btnRow.createEl("button", { cls: "fb-btn", text: L.btnHelp }).addEventListener("click", () => new HelpModal(this.app, this.locale).open());
     this.updateActionButtons();
+    applyMobileModalBehavior(this);
   }
   onClose() {
     this.contentEl.empty();
@@ -1478,7 +1631,7 @@ var TemplatePickerModal = class extends import_obsidian6.Modal {
     } else {
       btn.addEventListener("click", () => {
         const file = this.app.vault.getFileByPath(entry.path);
-        if (file instanceof import_obsidian6.TFile)
+        if (file instanceof import_obsidian8.TFile)
           this.selectTemplate(file);
       });
     }
@@ -1511,7 +1664,7 @@ var TemplatePickerModal = class extends import_obsidian6.Modal {
 };
 
 // src/form/FieldGeneratorModal.ts
-var import_obsidian7 = require("obsidian");
+var import_obsidian9 = require("obsidian");
 
 // src/generator/FieldSyntaxBuilder.ts
 function createEmptyState() {
@@ -1526,7 +1679,8 @@ function createEmptyState() {
     rows: "",
     min: "",
     max: "",
-    listRaw: ""
+    listRaw: "",
+    folder: false
   };
 }
 function toSemicolonList(raw) {
@@ -1570,6 +1724,8 @@ function buildOptions(type, state) {
     if (state.max.trim())
       opts.push({ key: "max", value: state.max.trim() });
   }
+  if (type === "text" && state.folder)
+    opts.push({ key: "folder", value: null });
   if (state.required)
     opts.push({ key: "required", value: null });
   return opts;
@@ -1648,7 +1804,7 @@ function isCursorInFormbuilderBlock(content, cursorLine) {
   }
   return false;
 }
-var FieldGeneratorModal = class extends import_obsidian7.Modal {
+var FieldGeneratorModal = class extends import_obsidian9.Modal {
   constructor(app, locale) {
     super(app);
     this.mode = "field";
@@ -1683,10 +1839,11 @@ var FieldGeneratorModal = class extends import_obsidian7.Modal {
     this.renderBody();
     this.renderButtons();
     this.updatePreview();
+    applyMobileModalBehavior(this);
   }
   /** アクティブなエディタのカーソルが、既存の formbuilder ブロックの中にあるかどうかを判定する。 */
   detectCursorInBlock() {
-    const view = this.app.workspace.getActiveViewOfType(import_obsidian7.MarkdownView);
+    const view = this.app.workspace.getActiveViewOfType(import_obsidian9.MarkdownView);
     if (!view)
       return false;
     const editor = view.editor;
@@ -1832,6 +1989,12 @@ var FieldGeneratorModal = class extends import_obsidian7.Modal {
       if (this.type === "textarea") {
         this.addTextInput(container, L.genRows, L.genRowsHint, this.state.rows, false, (v) => {
           this.state.rows = v;
+          this.updatePreview();
+        });
+      }
+      if (this.type === "text") {
+        this.addToggle(container, L.genFolder, L.genFolderHint, this.state.folder, (v) => {
+          this.state.folder = v;
           this.updatePreview();
         });
       }
@@ -2067,36 +2230,36 @@ ${variableText}`, L);
       return;
     try {
       await navigator.clipboard.writeText(text);
-      new import_obsidian7.Notice(L.genCopiedNotice);
+      new import_obsidian9.Notice(L.genCopiedNotice);
     } catch (e) {
       console.error("Form Builder: Failed to copy to clipboard", e);
-      new import_obsidian7.Notice(L.noticeCreateError, NOTICE_DURATION);
+      new import_obsidian9.Notice(L.noticeCreateError, NOTICE_DURATION);
     }
   }
   handleInsert(L) {
     const raw = this.currentSyntax();
     if (!raw)
       return;
-    const view = this.app.workspace.getActiveViewOfType(import_obsidian7.MarkdownView);
+    const view = this.app.workspace.getActiveViewOfType(import_obsidian9.MarkdownView);
     if (!view) {
-      new import_obsidian7.Notice(L.genNoActiveEditor);
+      new import_obsidian9.Notice(L.genNoActiveEditor);
       return;
     }
     const editor = view.editor;
     if (this.wrapInBlock) {
       editor.replaceRange(wrapInFormbuilderBlock(raw), editor.getCursor());
-      new import_obsidian7.Notice(L.genInsertedNotice);
+      new import_obsidian9.Notice(L.genInsertedNotice);
       this.close();
       return;
     }
     const cursor = editor.getCursor();
     const content = editor.getValue();
     if (!isCursorInFormbuilderBlock(content, cursor.line)) {
-      new import_obsidian7.Notice(L.genInsertOutsideBlock);
+      new import_obsidian9.Notice(L.genInsertOutsideBlock);
       return;
     }
     editor.replaceRange(raw, cursor);
-    new import_obsidian7.Notice(L.genInsertedNotice);
+    new import_obsidian9.Notice(L.genInsertedNotice);
     this.close();
   }
 };
@@ -2113,7 +2276,7 @@ var KNOWN_FIELD_TYPES = /* @__PURE__ */ new Set([
   "multilist"
 ]);
 var KNOWN_FIELD_OPTIONS = {
-  text: ["required", "label", "placeholder", "description", "default"],
+  text: ["required", "label", "placeholder", "description", "default", "folder"],
   textarea: ["required", "label", "placeholder", "description", "default", "rows"],
   number: ["required", "label", "placeholder", "description", "default", "min", "max"],
   date: ["required", "label", "placeholder", "description", "default"],
@@ -2336,7 +2499,7 @@ function parseFieldLine(tokens, errors, warnings, lineNum) {
   };
   switch (type) {
     case "text":
-      return { type: "text", ...base };
+      return { type: "text", ...base, folder: optMap.has("folder") };
     case "textarea": {
       const rows = parseRows(optMap.get("rows"));
       return { type: "textarea", ...base, ...rows !== void 0 && { rows } };
@@ -2475,14 +2638,14 @@ function parseTemplate(templateContent) {
 }
 
 // src/template/TemplateScanner.ts
-var import_obsidian8 = require("obsidian");
+var import_obsidian10 = require("obsidian");
 async function collectTemplateFiles(vault, folder) {
   const result = [];
   for (const child of folder.children) {
-    if (child instanceof import_obsidian8.TFolder) {
+    if (child instanceof import_obsidian10.TFolder) {
       const nested = await collectTemplateFiles(vault, child);
       result.push(...nested);
-    } else if (child instanceof import_obsidian8.TFile && child.extension === "md") {
+    } else if (child instanceof import_obsidian10.TFile && child.extension === "md") {
       try {
         const content = await vault.read(child);
         if (FORMBUILDER_BLOCK_RE.test(content)) {
@@ -2605,7 +2768,7 @@ var TemplateStore = class {
 };
 
 // src/main.ts
-var FormBuilderPlugin = class extends import_obsidian9.Plugin {
+var FormBuilderPlugin = class extends import_obsidian11.Plugin {
   onload() {
     void this.loadSettings().then(() => {
       this.templateStore = new TemplateStore(this);
@@ -2626,7 +2789,7 @@ var FormBuilderPlugin = class extends import_obsidian9.Plugin {
       });
       this.registerEvent(
         this.app.vault.on("rename", (file, oldPath) => {
-          if (file instanceof import_obsidian9.TFile && file.extension === "md") {
+          if (file instanceof import_obsidian11.TFile && file.extension === "md") {
             void this.templateStore.handleRename(oldPath, file.path);
           }
         })
@@ -2662,7 +2825,7 @@ var FormBuilderPlugin = class extends import_obsidian9.Plugin {
     try {
       content = await this.app.vault.read(file);
     } catch (e) {
-      new import_obsidian9.Notice(`${L.noticeReadError}
+      new import_obsidian11.Notice(`${L.noticeReadError}
 "${file.path}"`);
       return;
     }

@@ -5,7 +5,7 @@ const KNOWN_FIELD_TYPES = new Set([
 ]);
 
 const KNOWN_FIELD_OPTIONS: Record<string, string[]> = {
-    text:        ['required', 'label', 'placeholder', 'description', 'default'],
+    text:        ['required', 'label', 'placeholder', 'description', 'default', 'folder'],
     textarea:    ['required', 'label', 'placeholder', 'description', 'default', 'rows'],
     number:      ['required', 'label', 'placeholder', 'description', 'default', 'min', 'max'],
     date:        ['required', 'label', 'placeholder', 'description', 'default'],

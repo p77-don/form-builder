@@ -198,13 +198,15 @@ The **Field Type** dropdown lets you choose from the 8 field types (`text` / `te
 
 | Field Type | Fields shown |
 |---|---|
-| `text` / `date` | Placeholder, Default, Required |
+| `text` / `date` | Placeholder, Default, Required (`text` also has a Folder toggle — see below) |
 | `textarea` | Placeholder, Default, Rows, Required |
 | `number` | Placeholder, Default, Min, Max, Required |
 | `checkbox` | Just the Default toggle ("Checked by default"). `Required` is meaningless for a checkbox, so it isn't shown. |
 | `select` | Options, Default, Required |
 | `multiselect` | Options, Rows, Default, Required |
 | `multilist` | Placeholder, Rows, Required (no `Default` — the custom syntax can only be parsed one line at a time, so it can't represent a multi-line default) |
+
+For `text`, an additional **Folder** checkbox is shown. Turning it on adds `|folder` to the generated syntax, which shows a folder-picker button next to the input in the finished form (see [the `folder` option](#field-types)).
 
 Every field shows a short hint so the meaning of each option is clear even the first time you use it. In particular, the hint for `select`'s `Default` explains it's "the option that's selected initially," and `multiselect`'s explains you can specify several with a `;` separator.
 
@@ -282,13 +284,13 @@ The following are all treated as identical.
 a-z  A-Z  0-9  _  -
 ```
 
-The following characters cannot be used in a key: `| { } [ ] $ % space (half-width or full-width)`
+The following characters cannot be used in a key: `|` `{` `}` `[` `]` `$` `%` ` space (half-width or full-width)`
 
 Keys are case-sensitive (`name` and `Name` are different keys).
 
 #### Option value syntax
 
-Values must be wrapped in `[]`.
+Values must be wrapped in &#91; &#93;.
 
 ```
 label=[Title]
@@ -297,7 +299,7 @@ min=[0]
 max=[200]
 ```
 
-Everything inside `[]` is used as the value verbatim (including spaces).
+Everything inside &#91; &#93; is used as the value verbatim (including spaces).
 
 ```
 placeholder=[ has a leading space ]
@@ -416,7 +418,7 @@ If a template like this is selected via `Create Note From Template`, an error is
 
 Displays a single-line text field in the form.
 
-**Available options:** `label` `placeholder` `description` `default` `required`
+**Available options:** `label` `placeholder` `description` `default` `required` `folder`
 
 **Output example:**
 
@@ -425,6 +427,25 @@ Template body: Author: $name$
 Input value:   Jane Doe
 Output:        Author: Jane Doe
 ```
+
+**The `folder` option (flag, no value):**
+
+```
+{{text|output|label=[Output folder]|folder}}
+```
+
+Adds a folder-picker button (📁) next to the input. Clicking it opens a searchable list of folders in your Vault and fills the input with the path of the one you choose. The value is still just plain text — you can freely edit it afterward, for example by typing a new subfolder name at the end (`Characters/Main` → `Characters/Main/Villains`). Any folder that doesn't exist yet is created automatically when the note is saved, the same way `meta|folder` already works.
+
+Which folders are offered depends on the input's current value:
+
+| Current value | Folders offered |
+|---|---|
+| Empty, or points to a folder that doesn't exist | Every folder in the Vault |
+| Points to an existing folder | That folder and its subfolders only |
+
+The Vault root itself is never offered as a choice (leaving the value empty already means "save to the Vault root," so there's nothing to pick).
+
+`folder` doesn't change how the value is expanded — combine it with a `meta|folder=[$key$]` field as usual to use the picked path as the note's output folder (see [Q. Can I specify a nested folder in `meta|folder`?](#q-can-i-specify-a-nested-folder-in-metafolder)).
 
 ---
 
@@ -622,6 +643,7 @@ See [Variable Modifiers](#variable-modifiers) for details.
 | `min=[number]` | Number | number | Minimum allowed value. A value outside the range is an error at submit time |
 | `max=[number]` | Number | number | Maximum allowed value. A value outside the range is an error at submit time |
 | `rows=[count]` | Integer | textarea / multiselect / multilist | Number of visible rows |
+| `folder` | Flag (no value) | text only | Shows a folder-picker button (📁) next to the input. The value is still plain text and can be freely edited |
 
 ---
 
@@ -716,11 +738,11 @@ $key:list[prefix]$           Each item prefixed and joined with line breaks
 
 If a modifier is used on a field that isn't `multiselect` / `multilist`, a warning is shown and the modifier is ignored.
 
-> **The brackets `[]` are required:** a form like `$key:list$` with the `[]` omitted is invalid. Always give a prefix string inside `[]` (an empty string is fine), e.g. `$key:list[- ]$`.
+> **The brackets &#91; &#93; are required:** a form like `$key:list$` with the &#91; &#93; omitted is invalid. Always give a prefix string inside &#91; &#93; (an empty string is fine), e.g. `$key:list[- ]$`.
 
 #### The `separator` modifier
 
-Uses the string inside `[]` as the separator verbatim, including any spaces.
+Uses the string inside &#91; &#93; as the separator verbatim, including any spaces.
 
 ```
 $tags:separator[,]$      → Important,Pending,Done
@@ -732,7 +754,7 @@ $tags:separator[ | ]$    → Important | Pending | Done
 
 #### The `list` modifier
 
-Uses the string inside `[]` as a prefix for each line, joined with line breaks.
+Uses the string inside &#91; &#93; as a prefix for each line, joined with line breaks.
 
 ```
 $tags:list[- ]$       →   - TypeScript
@@ -746,7 +768,7 @@ $tags:list[ ・ ]$     →    ・ TypeScript
                            ・ Python
 ```
 
-**Auto-numbering:** numbers are generated automatically only when the text inside `[]` starts with `1.`.
+**Auto-numbering:** numbers are generated automatically only when the text inside &#91; &#93; starts with `1.`.
 
 ```
 $tags:list[1. ]$      →   1. TypeScript
@@ -1008,7 +1030,7 @@ tags:
 $tags:list[  - ]$
 ```
 
-The number of leading spaces inside `[]` becomes the indentation width. To match Obsidian's standard 2-space indentation, write `list[  - ]` (two spaces).
+The number of leading spaces inside &#91; &#93; becomes the indentation width. To match Obsidian's standard 2-space indentation, write `list[  - ]` (two spaces).
 
 ### Q. I want to use a `multiselect` value in a different format in the body vs. in Frontmatter
 
@@ -1052,6 +1074,10 @@ It's an error, and no note is created, for the same reason as duplicate `meta` k
 ### Q. Can I specify a nested folder in `meta|folder`?
 
 Yes — use `/` as a separator, e.g. `Projects/2026/Notes`. Any missing folders in the path are created automatically.
+
+### Q. Can I pick a folder from a list instead of typing the path by hand?
+
+Yes — add the `folder` option to a `text` field: `{{text|output|label=[Output folder]|folder}}`. This adds a folder-picker button (📁) next to the input in the form. You can still edit the value by hand afterward, including typing the name of a folder that doesn't exist yet (it's created when the note is saved). See [the `folder` option](#field-types) for details.
 
 ### Q. Can I split a `formbuilder` code block into several blocks?
 
@@ -1269,13 +1295,15 @@ Templates
 
 | Field Type | 表示される項目 |
 |---|---|
-| `text` / `date` | プレースホルダー・デフォルト値・必須項目にする |
+| `text` / `date` | プレースホルダー・デフォルト値・必須項目にする（`text` にはさらに Folder トグルが表示されます。後述） |
 | `textarea` | プレースホルダー・デフォルト値・行数・必須項目にする |
 | `number` | プレースホルダー・デフォルト値・最小値・最大値・必須項目にする |
 | `checkbox` | デフォルト値（初期状態でONにする、のトグルのみ。`required` は checkbox には意味を持たないため表示されません） |
 | `select` | 選択肢・デフォルト値・必須項目にする |
 | `multiselect` | 選択肢・行数・デフォルト値・必須項目にする |
 | `multilist` | プレースホルダー・行数・必須項目にする（`default` は独自構文が1行単位でしか扱えず複数行を表現できないため提供していません） |
+
+`text` の場合、さらに **Folder** チェックボックスが表示されます。ONにすると生成される構文に `|folder` が追加され、完成したフォームでは入力欄の横にフォルダ選択ボタンが表示されるようになります（詳細は[`folder` オプション](#フィールドタイプ一覧)を参照）。
 
 すべての項目にヒント文が表示されるため、初めて使う場合でもオプションの意味が分かるようになっています。特に `select` の `default` は「選択されている値」、`multiselect` の `default` は「`;` 区切りで複数指定できる」ことをヒントで明示しています。
 
@@ -1354,13 +1382,13 @@ $キー名:separator[; ]$
 a-z  A-Z  0-9  _  -
 ```
 
-以下の文字はキーに使用できません：`| { } [ ] $ % スペース（半角・全角）`
+以下の文字はキーに使用できません：`|` `{` `}` `[` `]` `$` `%` `スペース（半角・全角）`
 
 大文字・小文字は区別されます（`name` と `Name` は別のキーです）。
 
 #### オプション値の書式
 
-値は必ず `[]` で囲みます。
+値は必ず &#91; &#93; で囲みます。
 
 ```
 label=[タイトル]
@@ -1369,7 +1397,7 @@ min=[0]
 max=[200]
 ```
 
-`[]` 内の文字はすべてそのまま値として使用されます（スペースを含む）。
+&#91; &#93; 内の文字はすべてそのまま値として使用されます（スペースを含む）。
 
 ```
 placeholder=[ 先頭にスペースがある ]
@@ -1486,7 +1514,7 @@ placeholder=[ 先頭にスペースがある ]
 
 フォーム上に1行のテキスト入力欄を表示します。
 
-**使用可能なオプション：** `label` `placeholder` `description` `default` `required`
+**使用可能なオプション：** `label` `placeholder` `description` `default` `required` `folder`
 
 **出力例：**
 
@@ -1495,6 +1523,25 @@ placeholder=[ 先頭にスペースがある ]
 入力値: 山田 太郎
 出力:   著者: 山田 太郎
 ```
+
+**`folder` オプション（フラグ、値なし）：**
+
+```
+{{text|output|label=[出力先フォルダ]|folder}}
+```
+
+入力欄の横にフォルダ選択ボタン（📁）を表示します。クリックすると Vault 内のフォルダをあいまい検索できる一覧が開き、選択したフォルダのパスが入力欄にセットされます。値はあくまで通常の文字列なので、選択後も自由に編集できます。例えば末尾に新しいサブフォルダ名を追記する（`Characters/Main` → `Characters/Main/Villains`）といった使い方が可能です。まだ存在しないフォルダは、`meta|folder` と同様、ノート保存時に自動的に作成されます。
+
+一覧に表示されるフォルダの範囲は、入力欄の現在の値によって変わります。
+
+| 現在の値 | 一覧に表示されるフォルダ |
+|---|---|
+| 空、または実在しないフォルダを指している | Vault 内のすべてのフォルダ |
+| 実在するフォルダを指している | そのフォルダとその配下のフォルダのみ |
+
+Vault ルート自体は選択肢に表示されません（値を空のままにすればルートに保存されるため、あえて選ぶ意味がないためです）。
+
+`folder` は値の展開のされ方自体を変えるものではありません。選択したパスをノートの出力先として使いたい場合は、これまで通り `meta|folder=[$キー名$]` と組み合わせてください（[Q. 多階層のフォルダを `meta|folder` で指定できる？](#q-多階層のフォルダを-metafolder-で指定できる) を参照）。
 
 ---
 
@@ -1692,6 +1739,7 @@ $aliases:list[- ]$      → - 東京オフィス\n- Tokyo Office\n- 本社
 | `min=[数値]` | 数値 | number | 入力可能な最小値。送信時に範囲外の値はエラーになる |
 | `max=[数値]` | 数値 | number | 入力可能な最大値。送信時に範囲外の値はエラーになる |
 | `rows=[行数]` | 整数 | textarea / multiselect / multilist | 表示行数 |
+| `folder` | フラグ（値なし） | text のみ | 入力欄の横にフォルダ選択ボタン（📁）を表示する。値はあくまで通常の文字列で、自由に編集可能 |
 
 ---
 
@@ -1786,11 +1834,11 @@ $key:list[行頭文字列]$       各行に行頭文字列を付けて改行で�
 
 モディファイアを `multiselect` / `multilist` 以外のフィールドに使用した場合、警告を表示してモディファイアを無視します。
 
-> **角括弧 `[]` は省略できません：** `$key:list$` のように `[]` を省略した書式は無効です。必ず `$key:list[- ]$` のように `[]` 内にプレフィックス文字列（空文字列でも可）を指定してください。
+> **角括弧 &#91; &#93; は省略できません：** `$key:list$` のように &#91; &#93; を省略した書式は無効です。必ず `$key:list[- ]$` のように &#91; &#93; 内にプレフィックス文字列（空文字列でも可）を指定してください。
 
 #### `separator` モディファイア
 
-`[]` 内の文字列をそのまま区切り文字として使用します。スペースも含めてそのまま使われます。
+&#91; &#93; 内の文字列をそのまま区切り文字として使用します。スペースも含めてそのまま使われます。
 
 ```
 $tags:separator[,]$      → 重要,確認待ち,完了
@@ -1802,7 +1850,7 @@ $tags:separator[ | ]$    → 重要 | 確認待ち | 完了
 
 #### `list` モディファイア
 
-`[]` 内の文字列をそのまま各行の先頭に付けて、改行で結合します。
+&#91; &#93; 内の文字列をそのまま各行の先頭に付けて、改行で結合します。
 
 ```
 $tags:list[- ]$       →   - TypeScript
@@ -1816,7 +1864,7 @@ $tags:list[ ・ ]$     →    ・ TypeScript
                            ・ Python
 ```
 
-**自動採番：** `[]` 内が `1.` で始まる場合のみ番号を自動採番します。
+**自動採番：** &#91; &#93; 内が `1.` で始まる場合のみ番号を自動採番します。
 
 ```
 $tags:list[1. ]$      →   1. TypeScript
@@ -2078,7 +2126,7 @@ tags:
 $tags:list[  - ]$
 ```
 
-`[]` 内の先頭スペースの数がインデント幅になります。Obsidian 標準の2スペースに合わせるには `list[  - ]`（スペース2つ）と記述してください。
+&#91; &#93; 内の先頭スペースの数がインデント幅になります。Obsidian 標準の2スペースに合わせるには `list[  - ]`（スペース2つ）と記述してください。
 
 ### Q. `multiselect` の値を本文とFrontmatterで別々の形式で使いたい
 
@@ -2122,6 +2170,10 @@ OS の禁止文字（`/ \ : * ? " < > |`）は自動的に `_` に置き換え�
 ### Q. 多階層のフォルダを `meta|folder` で指定できる？
 
 はい。`Projects/2026/Notes` のように `/` で区切って指定できます。存在しない階層は自動的に作成されます。
+
+### Q. パスを手入力する代わりに、一覧から選ぶことはできる？
+
+はい。`text` フィールドに `folder` オプションを追加してください：`{{text|output|label=[出力先フォルダ]|folder}}`。フォーム上の入力欄の横にフォルダ選択ボタン（📁）が表示されます。選択後も文字列として自由に編集でき、まだ存在しないフォルダ名を入力することも可能です（ノート保存時に自動作成されます）。詳細は[`folder` オプション](#フィールドタイプ一覧)を参照してください。
 
 ### Q. `formbuilder` コードブロックを複数に分けて書ける？
 

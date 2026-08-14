@@ -18,8 +18,16 @@ export function sanitizeFileName(name: string, sanitizedNotice: string): string 
     // OS禁止文字を "_" に置換
     let sanitized = name.replace(INVALID_FILENAME_CHARS, '_');
 
-    // 制御文字（U+0000–U+001F）を除去（Windows/macOS/Linux 共通で問題になる）
-    sanitized = sanitized.replace(/[\u0000-\u001F]/gu, '');
+    // 制御文字（U+0000–U+001F）を除去（Windows/macOS/Linux 共通で問題になる）。
+    // 正規表現の文字クラスに制御文字の範囲を書くと ESLint の
+    // no-control-regex（および Obsidian の自動チェック）に警告されるため、
+    // 文字コードでの判定に置き換えている。
+    sanitized = Array.from(sanitized)
+        .filter(ch => {
+            const code = ch.codePointAt(0) ?? 0;
+            return code > 0x1f;
+        })
+        .join('');
 
     // Windows予約名への対応
     if (WINDOWS_RESERVED_NAMES.test(sanitized)) {

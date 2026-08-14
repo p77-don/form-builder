@@ -6,6 +6,7 @@ import { HelpModal } from './help';
 import { renderField, highlightRequiredErrors, validateNumberFields } from './FieldRenderer';
 import { generateNote } from '../generator/NoteGenerator';
 import { NOTICE_DURATION } from '../ui/ErrorNotice';
+import { applyMobileModalBehavior } from '../ui/MobileModal';
 import type FormBuilderPlugin from '../main';
 
 /** Obsidian の内部 setting パネルを開く。公開 API がないため型安全なラッパーを使用。 */
@@ -40,6 +41,7 @@ export class FormModal extends Modal {
         this.renderWarnings(root);
         this.renderFields(root);
         this.renderSubmitButton(root, L.btnCreateNote);
+        applyMobileModalBehavior(this);
     }
 
     onClose(): void {
@@ -56,8 +58,14 @@ export class FormModal extends Modal {
 
     private renderFields(root: HTMLElement): void {
         const L = getLocale(this.locale);
+        const ctx = {
+            app: this.app,
+            multilistHint: L.multilistHint,
+            folderPickerBtnLabel: L.folderPickerBtnLabel,
+            folderPickerPlaceholder: L.folderPickerPlaceholder,
+        };
         for (const field of this.parseResult.fields) {
-            renderField(root, field, this.values, L.multilistHint);
+            renderField(root, field, this.values, ctx);
         }
     }
 
@@ -136,6 +144,8 @@ export class NoTemplateModal extends Modal {
 
         btnRow.createEl('button', { cls: 'fb-btn', text: L.btnClose })
             .addEventListener('click', () => this.close());
+
+        applyMobileModalBehavior(this);
     }
 
     onClose(): void {

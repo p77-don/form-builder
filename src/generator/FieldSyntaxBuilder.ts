@@ -17,6 +17,7 @@ export interface FieldGeneratorState {
     min: string;         // number
     max: string;         // number
     listRaw: string;     // select / multiselect：1行1項目のテキスト
+    folder: boolean;     // text 専用（Vault フォルダ選択ボタンの表示有無）
 }
 
 export function createEmptyState(): FieldGeneratorState {
@@ -32,6 +33,7 @@ export function createEmptyState(): FieldGeneratorState {
         min: '',
         max: '',
         listRaw: '',
+        folder: false,
     };
 }
 
@@ -99,6 +101,8 @@ function buildOptions(type: FieldType, state: FieldGeneratorState): OptionEntry[
         if (state.min.trim()) opts.push({ key: 'min', value: state.min.trim() });
         if (state.max.trim()) opts.push({ key: 'max', value: state.max.trim() });
     }
+
+    if (type === 'text' && state.folder) opts.push({ key: 'folder', value: null });
 
     if (state.required) opts.push({ key: 'required', value: null });
 
