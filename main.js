@@ -61,7 +61,7 @@ var en = {
   btnHelp: "? Help",
   btnSettings: "Open Settings",
   // テンプレート選択
-  selectorTitle: "Select Template",
+  selectorTitle: "Select template",
   sortAsc: "\u25B2 A \u2192 Z",
   sortDesc: "\u25BC Z \u2192 A",
   pickerSearchPlaceholder: "Search templates...",
@@ -205,7 +205,7 @@ $aliases:separator[, ]$`,
     ["$key:list[1. ]$", 'Example: numbered list (auto-numbered only when [] starts with "1.")']
   ],
   // ---------- 構文ジェネレーター（Field Generator） ----------
-  genModalTitle: "Syntax Generator",
+  genModalTitle: "Syntax generator",
   genTypeLabel: "Generator Type",
   genTypeField: "Field",
   genTypeMetaFolder: "Meta: Folder",
@@ -3149,14 +3149,14 @@ var FormBuilderPlugin = class extends import_obsidian11.Plugin {
       this.addSettingTab(new FormBuilderSettingTab(this.app, this));
       this.addCommand({
         id: "create-note-from-template",
-        name: "Create Note From Template",
+        name: "Create note from template",
         callback: () => {
           void this.openTemplatePicker();
         }
       });
       this.addCommand({
         id: "insert-field",
-        name: "Syntax Generator",
+        name: "Syntax generator",
         callback: () => {
           new FieldGeneratorModal(this.app, this.settings.locale).open();
         }
