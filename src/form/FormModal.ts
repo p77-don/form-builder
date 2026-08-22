@@ -16,6 +16,15 @@ interface AppWithSetting {
 function openObsidianSettings(app: App): void {
     (app as unknown as AppWithSetting).setting.open();
 }
+
+// FormModal のインスタンスごとに一意な ID を発行する（multiselect のチェックボックス ID
+// 衝突防止に使う。CodeReview #9）。プラグイン全体で1つのカウンターを共有すればよい。
+let fbModalInstanceCounter = 0;
+function generateInstanceId(): string {
+    fbModalInstanceCounter++;
+    return `fbm-${Date.now().toString(36)}-${fbModalInstanceCounter}`;
+}
+
 // ============================================================
 // フォームモーダル（Help ボタンなし）
 // ============================================================
@@ -24,6 +33,12 @@ export class FormModal extends Modal {
     private parseResult: ParseResult;
     private values: ValueStore = new Map();
     private locale: SupportedLocale;
+    private instanceId = generateInstanceId();
+
+    private submitBtnEl?: HTMLButtonElement;
+    // Create Note の連打・多重クリックで generateNote() が並行実行されるのを防ぐフラグ
+    // （CodeReview #2）。送信中は送信ボタンを disabled にし、完了後に解除する。
+    private isSubmitting = false;
 
     constructor(app: App, parseResult: ParseResult, locale: SupportedLocale) {
         super(app);
@@ -36,6 +51,7 @@ export class FormModal extends Modal {
         const { contentEl } = this;
         contentEl.empty();
         const L = getLocale(this.locale);
+        this.setTitle(L.formTitle);
 
         const root = contentEl.createDiv({ cls: 'fb-modal' });
         this.renderWarnings(root);
@@ -63,6 +79,7 @@ export class FormModal extends Modal {
             multilistHint: L.multilistHint,
             folderPickerBtnLabel: L.folderPickerBtnLabel,
             folderPickerPlaceholder: L.folderPickerPlaceholder,
+            instanceId: this.instanceId,
         };
         for (const field of this.parseResult.fields) {
             renderField(root, field, this.values, ctx);
@@ -72,10 +89,15 @@ export class FormModal extends Modal {
     private renderSubmitButton(root: HTMLElement, label: string): void {
         const wrap = root.createDiv({ cls: 'fb-submit-wrap' });
         const btn = wrap.createEl('button', { cls: 'fb-submit-btn', text: label });
+        this.submitBtnEl = btn;
         btn.addEventListener('click', () => { void this.onSubmit(); });
     }
 
     private async onSubmit(): Promise<void> {
+        // ボタンは送信中に disabled にしているが、イベントが既にキューされているケースへの
+        // 最終防御として、フラグでも二重実行を防ぐ（CodeReview #2）。
+        if (this.isSubmitting) return;
+
         const L = getLocale(this.locale);
         const root = this.contentEl.querySelector('.fb-modal') as HTMLElement;
         const missing = highlightRequiredErrors(root, this.parseResult.fields, this.values);
@@ -85,6 +107,9 @@ export class FormModal extends Modal {
         if (numberErrors.length > 0) new Notice(L.noticeInvalidNumber);
         if (missing.length > 0 || numberErrors.length > 0) return;
 
+        this.isSubmitting = true;
+        if (this.submitBtnEl) this.submitBtnEl.disabled = true;
+
         try {
             await generateNote(
                 this.app,
@@ -92,14 +117,16 @@ export class FormModal extends Modal {
                 this.values,
                 this.parseResult.fields,
                 this.parseResult.meta,
-                L.noticeSanitized,
-                L.noticeDuplicateFilename
+                L
             );
             this.close();
         } catch (e) {
             console.error('Form Builder: Failed to create note', e);
             const message = e instanceof Error ? e.message : String(e);
             new Notice(`${L.noticeCreateError}\n${message}`, NOTICE_DURATION);
+        } finally {
+            this.isSubmitting = false;
+            if (this.submitBtnEl) this.submitBtnEl.disabled = false;
         }
     }
 }

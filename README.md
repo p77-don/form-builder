@@ -294,7 +294,7 @@ Values must be wrapped in &#91; &#93;.
 
 ```
 label=[Title]
-placeholder=[Enter your name]
+placeholder=[Jane Doe]
 min=[0]
 max=[200]
 ```
@@ -453,7 +453,7 @@ The Vault root itself is never offered as a choice (leaving the value empty alre
 
 ```
 {{textarea|description}}
-{{textarea|description|label=[Description]|rows=[8]|placeholder=[Write the details...]}}
+{{textarea|description|label=[Description]|rows=[8]|placeholder=[Development of Form Builder began in 2026.]}}
 ```
 
 Displays a multi-line text field in the form.
@@ -1392,7 +1392,7 @@ a-z  A-Z  0-9  _  -
 
 ```
 label=[タイトル]
-placeholder=[名前を入力してください]
+placeholder=[山田 太郎]
 min=[0]
 max=[200]
 ```
@@ -1549,7 +1549,7 @@ Vault ルート自体は選択肢に表示されません（値を空のまま�
 
 ```
 {{textarea|description}}
-{{textarea|description|label=[説明]|rows=[8]|placeholder=[詳細を記述...]}}
+{{textarea|description|label=[説明]|rows=[8]|placeholder=[Form Builder は2026年に開発を開始しました]}}
 ```
 
 フォーム上に複数行のテキスト入力欄を表示します。

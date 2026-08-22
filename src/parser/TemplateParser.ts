@@ -2,6 +2,8 @@ import type {
     FormField, MetaConfig, ParseError, ParseWarning, ParseResult,
     MultiselectField, ListField
 } from '../model/FieldModel';
+import type { Locale } from '../locales';
+import { formatMessage } from '../locales';
 import {
     validateFieldType, validateKey, validateOptionName,
     validateField, validateMetaKey
@@ -15,6 +17,9 @@ export const FORMBUILDER_BLOCK_RE = /^```formbuilder\s*\r?\n([\s\S]*?)\r?\n```/m
 const FIELD_SYNTAX_RE = /^\{\{([\s\S]*?)\}\}$/;
 const KV_OPTION_RE = /^([a-zA-Z_-]+)=\[([^\]]*)\]$/;
 
+// 値を持たないフラグ専用オプション（CodeReview #5）
+const FLAG_ONLY_OPTIONS = new Set(['required', 'folder']);
+
 function trimSpaces(s: string): string {
     return s.replace(/^[\s\u3000]+|[\s\u3000]+$/g, '');
 }
@@ -23,14 +28,60 @@ function parseList(raw: string): string[] {
     return raw.split(';').map(item => trimSpaces(item)).filter(item => item !== '');
 }
 
+// rows は 1 以上の整数のみを許可する（例: "5"）
+const ROWS_OPTION_RE = /^[1-9]\d*$/;
+// min / max は符号付き整数・小数のみを許可する（例: "0", "-1", "3.5"）。
+// "Infinity" や "1foo" のような文字列全体が数値表記と一致しない値は無効とする。
+const NUMERIC_OPTION_RE = /^-?\d+(\.\d+)?$/;
+
 /**
- * rows オプション値をパースして正の整数に変換する。
- * 非数値・NaN・1未満の値はすべて undefined として扱い、レンダラー側のデフォルト値に委ねる。
+ * rows オプション値を厳格にパースする。
+ * "2abc" のような部分的に数値として解釈できてしまう文字列は、
+ * これまで警告なしで別の値（"2"）として扱われていた（CodeReview #4）。
+ * 文字列全体が仕様（正の整数）に一致しない場合は警告を出し、undefined として扱う
+ * （undefined の場合はレンダラー側の既定値に委ねる）。
  */
-function parseRows(rawStr: string | null | undefined): number | undefined {
-    if (!rawStr) return undefined;
-    const n = parseInt(rawStr, 10);
-    return (!isNaN(n) && n >= 1) ? n : undefined;
+function parseRows(
+    rawStr: string | null | undefined,
+    key: string,
+    lineNum: number,
+    warnings: ParseWarning[],
+    L: Locale
+): number | undefined {
+    if (rawStr == null || rawStr === '') return undefined;
+    if (!ROWS_OPTION_RE.test(rawStr)) {
+        warnings.push({
+            message: formatMessage(L.msgInvalidRows, { value: rawStr, key }),
+            line: lineNum,
+        });
+        return undefined;
+    }
+    return parseInt(rawStr, 10);
+}
+
+/**
+ * min / max オプション値を厳格にパースする。
+ * parseFloat("1foo") が 1 を返してしまうような緩い変換は行わず、
+ * 文字列全体が数値表記と一致することを確認してから変換する（CodeReview #4）。
+ * 不正な場合は警告を出し undefined を返す（min/max 未指定として扱われる）。
+ */
+function parseNumericOption(
+    rawStr: string | null | undefined,
+    optionName: 'min' | 'max',
+    key: string,
+    lineNum: number,
+    warnings: ParseWarning[],
+    L: Locale
+): number | undefined {
+    if (rawStr == null || rawStr === '') return undefined;
+    if (!NUMERIC_OPTION_RE.test(rawStr)) {
+        warnings.push({
+            message: formatMessage(L.msgInvalidNumericOption, { option: optionName, value: rawStr, key }),
+            line: lineNum,
+        });
+        return undefined;
+    }
+    return Number(rawStr);
 }
 
 function splitTokens(inner: string): string[] {
@@ -70,12 +121,13 @@ function parseMetaLine(
     metaKeyLines: Map<string, number>,
     errors: ParseError[],
     warnings: ParseWarning[],
-    lineNum: number
+    lineNum: number,
+    L: Locale
 ): void {
     for (let i = 1; i < tokens.length; i++) {
         const opt = parseOptionToken(tokens[i]);
         if (!opt) continue;
-        const metaWarning = validateMetaKey(opt.key, lineNum);
+        const metaWarning = validateMetaKey(opt.key, L, lineNum);
         if (metaWarning) { warnings.push(metaWarning); continue; }
         if (opt.value === null) continue;
 
@@ -85,7 +137,7 @@ function parseMetaLine(
         const firstLine = metaKeyLines.get(opt.key);
         if (firstLine !== undefined) {
             errors.push({
-                message: `"meta|${opt.key}" is defined more than once (first defined on line ${firstLine}). Only one "meta|${opt.key}" is allowed per template.`,
+                message: formatMessage(L.msgDuplicateMetaKey, { metaKey: opt.key, firstLine }),
                 line: lineNum,
             });
             continue;
@@ -101,20 +153,21 @@ function parseFieldLine(
     tokens: string[],
     errors: ParseError[],
     warnings: ParseWarning[],
-    lineNum: number
+    lineNum: number,
+    L: Locale
 ): FormField | null {
     if (tokens.length < 2) {
-        errors.push({ message: 'Field syntax requires at least type and key', line: lineNum });
+        errors.push({ message: L.msgFieldSyntaxTooShort, line: lineNum });
         return null;
     }
 
     const type = tokens[0];
     const key  = tokens[1];
 
-    const typeError = validateFieldType(type, lineNum);
+    const typeError = validateFieldType(type, L, lineNum);
     if (typeError) { errors.push(typeError); return null; }
 
-    const keyError = validateKey(key, lineNum);
+    const keyError = validateKey(key, L, lineNum);
     if (keyError) { errors.push(keyError); return null; }
 
     const optMap: Map<string, string | null> = new Map();
@@ -122,14 +175,37 @@ function parseFieldLine(
     for (let i = 2; i < tokens.length; i++) {
         const opt = parseOptionToken(tokens[i]);
         if (!opt) {
-            warnings.push({ message: `Cannot parse option token: "${tokens[i]}"`, line: lineNum });
+            warnings.push({
+                message: formatMessage(L.msgCannotParseOptionToken, { token: tokens[i] }),
+                line: lineNum,
+            });
             continue;
         }
-        const optWarning = validateOptionName(opt.key, type, lineNum);
+        const optWarning = validateOptionName(opt.key, type, L, lineNum);
         if (optWarning) { warnings.push(optWarning); continue; }
-        if (!optMap.has(opt.key)) {
-            optMap.set(opt.key, opt.value);
+
+        // required / folder は値を持たないフラグ専用オプション。
+        // "required=[false]" のように値付きで指定されると、これまでは値の中身を見ずに
+        // 「トークンが存在するのでフラグ ON」と解釈していた（CodeReview #5）。
+        // ここでは値を無視した上で警告し、フラグとしては有効なまま扱う。
+        if (FLAG_ONLY_OPTIONS.has(opt.key) && opt.value !== null) {
+            warnings.push({
+                message: formatMessage(L.msgFlagOptionHasValue, { option: opt.key, value: opt.value, key }),
+                line: lineNum,
+            });
+            opt.value = null;
         }
+
+        // 同一オプションの重複指定。従来は黙って先頭のみを採用していたが、
+        // テンプレート作者が気づけるよう警告を表示する（先勝ちの挙動自体は維持する）（CodeReview #5）。
+        if (optMap.has(opt.key)) {
+            warnings.push({
+                message: formatMessage(L.msgDuplicateOption, { option: opt.key, key }),
+                line: lineNum,
+            });
+            continue;
+        }
+        optMap.set(opt.key, opt.value);
     }
 
     const base = {
@@ -141,25 +217,29 @@ function parseFieldLine(
         required:    optMap.has('required'),
     };
 
+    // checkbox は真偽値を送信するだけなので required に効果がない
+    // （highlightRequiredErrors も checkbox を対象外にしている）。
+    // これまで警告なしに無視されていたため、テンプレート作者が気づけるよう警告する（CodeReview #5）。
+    if (type === 'checkbox' && base.required) {
+        warnings.push({
+            message: formatMessage(L.msgRequiredNoEffectOnCheckbox, { key }),
+            line: lineNum,
+        });
+    }
+
     switch (type) {
         case 'text':
             return { type: 'text', ...base, folder: optMap.has('folder') };
 
         case 'textarea': {
-            const rows = parseRows(optMap.get('rows'));
+            const rows = parseRows(optMap.get('rows'), key, lineNum, warnings, L);
             return { type: 'textarea', ...base, ...(rows !== undefined && { rows }) };
         }
 
         case 'number': {
-            const minStr = optMap.get('min');
-            const maxStr = optMap.get('max');
-            const min = minStr != null ? parseFloat(minStr) : undefined;
-            const max = maxStr != null ? parseFloat(maxStr) : undefined;
-            return {
-                type: 'number', ...base,
-                min: min !== undefined && !isNaN(min) ? min : undefined,
-                max: max !== undefined && !isNaN(max) ? max : undefined,
-            };
+            const min = parseNumericOption(optMap.get('min'), 'min', key, lineNum, warnings, L);
+            const max = parseNumericOption(optMap.get('max'), 'max', key, lineNum, warnings, L);
+            return { type: 'number', ...base, min, max };
         }
 
         case 'date':
@@ -171,7 +251,10 @@ function parseFieldLine(
         case 'select': {
             const listRaw = optMap.get('list');
             if (listRaw == null) {
-                errors.push({ message: `"select" requires the "list" option in field "${key}"`, line: lineNum });
+                errors.push({
+                    message: formatMessage(L.msgFieldRequiresList, { type: 'select', key }),
+                    line: lineNum,
+                });
                 return null;
             }
             return { type: 'select', ...base, list: parseList(listRaw) };
@@ -180,25 +263,28 @@ function parseFieldLine(
         case 'multiselect': {
             const listRaw = optMap.get('list');
             if (listRaw == null) {
-                errors.push({ message: `"multiselect" requires the "list" option in field "${key}"`, line: lineNum });
+                errors.push({
+                    message: formatMessage(L.msgFieldRequiresList, { type: 'multiselect', key }),
+                    line: lineNum,
+                });
                 return null;
             }
             const list = parseList(listRaw);
-            const rows = parseRows(optMap.get('rows'));
+            const rows = parseRows(optMap.get('rows'), key, lineNum, warnings, L);
             const msField: MultiselectField = { type: 'multiselect', ...base, list };
             if (rows !== undefined) (msField as unknown as { rows?: number }).rows = rows;
             return msField;
         }
 
         case 'multilist': {
-            const rows = parseRows(optMap.get('rows'));
+            const rows = parseRows(optMap.get('rows'), key, lineNum, warnings, L);
             const lf: ListField = { type: 'multilist', ...base };
             if (rows !== undefined) lf.rows = rows;
             return lf;
         }
 
         default:
-            errors.push({ message: `Unknown field type: "${type}"`, line: lineNum });
+            errors.push({ message: formatMessage(L.msgUnknownFieldType, { type }), line: lineNum });
             return null;
     }
 }
@@ -227,7 +313,7 @@ function lineNumberAt(templateContent: string, index: number): number {
     return (templateContent.slice(0, index).match(/\n/g) ?? []).length + 1;
 }
 
-export function parseTemplate(templateContent: string): ParseResult {
+export function parseTemplate(templateContent: string, L: Locale): ParseResult {
     const errors:   ParseError[]   = [];
     const warnings: ParseWarning[] = [];
     const meta:     MetaConfig     = {};
@@ -255,7 +341,7 @@ export function parseTemplate(templateContent: string): ParseResult {
             const openCount  = (line.match(/\{\{/g) ?? []).length;
             const closeCount = (line.match(/\}\}/g) ?? []).length;
             if (openCount !== closeCount) {
-                errors.push({ message: `Unclosed "{{" found on line ${lineNum}`, line: lineNum });
+                errors.push({ message: formatMessage(L.msgUnclosedBrace, { line: lineNum }), line: lineNum });
                 continue;
             }
 
@@ -266,11 +352,11 @@ export function parseTemplate(templateContent: string): ParseResult {
             if (tokens.length === 0 || tokens[0] === '') continue;
 
             if (tokens[0] === 'meta') {
-                parseMetaLine(tokens, meta, metaKeyLines, errors, warnings, lineNum);
+                parseMetaLine(tokens, meta, metaKeyLines, errors, warnings, lineNum, L);
             } else {
-                const field = parseFieldLine(tokens, errors, warnings, lineNum);
+                const field = parseFieldLine(tokens, errors, warnings, lineNum, L);
                 if (field) {
-                    const vr = validateField(field, lineNum);
+                    const vr = validateField(field, L, lineNum);
                     errors.push(...vr.errors);
                     warnings.push(...vr.warnings);
                     if (vr.errors.length === 0) {
@@ -280,7 +366,7 @@ export function parseTemplate(templateContent: string): ParseResult {
                         const firstLine = fieldKeyLines.get(field.key);
                         if (firstLine !== undefined) {
                             errors.push({
-                                message: `Key "${field.key}" is defined more than once (first defined on line ${firstLine}). Each field key must be unique within a template.`,
+                                message: formatMessage(L.msgDuplicateFieldKey, { key: field.key, firstLine }),
                                 line: lineNum,
                             });
                         } else {

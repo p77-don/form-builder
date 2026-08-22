@@ -1,4 +1,6 @@
 import type { FormField, ValueStore } from '../model/FieldModel';
+import type { Locale } from '../locales';
+import { formatMessage } from '../locales';
 
 // ---------------------------------------------------------------------------
 // 日時フォーマット
@@ -120,7 +122,8 @@ export interface ModifierWarning {
 export function resolveUserVariables(
     template: string,
     values: ValueStore,
-    fields: FormField[]
+    fields: FormField[],
+    L: Locale
 ): { result: string; warnings: ModifierWarning[] } {
     const fieldMap = new Map<string, FormField>(fields.map(f => [f.key, f]));
     const warnings: ModifierWarning[] = [];
@@ -148,7 +151,7 @@ export function resolveUserVariables(
             warnings.push({
                 key,
                 modifier: modName,
-                message: `Modifier ":${modName}" is only valid for "multilist" or "multiselect" fields. Ignored for field "${key}".`
+                message: formatMessage(L.msgModifierOnlyForArrayFields, { modifier: modName, key }),
             });
             return formatScalarValue(value, field);
         }
@@ -168,7 +171,7 @@ export function resolveUserVariables(
         warnings.push({
             key,
             modifier: unknownMod,
-            message: `Unknown modifier ":${unknownMod}" on field "${key}". Known modifiers: "separator", "list". Ignored.`
+            message: formatMessage(L.msgUnknownModifier, { modifier: unknownMod, key }),
         });
         // デフォルト展開にフォールバック
         return arr.join(',');

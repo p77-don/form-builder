@@ -1,5 +1,5 @@
 import { Notice, Plugin, TFile } from 'obsidian';
-import { FormBuilderSettingTab, DEFAULT_SETTINGS } from './settings';
+import { FormBuilderSettingTab, DEFAULT_SETTINGS, sanitizeSettings } from './settings';
 import type { FormBuilderSettings } from './settings';
 import { FormModal, NoTemplateModal } from './form/FormModal';
 import { TemplatePickerModal } from './form/TemplatePickerModal';
@@ -15,36 +15,47 @@ export default class FormBuilderPlugin extends Plugin {
     templateStore!: TemplateStore;
 
     onload(): void {
-        void this.loadSettings().then(() => {
-            this.templateStore = new TemplateStore(this);
+        void this.loadSettings()
+            .then(() => {
+                this.templateStore = new TemplateStore(this);
 
-            this.addSettingTab(new FormBuilderSettingTab(this.app, this));
+                this.addSettingTab(new FormBuilderSettingTab(this.app, this));
 
-            this.addCommand({
-                id: 'create-note-from-template',
-                name: 'Create Note From Template',
-                callback: () => { void this.openTemplatePicker(); },
+                this.addCommand({
+                    id: 'create-note-from-template',
+                    name: 'Create Note From Template',
+                    callback: () => { void this.openTemplatePicker(); },
+                });
+
+                this.addCommand({
+                    id: 'insert-field',
+                    name: 'Syntax Generator',
+                    callback: () => {
+                        new FieldGeneratorModal(this.app, this.settings.locale).open();
+                    },
+                });
+
+                // ファイルのリネーム・移動を検知し、お気に入り・履歴のパスを追従させる。
+                // （Obsidian を閉じている間・PCのエクスプローラーでの変更は追従できないため、
+                //   その分は TemplatePickerModal 側の「見つかりません」表示で安全網を張っている）
+                this.registerEvent(
+                    this.app.vault.on('rename', (file, oldPath) => {
+                        if (file instanceof TFile && file.extension === 'md') {
+                            void this.templateStore.handleRename(oldPath, file.path);
+                        }
+                    })
+                );
+            })
+            .catch((e) => {
+                // loadSettings() 自体はどんな入力データでも例外を投げない設計にしたが
+                // （sanitizeSettings 参照）、TemplateStore の初期化や addCommand など
+                // その後の初期化処理が失敗した場合の最終防御として catch を用意する
+                // （CodeReview #8）。これがないと初期化失敗が未処理の Promise rejection になり、
+                // 原因が分かりにくいまま機能が使えない状態になっていた。
+                console.error('Form Builder: Failed to initialize the plugin', e);
+                const locale = this.settings?.locale ?? DEFAULT_SETTINGS.locale;
+                new Notice(getLocale(locale).noticeInitError);
             });
-
-            this.addCommand({
-                id: 'insert-field',
-                name: 'Syntax Generator',
-                callback: () => {
-                    new FieldGeneratorModal(this.app, this.settings.locale).open();
-                },
-            });
-
-            // ファイルのリネーム・移動を検知し、お気に入り・履歴のパスを追従させる。
-            // （Obsidian を閉じている間・PCのエクスプローラーでの変更は追従できないため、
-            //   その分は TemplatePickerModal 側の「見つかりません」表示で安全網を張っている）
-            this.registerEvent(
-                this.app.vault.on('rename', (file, oldPath) => {
-                    if (file instanceof TFile && file.extension === 'md') {
-                        void this.templateStore.handleRename(oldPath, file.path);
-                    }
-                })
-            );
-        });
     }
 
     onunload(): void {}
@@ -88,7 +99,7 @@ export default class FormBuilderPlugin extends Plugin {
             return;
         }
 
-        const parseResult = parseTemplate(content);
+        const parseResult = parseTemplate(content, L);
 
         if (parseResult.errors.length > 0) {
             showFatalError(parseResult.errors, L.noticeFatalHeader);
@@ -99,7 +110,16 @@ export default class FormBuilderPlugin extends Plugin {
     }
 
     async loadSettings(): Promise<void> {
-        this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData()) as FormBuilderSettings;
+        let raw: unknown;
+        try {
+            raw = await this.loadData();
+        } catch (e) {
+            // loadData() 自体が失敗するケース（ストレージ層の異常など）も含め、
+            // 常に有効な FormBuilderSettings を用意する（CodeReview #8）。
+            console.error('Form Builder: Failed to read settings data; falling back to defaults.', e);
+            raw = undefined;
+        }
+        this.settings = sanitizeSettings(raw);
     }
 
     async saveSettings(): Promise<void> {

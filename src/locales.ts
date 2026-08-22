@@ -33,7 +33,10 @@ export interface Locale {
     noticeRequired:      string;  // 必須未入力
     noticeCreateError:   string;  // ノート作成失敗
     noticeSanitized:     string;  // ファイル名文字置換
+    noticeFolderSanitized: string;  // フォルダパス文字置換
     noticeInvalidNumber: string;  // number フィールドの型/範囲エラー
+    noticeInitError: string;  // プラグイン初期化失敗
+    noticeStoreError: string;  // お気に入り・履歴等の保存失敗
     noticeDuplicateFilename: string;  // 同名ファイル存在時の自動リネーム通知（{name} をファイル名に置換）
     noticeFatalHeader:   string;  // 致命的エラーのヘッダー
 
@@ -60,6 +63,9 @@ export interface Locale {
     pickerClearRecent:        string;
     pickerClearRecentConfirm: string;
     pickerMissingLabel:      string;
+    pickerAriaClearSearch:    string;  // 検索ボックスの「×」ボタン
+    pickerAriaToggleFavorite: string;  // ★/☆ お気に入りトグル
+    pickerAriaRemove:         string;  // 見つからない項目の「✕」削除ボタン
 
     // ----------------------------------------
     // テンプレート未検出モーダル
@@ -154,6 +160,7 @@ export interface Locale {
 
     genPreviewTitle:  string;
     genVariableTitle: string;
+    genForbiddenBracketWarning: string;
 
     genVarHintDefaultScalar: string;
     genVarHintDefaultArray:  string;
@@ -184,6 +191,45 @@ export interface Locale {
     genNoActiveEditor:      string;
     genInsertOutsideBlock:  string;
     genInsertedNotice:      string;
+
+    // ----------------------------------------------------------------
+    // パーサー / バリデーターのメッセージ（テンプレート解析時のエラー・警告）
+    // 以前はここのメッセージ本文がすべて英語固定だったため、
+    // 設定言語が日本語でも英語のまま表示されていた。ここから下のキーは
+    // すべて formatMessage() で {placeholder} 部分を埋めてから表示する。
+    // ----------------------------------------------------------------
+    msgUnknownFieldType:        string;  // {type}
+    msgInvalidKey:              string;  // {key}
+    msgFieldSyntaxTooShort:     string;
+    msgCannotParseOptionToken:  string;  // {token}
+    msgUnknownOption:           string;  // {option} {fieldType} {hint}
+    msgUnknownOptionHint:       string;  // {suggestion}（msgUnknownOption の {hint} に差し込む）
+    msgFieldRequiresList:       string;  // {type} {key}
+    msgMinExceedsMax:           string;  // {min} {max} {key}
+    msgDefaultNotInList:        string;  // {value} {key}
+    msgUnknownMetaKey:          string;  // {key}
+    msgInvalidRows:             string;  // {value} {key}
+    msgInvalidNumericOption:    string;  // {option} {value} {key}
+    msgDuplicateMetaKey:        string;  // {metaKey} {firstLine}
+    msgFlagOptionHasValue:      string;  // {option} {value} {key}
+    msgDuplicateOption:         string;  // {option} {key}
+    msgRequiredNoEffectOnCheckbox: string;  // {key}
+    msgUnclosedBrace:           string;  // {line}
+    msgDuplicateFieldKey:       string;  // {key} {firstLine}
+    msgModifierOnlyForArrayFields: string;  // {modifier} {key}
+    msgUnknownModifier:         string;  // {modifier} {key}
+}
+
+/**
+ * ロケール文字列中の `{placeholder}` を params の値で置き換える。
+ * パーサー・バリデーターのメッセージのように、フィールドキーや入力値などの
+ * 動的な値を含むメッセージを言語ごとにテンプレート化するために使う。
+ * 該当する key が params になければプレースホルダーはそのまま残す。
+ */
+export function formatMessage(template: string, params: Record<string, string | number>): string {
+    return template.replace(/\{(\w+)\}/g, (match, key: string) => {
+        return Object.prototype.hasOwnProperty.call(params, key) ? String(params[key]) : match;
+    });
 }
 
 // ============================================================
@@ -203,7 +249,10 @@ const en: Locale = {
     noticeRequired:    'Form Builder: Please fill in all required fields.',
     noticeCreateError: 'Form Builder: Failed to create note.',
     noticeSanitized:   'Form Builder: Some invalid characters in the file name were replaced with "_".',
+    noticeFolderSanitized: 'Form Builder: Some invalid parts of the output folder path (e.g. "..", forbidden characters) were replaced with "_".',
     noticeInvalidNumber: 'Form Builder: One or more number fields are invalid. Please check the values and the min/max range.',
+    noticeInitError: 'Form Builder: Failed to initialize the plugin. Please check the developer console for details.',
+    noticeStoreError: 'Form Builder: Failed to save your change. Please try again.',
     noticeDuplicateFilename: 'Form Builder: A note with this name already existed, so it was saved as "{name}" instead.',
     noticeFatalHeader: 'Form Builder Error:',
 
@@ -226,6 +275,9 @@ const en: Locale = {
     pickerClearRecent:        'Clear History',
     pickerClearRecentConfirm: 'Tap again to confirm',
     pickerMissingLabel:      '(missing — tap ✕ to remove)',
+    pickerAriaClearSearch:    'Clear search',
+    pickerAriaToggleFavorite: 'Toggle favorite',
+    pickerAriaRemove:         'Remove',
 
     // テンプレート未検出
     welcomeTitle:      'Welcome to Form Builder',
@@ -423,6 +475,8 @@ $aliases:separator[, ]$`,
 
     genPreviewTitle:  'Preview',
     genVariableTitle: 'Generated Variable',
+    genForbiddenBracketWarning:
+        'Values cannot contain "]" — the generated syntax could not be read back correctly by the template parser. Please remove it.',
 
     genVarHintDefaultScalar: 'Replaced with the value as entered.',
     genVarHintDefaultArray:  'Joins all values with "," (no space).',
@@ -457,6 +511,37 @@ $aliases:separator[, ]$`,
     genNoActiveEditor:     'Form Builder: No active editor found.',
     genInsertOutsideBlock: 'Place the cursor inside a formbuilder code block.',
     genInsertedNotice:     'Form Builder: Field inserted.',
+
+    // パーサー / バリデーターのメッセージ
+    msgUnknownFieldType:       'Unknown field type: "{type}"',
+    msgInvalidKey:             'Invalid key: "{key}". Keys must match [a-zA-Z0-9_-]',
+    msgFieldSyntaxTooShort:    'Field syntax requires at least type and key',
+    msgCannotParseOptionToken: 'Cannot parse option token: "{token}"',
+    msgUnknownOption:          'Unknown option "{option}" in field type "{fieldType}".{hint}',
+    msgUnknownOptionHint:      ' Did you mean "{suggestion}"?',
+    msgFieldRequiresList:      '"{type}" requires the "list" option in field "{key}"',
+    msgMinExceedsMax:          '"min" ({min}) must not exceed "max" ({max}) in field "{key}"',
+    msgDefaultNotInList:       'Default value "{value}" is not in the list of field "{key}"',
+    msgUnknownMetaKey:         'Unknown meta key: "{key}"',
+    msgInvalidRows:
+        'Invalid "rows" value "{value}" in field "{key}"; expected a positive integer (e.g. "5"). Ignoring.',
+    msgInvalidNumericOption:
+        'Invalid "{option}" value "{value}" in field "{key}"; expected a number (e.g. "0", "3.5", "-1"). Ignoring.',
+    msgDuplicateMetaKey:
+        '"meta|{metaKey}" is defined more than once (first defined on line {firstLine}). Only one "meta|{metaKey}" is allowed per template.',
+    msgFlagOptionHasValue:
+        'Option "{option}" does not take a value; "{option}=[{value}]" in field "{key}" is treated as just "{option}" (the assigned value is ignored)',
+    msgDuplicateOption:
+        'Option "{option}" is specified more than once in field "{key}"; only the first occurrence is used',
+    msgRequiredNoEffectOnCheckbox:
+        '"required" has no effect on "checkbox" fields (a checkbox field always submits true/false) in field "{key}"',
+    msgUnclosedBrace:     'Unclosed "{{" found on line {line}',
+    msgDuplicateFieldKey:
+        'Key "{key}" is defined more than once (first defined on line {firstLine}). Each field key must be unique within a template.',
+    msgModifierOnlyForArrayFields:
+        'Form Builder: Modifier ":{modifier}" is only valid for "multilist" or "multiselect" fields. Ignored for field "{key}".',
+    msgUnknownModifier:
+        'Form Builder: Unknown modifier ":{modifier}" on field "{key}". Known modifiers: "separator", "list". Ignored.',
 };
 
 // ============================================================
@@ -476,7 +561,10 @@ const ja: Locale = {
     noticeRequired:    'Form Builder: 必須フィールドをすべて入力してください。',
     noticeCreateError: 'Form Builder: ノートの作成に失敗しました。',
     noticeSanitized:   'Form Builder: ファイル名に使用できない文字が含まれていたため "_" に置き換えました。',
+    noticeFolderSanitized: 'Form Builder: 出力フォルダのパスに使用できない部分（".." や禁止文字など）が含まれていたため "_" に置き換えました。',
     noticeInvalidNumber: 'Form Builder: 数値の入力に誤りがあります。入力内容と最小値・最大値の範囲を確認してください。',
+    noticeInitError: 'Form Builder: プラグインの初期化に失敗しました。開発者コンソールをご確認ください。',
+    noticeStoreError: 'Form Builder: 変更の保存に失敗しました。もう一度お試しください。',
     noticeDuplicateFilename: 'Form Builder: 同名のノートが既に存在したため、"{name}" として保存しました。',
     noticeFatalHeader: 'Form Builder エラー:',
 
@@ -499,6 +587,9 @@ const ja: Locale = {
     pickerClearRecent:        '使用履歴をクリア',
     pickerClearRecentConfirm: 'もう一度タップで削除',
     pickerMissingLabel:      '（見つかりません — ✕ で削除できます）',
+    pickerAriaClearSearch:    '検索文字列をクリア',
+    pickerAriaToggleFavorite: 'お気に入りを切り替え',
+    pickerAriaRemove:         '削除',
 
     // テンプレート未検出
     welcomeTitle:      'Form Builder へようこそ',
@@ -696,6 +787,8 @@ $aliases:separator[、]$`,
 
     genPreviewTitle:  'プレビュー',
     genVariableTitle: '展開用変数',
+    genForbiddenBracketWarning:
+        '値に "]" を含めることはできません（生成した構文がテンプレート側で正しく読み込めなくなります）。取り除いてください。',
 
     genVarHintDefaultScalar: '入力された値がそのまま置き換わります。',
     genVarHintDefaultArray:  'すべての値を "," （区切り文字なし）で連結します。',
@@ -730,6 +823,37 @@ $aliases:separator[、]$`,
     genNoActiveEditor:     'Form Builder: アクティブなエディタが見つかりません。',
     genInsertOutsideBlock: 'formbuilder コードブロックの中にカーソルを置いてください。',
     genInsertedNotice:     'Form Builder: フィールドを挿入しました。',
+
+    // パーサー / バリデーターのメッセージ
+    msgUnknownFieldType:       '不明なフィールドタイプです: "{type}"',
+    msgInvalidKey:             '不正なキーです: "{key}"。キーには半角英数字・アンダースコア・ハイフンのみ使用できます。',
+    msgFieldSyntaxTooShort:    'フィールド構文にはタイプとキーの両方が必要です',
+    msgCannotParseOptionToken: 'オプションを解釈できませんでした: "{token}"',
+    msgUnknownOption:          '不明なオプションです: フィールドタイプ "{fieldType}" に "{option}" というオプションはありません。{hint}',
+    msgUnknownOptionHint:      ' もしかして "{suggestion}" ではありませんか？',
+    msgFieldRequiresList:      '"{type}" には "list" オプションが必須です（フィールド "{key}"）',
+    msgMinExceedsMax:          '"min"（{min}）は "max"（{max}）を超えることはできません（フィールド "{key}"）',
+    msgDefaultNotInList:       '既定値 "{value}" はフィールド "{key}" の list に存在しません',
+    msgUnknownMetaKey:         '不明な meta キーです: "{key}"',
+    msgInvalidRows:
+        '"rows" の値 "{value}" が不正です（フィールド "{key}"）。1以上の整数を指定してください（例: "5"）。この指定は無視されます。',
+    msgInvalidNumericOption:
+        '"{option}" の値 "{value}" が不正です（フィールド "{key}"）。数値を指定してください（例: "0"、"3.5"、"-1"）。この指定は無視されます。',
+    msgDuplicateMetaKey:
+        '"meta|{metaKey}" が複数回定義されています（最初の定義は {firstLine} 行目）。1つのテンプレートにつき "meta|{metaKey}" は1つまでです。',
+    msgFlagOptionHasValue:
+        'オプション "{option}" は値を持ちません。フィールド "{key}" の "{option}=[{value}]" は "{option}" のみが指定されたものとして扱われます（代入された値は無視されます）',
+    msgDuplicateOption:
+        'オプション "{option}" がフィールド "{key}" に複数回指定されています。最初の指定のみが使用されます',
+    msgRequiredNoEffectOnCheckbox:
+        '"required" は "checkbox" フィールドには効果がありません（checkbox は常に true/false を送信します）。フィールド "{key}"',
+    msgUnclosedBrace:     '{line} 行目で "{{" が閉じられていません',
+    msgDuplicateFieldKey:
+        'キー "{key}" が複数回定義されています（最初の定義は {firstLine} 行目）。フィールドキーはテンプレート内で一意である必要があります。',
+    msgModifierOnlyForArrayFields:
+        'Form Builder: モディファイア ":{modifier}" は "multilist" または "multiselect" フィールドでのみ有効です。フィールド "{key}" では無視されます。',
+    msgUnknownModifier:
+        'Form Builder: 不明なモディファイアです: フィールド "{key}" の ":{modifier}"。使用できるモディファイアは "separator" と "list" です。この指定は無視されます。',
 };
 
 // ============================================================

@@ -5,6 +5,7 @@ import { getLocale } from '../locales';
 import {
     createEmptyState, buildFieldSyntax, buildVariableExamples, buildVariableClipboardText,
     buildMetaSyntax, containsVariableToken, wrapInFormbuilderBlock,
+    stateHasForbiddenBracket, metaValueHasForbiddenBracket,
 } from '../generator/FieldSyntaxBuilder';
 import type { FieldGeneratorState, MetaKind, VariableExampleHints } from '../generator/FieldSyntaxBuilder';
 import { NOTICE_DURATION } from '../ui/ErrorNotice';
@@ -429,20 +430,30 @@ export class FieldGeneratorModal extends Modal {
         const L = getLocale(this.locale);
 
         let enabled = false;
+        let forbiddenBracket = false;
 
         if (this.mode === 'field') {
             const key = this.state.key.trim();
             const keyValid = key !== '' && VALID_KEY.test(key);
-            enabled = keyValid;
+            forbiddenBracket = stateHasForbiddenBracket(this.type, this.state);
+            enabled = keyValid && !forbiddenBracket;
             if (this.keyInputEl) this.keyInputEl.toggleClass('fb-error', key !== '' && !keyValid);
         } else {
-            enabled = this.currentSyntax() !== '';
+            const value = this.mode === 'meta-folder' ? this.metaFolderValue : this.metaFilenameValue;
+            forbiddenBracket = metaValueHasForbiddenBracket(value);
+            enabled = this.currentSyntax() !== '' && !forbiddenBracket;
         }
 
-        const syntax = this.renderedSyntax();
+        // "]" を含む値は構文として再読込できなくなるため（CodeReview #6）、
+        // プレビューには出さず、警告を表示してコピー・挿入系のボタンを無効化する。
+        const syntax = forbiddenBracket ? '' : this.renderedSyntax();
 
         this.previewEl.empty();
         this.previewEl.createDiv({ cls: 'fb-label', text: L.genPreviewTitle });
+        if (forbiddenBracket) {
+            const block = this.previewEl.createDiv({ cls: 'fb-warning-block' });
+            block.createDiv({ cls: 'fb-warning', text: `⚠ ${L.genForbiddenBracketWarning}` });
+        }
         this.previewEl.createEl('pre', { cls: 'fb-example-block fb-gen-code' })
             .createEl('code', { text: syntax || '—' });
 

@@ -1,4 +1,6 @@
 import type { FormField, ParseError, ParseWarning } from '../model/FieldModel';
+import type { Locale } from '../locales';
+import { formatMessage } from '../locales';
 
 const KNOWN_FIELD_TYPES = new Set([
     'text', 'textarea', 'number', 'date', 'checkbox', 'select', 'multiselect', 'multilist'
@@ -47,16 +49,16 @@ export interface ValidationResult {
     warnings: ParseWarning[];
 }
 
-export function validateFieldType(type: string, line?: number): ParseError | null {
+export function validateFieldType(type: string, L: Locale, line?: number): ParseError | null {
     if (!KNOWN_FIELD_TYPES.has(type)) {
-        return { message: `Unknown field type: "${type}"`, line };
+        return { message: formatMessage(L.msgUnknownFieldType, { type }), line };
     }
     return null;
 }
 
-export function validateKey(key: string, line?: number): ParseError | null {
+export function validateKey(key: string, L: Locale, line?: number): ParseError | null {
     if (!VALID_KEY.test(key)) {
-        return { message: `Invalid key: "${key}". Keys must match [a-zA-Z0-9_-]`, line };
+        return { message: formatMessage(L.msgInvalidKey, { key }), line };
     }
     return null;
 }
@@ -64,21 +66,22 @@ export function validateKey(key: string, line?: number): ParseError | null {
 export function validateOptionName(
     optionName: string,
     fieldType: string,
+    L: Locale,
     line?: number
 ): ParseWarning | null {
     const known = KNOWN_FIELD_OPTIONS[fieldType] ?? [];
     if (!known.includes(optionName)) {
         const suggestion = suggestOption(optionName, known);
-        const hint = suggestion ? ` Did you mean "${suggestion}"?` : '';
+        const hint = suggestion ? formatMessage(L.msgUnknownOptionHint, { suggestion }) : '';
         return {
-            message: `Unknown option "${optionName}" in field type "${fieldType}".${hint}`,
+            message: formatMessage(L.msgUnknownOption, { option: optionName, fieldType, hint }),
             line
         };
     }
     return null;
 }
 
-export function validateField(field: FormField, line?: number): ValidationResult {
+export function validateField(field: FormField, L: Locale, line?: number): ValidationResult {
     const errors: ParseError[] = [];
     const warnings: ParseWarning[] = [];
 
@@ -86,7 +89,10 @@ export function validateField(field: FormField, line?: number): ValidationResult
     if (field.type === 'select' || field.type === 'multiselect') {
         const f = field as { list?: string[] };
         if (!f.list || f.list.length === 0) {
-            errors.push({ message: `"${field.type}" requires the "list" option`, line });
+            errors.push({
+                message: formatMessage(L.msgFieldRequiresList, { type: field.type, key: field.key }),
+                line
+            });
         }
     }
 
@@ -95,7 +101,7 @@ export function validateField(field: FormField, line?: number): ValidationResult
         const { min, max } = field;
         if (min !== undefined && max !== undefined && min > max) {
             errors.push({
-                message: `"min" (${min}) must not exceed "max" (${max}) in field "${field.key}"`,
+                message: formatMessage(L.msgMinExceedsMax, { min, max, key: field.key }),
                 line
             });
         }
@@ -106,7 +112,7 @@ export function validateField(field: FormField, line?: number): ValidationResult
         for (const dv of field.default.split(';').map(s => s.trim())) {
             if (!field.list.includes(dv)) {
                 warnings.push({
-                    message: `Default value "${dv}" is not in the list of field "${field.key}"`,
+                    message: formatMessage(L.msgDefaultNotInList, { value: dv, key: field.key }),
                     line
                 });
             }
@@ -117,7 +123,7 @@ export function validateField(field: FormField, line?: number): ValidationResult
     if (field.type === 'select' && field.default && field.list) {
         if (field.default !== '' && !field.list.includes(field.default)) {
             warnings.push({
-                message: `Default value "${field.default}" is not in the list of field "${field.key}"`,
+                message: formatMessage(L.msgDefaultNotInList, { value: field.default, key: field.key }),
                 line
             });
         }
@@ -128,9 +134,9 @@ export function validateField(field: FormField, line?: number): ValidationResult
 
 const KNOWN_META_KEYS = new Set(['folder', 'filename']);
 
-export function validateMetaKey(key: string, line?: number): ParseWarning | null {
+export function validateMetaKey(key: string, L: Locale, line?: number): ParseWarning | null {
     if (!KNOWN_META_KEYS.has(key)) {
-        return { message: `Unknown meta key: "${key}"`, line };
+        return { message: formatMessage(L.msgUnknownMetaKey, { key }), line };
     }
     return null;
 }

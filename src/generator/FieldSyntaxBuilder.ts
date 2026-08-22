@@ -64,6 +64,51 @@ function hasRowsOption(type: FieldType): boolean {
 }
 
 /**
+ * 値の中に "]" が含まれているかを判定する。
+ * パーサー側の KV_OPTION_RE（TemplateParser.ts）は `key=[value]` の value 部分に
+ * "]" を許容しないため、"]" を含む値を生成すると、生成した構文自体をテンプレート側で
+ * 再度読み込めなくなってしまう（CodeReview #6）。ここでは方針として、
+ * ジェネレーター側の入力の時点で "]" を含む値の使用を許可しない（案2）。
+ */
+export function containsForbiddenBracket(value: string): boolean {
+    return value.includes(']');
+}
+
+/**
+ * フィールド生成の入力状態のうち、構文へ "key=[value]" として出力される値に
+ * "]" を含むものがあるかどうかを判定する。
+ * list（1行1項目のテキスト）は各行がそのまま個別の選択肢の値になるため、行単位で確認する。
+ */
+export function stateHasForbiddenBracket(type: FieldType, state: FieldGeneratorState): boolean {
+    const scalarValues: string[] = [state.label, state.description];
+
+    if (hasPlaceholderOption(type)) scalarValues.push(state.placeholder);
+
+    // default: checkbox は真偽値のみ、multilist は構文上 default を持たないため対象外
+    if (type !== 'checkbox' && type !== 'multilist') {
+        scalarValues.push(state.default);
+    }
+
+    if (type === 'number') {
+        scalarValues.push(state.min, state.max);
+    }
+
+    if (scalarValues.some(v => containsForbiddenBracket(v))) return true;
+
+    if (type === 'select' || type === 'multiselect') {
+        const items = state.listRaw.split('\n').map(s => s.trim()).filter(s => s !== '');
+        if (items.some(item => containsForbiddenBracket(item))) return true;
+    }
+
+    return false;
+}
+
+/** meta（folder / filename）用の値チェック。 */
+export function metaValueHasForbiddenBracket(rawValue: string): boolean {
+    return containsForbiddenBracket(rawValue.trim());
+}
+
+/**
  * SyntaxValidator.KNOWN_FIELD_OPTIONS に定義された許可オプションのみを、
  * 定義順に組み立てる。未対応のオプションは生成しない。
  */

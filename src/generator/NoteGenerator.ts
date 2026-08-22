@@ -1,5 +1,6 @@
 import { App, normalizePath, Notice } from 'obsidian';
 import type { FormField, MetaConfig, ValueStore } from '../model/FieldModel';
+import type { Locale } from '../locales';
 import { resolveUserVariables, resolveSystemVariables } from './VariableResolver';
 import { NOTICE_DURATION } from '../ui/ErrorNotice';
 
@@ -43,6 +44,78 @@ export function sanitizeFileName(name: string, sanitizedNotice: string): string 
     if (sanitized !== name) {
         new Notice(sanitizedNotice);
     }
+    return sanitized;
+}
+
+// フォルダパスのセグメントに使用できない文字（"/" は区切り文字のため対象外）
+const INVALID_FOLDER_SEGMENT_CHARS = /[\\:*?"<>|]/g;
+
+/**
+ * 出力フォルダパス（meta|folder を展開した文字列）をサニタイズする。
+ * これまでファイル名はサニタイズしていたが、フォルダパスは無検査で
+ * createFolder() に渡していたため、"..' や OS 禁止文字を含むテンプレート／
+ * フォーム入力が環境依存のわかりにくいエラーになっていた（CodeReview #3）。
+ *
+ * 対応スコープ（最小限）:
+ * - "." / ".." セグメントの拒否（親・カレントディレクトリ参照を無害化）
+ * - 連続スラッシュ・前後の空白・空セグメントの正規化
+ * - ファイル名と共通の OS 禁止文字・制御文字・Windows 予約名・末尾の "." やスペースの除去
+ *
+ * セグメントごとに具体的な不正内容をローカライズして通知する等、フルバリデーションへの
+ * 拡張は将来の検討課題とする。
+ */
+export function sanitizeFolderPath(folderPath: string, folderSanitizedNotice: string): string {
+    if (!folderPath) return '';
+
+    const rawSegments = folderPath.replace(/\\/g, '/').split('/');
+    const segments: string[] = [];
+    let changed = false;
+
+    for (const rawSeg of rawSegments) {
+        let seg = rawSeg.trim();
+        if (seg !== rawSeg) changed = true;
+
+        // 空セグメント（連続スラッシュ・先頭/末尾スラッシュ）は詰めて無視する
+        if (seg === '') {
+            if (rawSeg !== '') changed = true;
+            continue;
+        }
+
+        // "." "..": 親・カレントディレクトリ参照は許可せず、同じ文字数の "_" に置き換える
+        if (seg === '.' || seg === '..') {
+            seg = '_'.repeat(seg.length);
+            changed = true;
+        }
+
+        // OS禁止文字を "_" に置換（ファイル名と共通のポリシー）
+        const noInvalidChars = seg.replace(INVALID_FOLDER_SEGMENT_CHARS, '_');
+        if (noInvalidChars !== seg) changed = true;
+        seg = noInvalidChars;
+
+        // 制御文字を除去（sanitizeFileName と同じ方針）
+        const noControl = Array.from(seg)
+            .filter(ch => (ch.codePointAt(0) ?? 0) > 0x1f)
+            .join('');
+        if (noControl !== seg) changed = true;
+        seg = noControl;
+
+        // 末尾の "." とスペースを除去（Windows の制約。ファイル名と同様）
+        const trimmedEnd = seg.replace(/[.\s]+$/, '');
+        if (trimmedEnd !== seg) changed = true;
+        seg = trimmedEnd;
+
+        if (seg === '') { changed = true; continue; }
+
+        if (WINDOWS_RESERVED_NAMES.test(seg)) {
+            seg = '_' + seg;
+            changed = true;
+        }
+
+        segments.push(seg);
+    }
+
+    const sanitized = segments.join('/');
+    if (changed) new Notice(folderSanitizedNotice);
     return sanitized;
 }
 
@@ -113,19 +186,19 @@ export async function generateNote(
     values: ValueStore,
     fields: FormField[],
     meta: MetaConfig,
-    sanitizedNotice: string,
-    duplicateRenamedNotice: string
+    L: Locale
 ): Promise<void> {
     // ファイル名の変数展開（%folder% / %filename% はまだ使えない。自己参照になるため）
     const rawFilename = meta.filename ?? 'Untitled';
-    const { result: filename0 } = resolveUserVariables(rawFilename, values, fields);
+    const { result: filename0 } = resolveUserVariables(rawFilename, values, fields, L);
     let resolvedFilename = resolveSystemVariables(filename0);
-    resolvedFilename = sanitizeFileName(resolvedFilename, sanitizedNotice);
+    resolvedFilename = sanitizeFileName(resolvedFilename, L.noticeSanitized);
 
     // フォルダの変数展開（同様に %folder% / %filename% はまだ使えない）
     const rawFolder = meta.folder ?? '';
-    const { result: folder0 } = resolveUserVariables(rawFolder, values, fields);
-    const resolvedFolder = resolveSystemVariables(folder0);
+    const { result: folder0 } = resolveUserVariables(rawFolder, values, fields, L);
+    const expandedFolder = resolveSystemVariables(folder0);
+    const resolvedFolder = sanitizeFolderPath(expandedFolder, L.noticeFolderSanitized);
 
     const filenameWithExt = resolvedFilename.endsWith('.md') ? resolvedFilename : `${resolvedFilename}.md`;
 
@@ -137,16 +210,17 @@ export async function generateNote(
 
     // 本文の変数展開。ここで初めて %folder% / %filename%（拡張子なし）を本文中に展開できる。
     // %filename% には（連番が付与された場合は）実際に保存される最終的なファイル名を使う。
-    const { result: content0, warnings: bodyWarnings } = resolveUserVariables(bodyTemplate, values, fields);
+    const { result: content0, warnings: bodyWarnings } = resolveUserVariables(bodyTemplate, values, fields, L);
     const content = resolveSystemVariables(content0, { folder: resolvedFolder, filename: finalNameNoExt });
 
-    // モディファイア警告を Notice で表示
+    // モディファイア警告を Notice で表示（message は resolveUserVariables 側で
+    // 既に設定言語に応じて組み立て済みなので、ここでの追加のプレフィックス付与は不要）
     for (const w of bodyWarnings) {
-        new Notice(`Form Builder: ${w.message}`, 6000);
+        new Notice(w.message, 6000);
     }
 
     if (renamed) {
-        new Notice(duplicateRenamedNotice.replace('{name}', finalNameWithExt), NOTICE_DURATION);
+        new Notice(L.noticeDuplicateFilename.replace('{name}', finalNameWithExt), NOTICE_DURATION);
     }
 
     await app.vault.create(filePath, content);

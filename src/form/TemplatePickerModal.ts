@@ -1,4 +1,4 @@
-import { App, Modal, TFile } from 'obsidian';
+import { App, Modal, Notice, TFile } from 'obsidian';
 import type { Locale, SupportedLocale } from '../locales';
 import { getLocale } from '../locales';
 import { HelpModal } from './help';
@@ -36,6 +36,7 @@ export class TemplatePickerModal extends Modal {
     private onSelect: (file: TFile) => void;
 
     private allTemplates: TFile[];
+    private templateByPath: Map<string, TFile>;
     private templateFolderPath: string;
 
     private activeTab: TabType;
@@ -62,6 +63,10 @@ export class TemplatePickerModal extends Modal {
         super(app);
         this.plugin = plugin;
         this.allTemplates = allTemplates;
+        // renderFolderNode() で path から TFile を都度 .find() していると
+        // テンプレート数 N に対して最悪 O(N²) になるため、Map を1度だけ構築して
+        // O(1) 参照にする（CodeReview #12）。
+        this.templateByPath = new Map(allTemplates.map(f => [f.path, f]));
         this.templateFolderPath = templateFolderPath;
         this.locale = locale;
         this.onSelect = onSelect;
@@ -100,6 +105,64 @@ export class TemplatePickerModal extends Modal {
     }
 
     // ------------------------------------------------------------
+    // 非同期保存失敗のハンドリング（CodeReview #13）
+    // 以前は setLastTab / toggleFavorite / removeFavorite / removeRecent /
+    // clearRecent / pushRecent の Promise を `void` で切り捨てる箇所が多く、
+    // 失敗時に data.json と画面表示の状態が食い違ったり、無視された rejection が
+    // 発生したりしていた。ここでは呼び出し側を async の private メソッドへ集約し、
+    // 必ず try/catch で失敗を捕捉する。
+    // ------------------------------------------------------------
+
+    /** お気に入り・履歴削除など、ユーザーが明示的に行った操作の保存に失敗した場合に使う。
+     *  データの信頼性に直接関わるため、コンソールログに加えて Notice でも知らせる。 */
+    private notifyStoreError(e: unknown): void {
+        console.error('Form Builder: Failed to save template picker state', e);
+        new Notice(getLocale(this.locale).noticeStoreError);
+    }
+
+    private async handleSetLastTab(tab: TabType): Promise<void> {
+        try {
+            await this.plugin.templateStore.setLastTab(tab);
+        } catch (e) {
+            // 「最後に開いていたタブ」の記憶に失敗しても、その場のタブ切替自体には
+            // 支障がないため、ここでは Notice は出さずログのみに留める。
+            console.error('Form Builder: Failed to save last tab', e);
+        }
+    }
+
+    private async handleClearRecent(L: Locale): Promise<void> {
+        try {
+            await this.plugin.templateStore.clearRecent();
+            this.renderList(L);
+        } catch (e) {
+            this.notifyStoreError(e);
+        }
+    }
+
+    private async handleToggleFavorite(path: string, L: Locale): Promise<void> {
+        try {
+            await this.plugin.templateStore.toggleFavorite(path);
+            this.renderList(L);
+        } catch (e) {
+            this.notifyStoreError(e);
+        }
+    }
+
+    /** グレーアウトした「見つからない」項目を、表示中のタブに応じて実削除する。 */
+    private async handleRemoveMissingEntry(path: string, L: Locale): Promise<void> {
+        try {
+            if (this.activeTab === 'favorites') {
+                await this.plugin.templateStore.removeFavorite(path);
+            } else if (this.activeTab === 'recent') {
+                await this.plugin.templateStore.removeRecent(path);
+            }
+            this.renderList(L);
+        } catch (e) {
+            this.notifyStoreError(e);
+        }
+    }
+
+    // ------------------------------------------------------------
     // 検索ボックス（共通フィルター。入力時のみ「×」でクリアできる）
     // ------------------------------------------------------------
 
@@ -119,7 +182,7 @@ export class TemplatePickerModal extends Modal {
         });
 
         this.searchClearBtnEl = wrap.createEl('button', { cls: 'fb-search-clear', text: '×' });
-        this.searchClearBtnEl.setAttribute('aria-label', 'Clear search');
+        this.searchClearBtnEl.setAttribute('aria-label', L.pickerAriaClearSearch);
         this.searchClearBtnEl.addEventListener('click', () => {
             this.searchQuery = '';
             this.searchInputEl.value = '';
@@ -179,7 +242,7 @@ export class TemplatePickerModal extends Modal {
                 return;
             }
             reset();
-            void this.plugin.templateStore.clearRecent().then(() => this.renderList(L));
+            void this.handleClearRecent(L);
         });
     }
 
@@ -215,7 +278,7 @@ export class TemplatePickerModal extends Modal {
             btn.addEventListener('click', () => {
                 if (this.activeTab === tab.id) return;
                 this.activeTab = tab.id;
-                void this.plugin.templateStore.setLastTab(tab.id);
+                void this.handleSetLastTab(tab.id);
                 this.renderTabBar(L);
                 this.updateActionButtons();
                 this.renderList(L);
@@ -271,8 +334,14 @@ export class TemplatePickerModal extends Modal {
             body = container;
         } else {
             const expanded = this.expandedFolders.has(node.path);
-            const header = container.createDiv({ cls: 'fb-folder-header' });
-            header.createSpan({ cls: 'fb-folder-icon', text: expanded ? '📂' : '📁' });
+            // フォルダの開閉はクリック可能な <div> ではなく <button type="button"> にし、
+            // aria-expanded で開閉状態を伝える（CodeReview #10）。
+            // これによりキーボード（Tab + Enter/Space）だけでも操作でき、
+            // スクリーンリーダーでも「折りたたみ可能な項目であること」と現在の開閉状態が伝わる。
+            const header = container.createEl('button', { cls: 'fb-folder-header' });
+            header.type = 'button';
+            header.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+            header.createSpan({ cls: 'fb-folder-icon', text: expanded ? '📂' : '📁', attr: { 'aria-hidden': 'true' } });
             header.createSpan({ cls: 'fb-folder-name', text: node.name });
             header.addEventListener('click', () => {
                 if (expanded) this.expandedFolders.delete(node.path);
@@ -290,7 +359,7 @@ export class TemplatePickerModal extends Modal {
         if (node.files.length > 0) {
             const ul = body.createEl('ul', { cls: 'fb-template-list' });
             for (const path of node.files) {
-                const file = this.allTemplates.find(f => f.path === path);
+                const file = this.templateByPath.get(path);
                 if (file) this.renderTemplateButton(ul, file);
             }
         }
@@ -374,12 +443,10 @@ export class TemplatePickerModal extends Modal {
             cls: 'fb-fav-toggle',
             text: this.plugin.templateStore.isFavorite(file.path) ? '★' : '☆',
         });
-        favBtn.setAttribute('aria-label', 'Toggle favorite');
+        favBtn.setAttribute('aria-label', getLocale(this.locale).pickerAriaToggleFavorite);
         favBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            void this.plugin.templateStore.toggleFavorite(file.path).then(() => {
-                this.renderList(getLocale(this.locale));
-            });
+            void this.handleToggleFavorite(file.path, getLocale(this.locale));
         });
     }
 
@@ -407,19 +474,16 @@ export class TemplatePickerModal extends Modal {
             cls: 'fb-fav-toggle',
             text: entry.isMissing ? '✕' : (this.plugin.templateStore.isFavorite(entry.path) ? '★' : '☆'),
         });
-        favBtn.setAttribute('aria-label', entry.isMissing ? 'Remove' : 'Toggle favorite');
+        favBtn.setAttribute('aria-label', entry.isMissing ? L.pickerAriaRemove : L.pickerAriaToggleFavorite);
         favBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            void (async () => {
-                if (entry.isMissing) {
-                    // 見つからない項目はここで初めてデータから実削除する
-                    await this.plugin.templateStore.removeFavorite(entry.path);
-                    await this.plugin.templateStore.removeRecent(entry.path);
-                } else {
-                    await this.plugin.templateStore.toggleFavorite(entry.path);
-                }
-                this.renderList(L);
-            })();
+            if (entry.isMissing) {
+                // 見つからない項目はここで初めてデータから実削除する。
+                // 現在表示しているタブに対応するコレクションのみを削除する（CodeReview #7）。
+                void this.handleRemoveMissingEntry(entry.path, L);
+            } else {
+                void this.handleToggleFavorite(entry.path, L);
+            }
         });
     }
 
@@ -428,8 +492,28 @@ export class TemplatePickerModal extends Modal {
     // ------------------------------------------------------------
 
     private selectTemplate(file: TFile): void {
+        void this.handleSelectTemplate(file);
+    }
+
+    /**
+     * テンプレート選択時に呼び出す。
+     * `pushRecent()` を呼ぶタイミングは「テンプレート選択時」に統一する
+     * （CodeReview #13 で議論、アルさんの判断により確定）。
+     * 以前は `TemplateStore.pushRecent()` のコメント上「テンプレート生成成功時に呼ぶ」と
+     * 書かれていたが、実装は選択時に呼んでおり契約とコードが一致していなかった。
+     * また `pushRecent()` の失敗を `void` で握りつぶしていたため、履歴の保存に失敗しても
+     * 利用者に気づく手段がなかった。
+     * 履歴の保存に失敗しても、ノート作成というメインの操作自体は継続させる
+     * （ここで処理を止めると、履歴保存の失敗のせいでノートを作成できなくなってしまう）。
+     */
+    private async handleSelectTemplate(file: TFile): Promise<void> {
         this.close();
-        void this.plugin.templateStore.pushRecent(file.path);
+        try {
+            await this.plugin.templateStore.pushRecent(file.path);
+        } catch (e) {
+            console.error('Form Builder: Failed to update recent templates', e);
+            new Notice(getLocale(this.locale).noticeStoreError);
+        }
         this.onSelect(file);
     }
 }

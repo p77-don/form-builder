@@ -53,7 +53,9 @@ export class TemplateStore {
         return [...this.plugin.settings.recentTemplates];
     }
 
-    /** テンプレート生成成功時に呼び出す。重複は先頭へ移動し、最大件数を超えたら古いものを切り詰める。 */
+    /** テンプレート選択時に呼び出す（CodeReview #13 で契約を明確化。
+     *  「テンプレート生成成功時」ではなく「選択時」に統一する）。
+     *  重複は先頭へ移動し、最大件数を超えたら古いものを切り詰める。 */
     async pushRecent(path: string): Promise<void> {
         const recent = this.plugin.settings.recentTemplates;
         const existing = recent.indexOf(path);

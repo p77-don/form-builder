@@ -49,14 +49,16 @@
 }
 
 /* ---------- モバイル対応: モーダルを画面上部起点で表示する ----------
-   Modal.containerEl（画面全体を覆うフレックスコンテナ）に対して、
-   src/ui/MobileModal.ts が Platform.isMobile のときだけ付与するクラス。
+   Modal.containerEl（画面全体を覆うフレックスコンテナ、Obsidian コア側の
+   .modal-container クラスを持つ）に対して、src/ui/MobileModal.ts が
+   Platform.isMobile のときだけ .fb-modal-container-top を追加で付与する。
    デスクトップでは付与されないため、このルールは一切影響しない。
-   Obsidian コア側の中央寄せ指定（align-items: center 相当）より
-   優先させる必要があるため !important を使用している。 */
-.fb-modal-container-top {
-    align-items: flex-start !important;
-    padding-top: max(env(safe-area-inset-top, 0px), 16px) !important;
+   Obsidian コア側の中央寄せ指定（.modal-container { align-items: center } 相当）
+   より確実に優先させるため、!important ではなく .modal-container と
+   .fb-modal-container-top を連結して詳細度を上げることで対応している。 */
+.modal-container.fb-modal-container-top {
+    align-items: flex-start;
+    padding-top: max(env(safe-area-inset-top, 0px), 16px);
 }
 
 /* ---------- コンテンツ全体 ---------- */
@@ -359,6 +361,16 @@
     outline-offset: 3px;
 }
 
+/* Create Note 連打対策で送信中は disabled にする（CodeReview #2, #14）。
+   有効時とはっきり区別できるよう、透過度とカーソルを変更する。 */
+.fb-submit-btn:disabled,
+.fb-submit-btn:disabled:hover,
+.fb-submit-btn:disabled:active {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: var(--fb-accent);
+}
+
 /* ---------- テンプレートボタン（フォルダ／お気に入り／最近使ったタブ共通） ---------- */
 .fb-template-list {
     list-style: none;
@@ -455,6 +467,18 @@
 .fb-btn:focus-visible {
     outline: 2px solid var(--fb-accent);
     outline-offset: 2px;
+}
+
+/* 無効化状態（例: 構文ジェネレーターで "]" を含む値が入力されている場合など）。
+   以前は有効なボタンと見た目がほとんど同じで、無効な理由に気づきにくかった（CodeReview #14）。 */
+.fb-btn:disabled,
+.fb-btn:disabled:hover,
+.fb-btn:disabled:active {
+    opacity: 0.4;
+    cursor: not-allowed;
+    color: var(--fb-text-sub);
+    border-color: var(--fb-border);
+    background: transparent;
 }
 
 /* ---------- フォームフッター（Help + Create Note を横並び） ---------- */
@@ -677,8 +701,13 @@
 }
 
 .fb-clear-toggle--confirm:hover {
-    color: var(--fb-accent);
+    /* 以前は :hover でアクセントカラーの文字色に変えていたため、テーマによっては
+       赤背景とのコントラストが低下し、破壊的操作の確認状態がかえって見えにくかった
+       （CodeReview #14）。背景のみを少し濃くし、文字色は高コントラストのまま維持する。 */
+    color: var(--fb-on-accent);
+    background: var(--fb-danger);
     border-color: var(--fb-danger);
+    filter: brightness(0.88);
 }
 
 /* ---------- タブバー（アンダーライン方式） ---------- */
@@ -732,20 +761,32 @@
 }
 
 /* ---------- フォルダタブ — 階層見出し（フォルダアイコン使用） ---------- */
+/* <button type="button"> 化した際のブラウザ既定の装飾をリセットする（CodeReview #10）。
+   以前は <div> だったため、この reset は不要だった。 */
 .fb-folder-header {
     display: flex;
     align-items: center;
+    width: 100%;
     gap: 6px;
     padding: 7px 6px;
     font-size: 0.82rem;
     font-weight: 600;
+    font-family: inherit;
     color: var(--fb-text);
+    background: transparent;
+    border: none;
+    text-align: left;
     cursor: pointer;
     user-select: none;
 }
 
 .fb-folder-header:hover {
     color: var(--fb-accent);
+}
+
+.fb-folder-header:focus-visible {
+    outline: 2px solid var(--fb-accent);
+    outline-offset: -2px;
 }
 
 .fb-folder-icon {
