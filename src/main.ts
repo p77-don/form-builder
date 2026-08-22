@@ -23,13 +23,13 @@ export default class FormBuilderPlugin extends Plugin {
 
                 this.addCommand({
                     id: 'create-note-from-template',
-                    name: 'Create Note From Template',
+                    name: 'Create note from template',
                     callback: () => { void this.openTemplatePicker(); },
                 });
 
                 this.addCommand({
                     id: 'insert-field',
-                    name: 'Syntax Generator',
+                    name: 'Syntax generator',
                     callback: () => {
                         new FieldGeneratorModal(this.app, this.settings.locale).open();
                     },

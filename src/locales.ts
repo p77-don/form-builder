@@ -262,7 +262,7 @@ const en: Locale = {
     btnSettings: 'Open Settings',
 
     // テンプレート選択
-    selectorTitle: 'Select Template',
+    selectorTitle: 'Select template',
     sortAsc:       '▲ A → Z',
     sortDesc:      '▼ Z → A',
     pickerSearchPlaceholder: 'Search templates...',
@@ -417,7 +417,7 @@ $aliases:separator[, ]$`,
     ],
 
     // ---------- 構文ジェネレーター（Field Generator） ----------
-    genModalTitle: 'Syntax Generator',
+    genModalTitle: 'Syntax generator',
 
     genTypeLabel:        'Generator Type',
     genTypeField:        'Field',
