@@ -596,8 +596,7 @@ function isValidTab(value) {
   return value === "folder" || value === "favorites" || value === "recent";
 }
 function toStringArray(value) {
-  if (!Array.isArray(value))
-    return [];
+  if (!Array.isArray(value)) return [];
   return value.filter((v) => typeof v === "string");
 }
 function sanitizeSettings(raw) {
@@ -655,10 +654,8 @@ var FormBuilderSettingTab = class extends import_obsidian.PluginSettingTab {
     ];
   }
   getControlValue(key) {
-    if (key === "templateFolder")
-      return this.plugin.settings.templateFolder;
-    if (key === "locale")
-      return this.plugin.settings.locale;
+    if (key === "templateFolder") return this.plugin.settings.templateFolder;
+    if (key === "locale") return this.plugin.settings.locale;
     return void 0;
   }
   async setControlValue(key, value) {
@@ -688,14 +685,12 @@ var import_obsidian3 = require("obsidian");
 var import_obsidian2 = require("obsidian");
 var KEYBOARD_PADDING_RATIO = 0.45;
 function applyMobileModalBehavior(modal) {
-  if (!import_obsidian2.Platform.isMobile)
-    return;
+  if (!import_obsidian2.Platform.isMobile) return;
   const { containerEl, modalEl, contentEl } = modal;
   containerEl.addClass("fb-modal-container-top");
   modalEl.addEventListener("click", (evt) => {
     const target = evt.target;
-    if (target.closest("input, textarea, select, button, a, label"))
-      return;
+    if (target.closest("input, textarea, select, button, a, label")) return;
     const active = document.activeElement;
     if (active && contentEl.contains(active) && typeof active.blur === "function") {
       active.blur();
@@ -703,8 +698,7 @@ function applyMobileModalBehavior(modal) {
   });
   contentEl.addEventListener("focusin", (evt) => {
     const target = evt.target;
-    if (!target.matches("input, textarea, select"))
-      return;
+    if (!target.matches("input, textarea, select")) return;
     contentEl.style.setProperty("padding-bottom", `${Math.round(window.innerHeight * KEYBOARD_PADDING_RATIO)}px`);
     const scrollToField = () => {
       const active = document.activeElement;
@@ -790,15 +784,30 @@ var FolderSuggestModal = class extends import_obsidian4.FuzzySuggestModal {
     super(app);
     this.onChoose = onChoose;
     this.startFolder = this.resolveStartFolder(currentValue);
+    this.initialQuery = currentValue.trim();
     this.setPlaceholder(placeholder);
+  }
+  /**
+   * default（= input の初期値）を検索欄の初期値として使う。
+   * 実在するフォルダかどうかは問わない（存在しない値でも、絞り込みの
+   * 起点としてそのまま検索欄に表示し、候補一覧はユーザーの入力に委ねる）。
+   * FuzzySuggestModal（SuggestModal）は inputEl を用意した上で onOpen() を
+   * 呼び出すため、super.onOpen() の後で値を設定し、"input" イベントを
+   * 発火させて候補一覧（getSuggestions）を再計算させる必要がある。
+   */
+  onOpen() {
+    super.onOpen();
+    if (this.initialQuery) {
+      this.inputEl.value = this.initialQuery;
+      this.inputEl.dispatchEvent(new Event("input"));
+      this.inputEl.select();
+    }
   }
   resolveStartFolder(currentValue) {
     const trimmed = currentValue.trim();
-    if (!trimmed)
-      return null;
+    if (!trimmed) return null;
     const folder = this.app.vault.getFolderByPath(trimmed);
-    if (!folder || folder.isRoot())
-      return null;
+    if (!folder || folder.isRoot()) return null;
     return folder;
   }
   getItems() {
@@ -889,8 +898,7 @@ function appendLabelRow(card, field, baseId, labelFor) {
 }
 function renderText(containerEl, field, values, ctx) {
   var _a, _b, _c;
-  if (field.type !== "text")
-    return;
+  if (field.type !== "text") return;
   values.set(field.key, (_a = field.default) != null ? _a : "");
   const card = createCard(containerEl, field);
   const baseId = fieldBaseId(ctx, field);
@@ -900,12 +908,9 @@ function renderText(containerEl, field, values, ctx) {
     input2.type = "text";
     input2.id = baseId;
     input2.value = (_b = field.default) != null ? _b : "";
-    if (field.placeholder)
-      input2.placeholder = field.placeholder;
-    if (descId)
-      input2.setAttribute("aria-describedby", descId);
-    if (field.required)
-      input2.setAttribute("aria-required", "true");
+    if (field.placeholder) input2.placeholder = field.placeholder;
+    if (descId) input2.setAttribute("aria-describedby", descId);
+    if (field.required) input2.setAttribute("aria-required", "true");
     input2.addEventListener("input", () => values.set(field.key, input2.value));
     return;
   }
@@ -914,12 +919,9 @@ function renderText(containerEl, field, values, ctx) {
   input.type = "text";
   input.id = baseId;
   input.value = (_c = field.default) != null ? _c : "";
-  if (field.placeholder)
-    input.placeholder = field.placeholder;
-  if (descId)
-    input.setAttribute("aria-describedby", descId);
-  if (field.required)
-    input.setAttribute("aria-required", "true");
+  if (field.placeholder) input.placeholder = field.placeholder;
+  if (descId) input.setAttribute("aria-describedby", descId);
+  if (field.required) input.setAttribute("aria-required", "true");
   input.addEventListener("input", () => values.set(field.key, input.value));
   const pickBtn = row.createEl("button", { cls: "fb-folder-picker-btn", text: "\u{1F4C1}" });
   pickBtn.type = "button";
@@ -941,12 +943,9 @@ function renderTextarea(containerEl, field, values, ctx) {
   const textarea = card.createEl("textarea", { cls: "fb-textarea" });
   textarea.id = baseId;
   textarea.value = (_b = field.default) != null ? _b : "";
-  if (field.placeholder)
-    textarea.placeholder = field.placeholder;
-  if (descId)
-    textarea.setAttribute("aria-describedby", descId);
-  if (field.required)
-    textarea.setAttribute("aria-required", "true");
+  if (field.placeholder) textarea.placeholder = field.placeholder;
+  if (descId) textarea.setAttribute("aria-describedby", descId);
+  if (field.required) textarea.setAttribute("aria-required", "true");
   const rows = field.rows;
   textarea.rows = rows && rows > 0 ? rows : 5;
   textarea.addEventListener("input", () => values.set(field.key, textarea.value));
@@ -960,16 +959,11 @@ function renderNumber(containerEl, field, values, ctx) {
   input.type = "number";
   input.id = baseId;
   const nf = field;
-  if (nf.min !== void 0)
-    input.min = String(nf.min);
-  if (nf.max !== void 0)
-    input.max = String(nf.max);
-  if (field.placeholder)
-    input.placeholder = field.placeholder;
-  if (descId)
-    input.setAttribute("aria-describedby", descId);
-  if (field.required)
-    input.setAttribute("aria-required", "true");
+  if (nf.min !== void 0) input.min = String(nf.min);
+  if (nf.max !== void 0) input.max = String(nf.max);
+  if (field.placeholder) input.placeholder = field.placeholder;
+  if (descId) input.setAttribute("aria-describedby", descId);
+  if (field.required) input.setAttribute("aria-required", "true");
   input.value = (_a = field.default) != null ? _a : "";
   values.set(field.key, input.value);
   input.addEventListener("input", () => values.set(field.key, input.value));
@@ -982,10 +976,8 @@ function renderDate(containerEl, field, values, ctx) {
   const input = card.createEl("input", { cls: "fb-input" });
   input.type = "date";
   input.id = baseId;
-  if (descId)
-    input.setAttribute("aria-describedby", descId);
-  if (field.required)
-    input.setAttribute("aria-required", "true");
+  if (descId) input.setAttribute("aria-describedby", descId);
+  if (field.required) input.setAttribute("aria-required", "true");
   input.value = (_a = field.default) != null ? _a : "";
   values.set(field.key, input.value);
   input.addEventListener("change", () => values.set(field.key, input.value));
@@ -1002,8 +994,7 @@ function renderCheckbox(containerEl, field, values, ctx) {
   input.type = "checkbox";
   input.id = baseId;
   input.checked = initVal;
-  if (descId)
-    input.setAttribute("aria-describedby", descId);
+  if (descId) input.setAttribute("aria-describedby", descId);
   toggleLabel.createDiv({ cls: "fb-toggle-track" });
   toggleLabel.createDiv({ cls: "fb-toggle-thumb" });
   input.addEventListener("change", () => values.set(field.key, input.checked));
@@ -1016,10 +1007,8 @@ function renderSelect(containerEl, field, values, ctx) {
   const { descId } = appendLabelRow(card, field, baseId, baseId);
   const select = card.createEl("select", { cls: "fb-select" });
   select.id = baseId;
-  if (descId)
-    select.setAttribute("aria-describedby", descId);
-  if (field.required)
-    select.setAttribute("aria-required", "true");
+  if (descId) select.setAttribute("aria-describedby", descId);
+  if (field.required) select.setAttribute("aria-required", "true");
   const emptyOpt = select.createEl("option");
   emptyOpt.value = "";
   emptyOpt.textContent = "---";
@@ -1035,8 +1024,7 @@ function renderSelect(containerEl, field, values, ctx) {
 }
 function renderMultiselect(containerEl, field, values, ctx) {
   var _a;
-  if (field.type !== "multiselect")
-    return;
+  if (field.type !== "multiselect") return;
   const defaultRaw = (_a = field.default) != null ? _a : "";
   const defaultItems = defaultRaw ? defaultRaw.split(";").map((s) => s.trim()).filter((s) => field.list.includes(s)) : [];
   const selected = new Set(defaultItems);
@@ -1046,10 +1034,8 @@ function renderMultiselect(containerEl, field, values, ctx) {
   const { descId, legendId } = appendLabelRow(card, field, baseId, null);
   const chipGroup = card.createDiv({ cls: "fb-chip-group" });
   chipGroup.setAttribute("role", "group");
-  if (legendId)
-    chipGroup.setAttribute("aria-labelledby", legendId);
-  if (descId)
-    chipGroup.setAttribute("aria-describedby", descId);
+  if (legendId) chipGroup.setAttribute("aria-labelledby", legendId);
+  if (descId) chipGroup.setAttribute("aria-describedby", descId);
   field.list.forEach((item, index) => {
     const chipWrap = chipGroup.createDiv({ cls: "fb-chip" });
     const id = `fb-chip-${ctx.instanceId}-${field.key}-${index}`;
@@ -1061,18 +1047,15 @@ function renderMultiselect(containerEl, field, values, ctx) {
     label.htmlFor = id;
     label.textContent = item;
     checkbox.addEventListener("change", () => {
-      if (checkbox.checked)
-        selected.add(item);
-      else
-        selected.delete(item);
+      if (checkbox.checked) selected.add(item);
+      else selected.delete(item);
       values.set(field.key, [...selected]);
     });
   });
 }
 function renderList(containerEl, field, values, ctx) {
   var _a, _b;
-  if (field.type !== "multilist")
-    return;
+  if (field.type !== "multilist") return;
   values.set(field.key, (_a = field.default) != null ? _a : "");
   const card = createCard(containerEl, field);
   const baseId = fieldBaseId(ctx, field);
@@ -1085,26 +1068,20 @@ function renderList(containerEl, field, values, ctx) {
   const textarea = card.createEl("textarea", { cls: "fb-textarea fb-list-input" });
   textarea.id = baseId;
   textarea.value = (_b = field.default) != null ? _b : "";
-  if (field.placeholder)
-    textarea.placeholder = field.placeholder;
+  if (field.placeholder) textarea.placeholder = field.placeholder;
   textarea.rows = field.rows && field.rows > 0 ? field.rows : 4;
   const effectiveDescId = descId != null ? descId : hintDescId;
-  if (effectiveDescId)
-    textarea.setAttribute("aria-describedby", effectiveDescId);
-  if (field.required)
-    textarea.setAttribute("aria-required", "true");
+  if (effectiveDescId) textarea.setAttribute("aria-describedby", effectiveDescId);
+  if (field.required) textarea.setAttribute("aria-required", "true");
   textarea.addEventListener("input", () => values.set(field.key, textarea.value));
 }
 function validateNumberFields(containerEl, fields, values) {
   const errors = [];
   for (const field of fields) {
-    if (field.type !== "number")
-      continue;
+    if (field.type !== "number") continue;
     const raw = values.get(field.key);
-    if (raw === void 0 || raw === "")
-      continue;
-    if (typeof raw !== "string")
-      continue;
+    if (raw === void 0 || raw === "") continue;
+    if (typeof raw !== "string") continue;
     const num = Number(raw);
     let reason = null;
     if (Number.isNaN(num)) {
@@ -1117,8 +1094,7 @@ function validateNumberFields(containerEl, fields, values) {
     if (reason) {
       errors.push({ key: field.key, reason });
       const el = containerEl.querySelector(`[data-form-key="${field.key}"]`);
-      if (el)
-        el.addClass("fb-error");
+      if (el) el.addClass("fb-error");
     }
   }
   return errors;
@@ -1127,15 +1103,13 @@ function highlightRequiredErrors(containerEl, fields, values) {
   containerEl.querySelectorAll(".fb-error").forEach((el) => el.removeClass("fb-error"));
   const missing = [];
   for (const field of fields) {
-    if (!field.required)
-      continue;
+    if (!field.required) continue;
     const value = values.get(field.key);
     const isEmpty = field.type === "checkbox" ? false : field.type === "multilist" ? typeof value !== "string" || value.split("\n").map((l) => l.trim()).filter(Boolean).length === 0 : value === void 0 || value === "" || Array.isArray(value) && value.length === 0;
     if (isEmpty) {
       missing.push(field.key);
       const el = containerEl.querySelector(`[data-form-key="${field.key}"]`);
-      if (el)
-        el.addClass("fb-error");
+      if (el) el.addClass("fb-error");
     }
   }
   return missing;
@@ -1178,13 +1152,11 @@ function isArrayField(field) {
   return field.type === "multiselect" || field.type === "multilist";
 }
 function formatScalarValue(value, field) {
-  if (value === void 0 || value === null)
-    return "";
+  if (value === void 0 || value === null) return "";
   if (field.type === "checkbox") {
     return value === true || value === "true" ? "true" : "false";
   }
-  if (Array.isArray(value))
-    return value.join(",");
+  if (Array.isArray(value)) return value.join(",");
   return String(value);
 }
 function toStringArray2(value, field) {
@@ -1202,8 +1174,7 @@ function resolveUserVariables(template, values, fields, L) {
   const warnings = [];
   const result = template.replace(VARIABLE_RE, (match, key, modifier, modValue) => {
     const field = fieldMap.get(key);
-    if (!field)
-      return match;
+    if (!field) return match;
     const value = values.get(key);
     if (!modifier) {
       if (isArrayField(field)) {
@@ -1238,7 +1209,7 @@ function resolveUserVariables(template, values, fields, L) {
   return { result, warnings };
 }
 function resolveSystemVariables(template, location) {
-  const now = new Date();
+  const now = /* @__PURE__ */ new Date();
   let result = template.split("%timestamp%").join(formatTimestamp(now)).split("%date%").join(formatDate(now)).split("%time%").join(formatTime(now));
   if (location) {
     result = result.split("%folder%").join(location.folder).split("%filename%").join(location.filename);
@@ -1272,8 +1243,7 @@ function sanitizeFileName(name, sanitizedNotice) {
     sanitized = "_" + sanitized;
   }
   sanitized = sanitized.replace(/[.\s]+$/, "");
-  if (!sanitized)
-    sanitized = "Untitled";
+  if (!sanitized) sanitized = "Untitled";
   if (sanitized !== name) {
     new import_obsidian6.Notice(sanitizedNotice);
   }
@@ -1281,18 +1251,15 @@ function sanitizeFileName(name, sanitizedNotice) {
 }
 var INVALID_FOLDER_SEGMENT_CHARS = /[\\:*?"<>|]/g;
 function sanitizeFolderPath(folderPath, folderSanitizedNotice) {
-  if (!folderPath)
-    return "";
+  if (!folderPath) return "";
   const rawSegments = folderPath.replace(/\\/g, "/").split("/");
   const segments = [];
   let changed = false;
   for (const rawSeg of rawSegments) {
     let seg = rawSeg.trim();
-    if (seg !== rawSeg)
-      changed = true;
+    if (seg !== rawSeg) changed = true;
     if (seg === "") {
-      if (rawSeg !== "")
-        changed = true;
+      if (rawSeg !== "") changed = true;
       continue;
     }
     if (seg === "." || seg === "..") {
@@ -1300,19 +1267,16 @@ function sanitizeFolderPath(folderPath, folderSanitizedNotice) {
       changed = true;
     }
     const noInvalidChars = seg.replace(INVALID_FOLDER_SEGMENT_CHARS, "_");
-    if (noInvalidChars !== seg)
-      changed = true;
+    if (noInvalidChars !== seg) changed = true;
     seg = noInvalidChars;
     const noControl = Array.from(seg).filter((ch) => {
       var _a;
       return ((_a = ch.codePointAt(0)) != null ? _a : 0) > 31;
     }).join("");
-    if (noControl !== seg)
-      changed = true;
+    if (noControl !== seg) changed = true;
     seg = noControl;
     const trimmedEnd = seg.replace(/[.\s]+$/, "");
-    if (trimmedEnd !== seg)
-      changed = true;
+    if (trimmedEnd !== seg) changed = true;
     seg = trimmedEnd;
     if (seg === "") {
       changed = true;
@@ -1325,13 +1289,11 @@ function sanitizeFolderPath(folderPath, folderSanitizedNotice) {
     segments.push(seg);
   }
   const sanitized = segments.join("/");
-  if (changed)
-    new import_obsidian6.Notice(folderSanitizedNotice);
+  if (changed) new import_obsidian6.Notice(folderSanitizedNotice);
   return sanitized;
 }
 async function ensureFolder(app, folderPath) {
-  if (!folderPath)
-    return;
+  if (!folderPath) return;
   const parts = folderPath.replace(/\\/g, "/").split("/").filter((p) => p !== "");
   let current = "";
   for (const part of parts) {
@@ -1383,8 +1345,7 @@ async function generateNote(app, bodyTemplate, values, fields, meta, L) {
   }
   await app.vault.create(filePath, content);
   const file = app.vault.getFileByPath(filePath);
-  if (file)
-    await app.workspace.getLeaf().openFile(file);
+  if (file) await app.workspace.getLeaf().openFile(file);
 }
 
 // src/form/FormModal.ts
@@ -1423,8 +1384,7 @@ var FormModal = class extends import_obsidian7.Modal {
     this.contentEl.empty();
   }
   renderWarnings(root) {
-    if (this.parseResult.warnings.length === 0)
-      return;
+    if (this.parseResult.warnings.length === 0) return;
     const block = root.createDiv({ cls: "fb-warning-block" });
     for (const w of this.parseResult.warnings) {
       block.createDiv({ cls: "fb-warning", text: `\u26A0 ${w.message}` });
@@ -1452,21 +1412,16 @@ var FormModal = class extends import_obsidian7.Modal {
     });
   }
   async onSubmit() {
-    if (this.isSubmitting)
-      return;
+    if (this.isSubmitting) return;
     const L = getLocale(this.locale);
     const root = this.contentEl.querySelector(".fb-modal");
     const missing = highlightRequiredErrors(root, this.parseResult.fields, this.values);
     const numberErrors = validateNumberFields(root, this.parseResult.fields, this.values);
-    if (missing.length > 0)
-      new import_obsidian7.Notice(L.noticeRequired);
-    if (numberErrors.length > 0)
-      new import_obsidian7.Notice(L.noticeInvalidNumber);
-    if (missing.length > 0 || numberErrors.length > 0)
-      return;
+    if (missing.length > 0) new import_obsidian7.Notice(L.noticeRequired);
+    if (numberErrors.length > 0) new import_obsidian7.Notice(L.noticeInvalidNumber);
+    if (missing.length > 0 || numberErrors.length > 0) return;
     this.isSubmitting = true;
-    if (this.submitBtnEl)
-      this.submitBtnEl.disabled = true;
+    if (this.submitBtnEl) this.submitBtnEl.disabled = true;
     try {
       await generateNote(
         this.app,
@@ -1484,8 +1439,7 @@ var FormModal = class extends import_obsidian7.Modal {
 ${message}`, NOTICE_DURATION);
     } finally {
       this.isSubmitting = false;
-      if (this.submitBtnEl)
-        this.submitBtnEl.disabled = false;
+      if (this.submitBtnEl) this.submitBtnEl.disabled = false;
     }
   }
 };
@@ -1529,8 +1483,7 @@ function buildTemplateTree(rootPath, files, ascending = true) {
   nodeMap.set(rootPath, root);
   function ensureNode(path) {
     const existing = nodeMap.get(path);
-    if (existing)
-      return existing;
+    if (existing) return existing;
     const lastSlash = path.lastIndexOf("/");
     const parentPath = lastSlash === -1 ? rootPath : path.slice(0, lastSlash);
     const parent = ensureNode(parentPath);
@@ -1552,8 +1505,7 @@ function sortNode(node, ascending) {
   const dir = ascending ? 1 : -1;
   node.children.sort((a, b) => dir * a.name.localeCompare(b.name));
   node.files.sort((a, b) => dir * a.localeCompare(b));
-  for (const child of node.children)
-    sortNode(child, ascending);
+  for (const child of node.children) sortNode(child, ascending);
 }
 
 // src/form/TemplatePickerModal.ts
@@ -1685,8 +1637,7 @@ var TemplatePickerModal = class extends import_obsidian8.Modal {
     });
     this.sortToggleEl = btn;
     btn.addEventListener("click", () => {
-      if (this.activeTab === "recent")
-        return;
+      if (this.activeTab === "recent") return;
       this.ascending = !this.ascending;
       btn.textContent = this.ascending ? L.sortAsc : L.sortDesc;
       this.renderList(L);
@@ -1701,8 +1652,7 @@ var TemplatePickerModal = class extends import_obsidian8.Modal {
     let revertTimer;
     const reset = () => {
       confirming = false;
-      if (revertTimer !== void 0)
-        window.clearTimeout(revertTimer);
+      if (revertTimer !== void 0) window.clearTimeout(revertTimer);
       btn.textContent = L.pickerClearRecent;
       btn.removeClass("fb-clear-toggle--confirm");
     };
@@ -1726,8 +1676,7 @@ var TemplatePickerModal = class extends import_obsidian8.Modal {
     this.sortToggleEl.disabled = isRecent;
     this.sortToggleEl.toggleClass("fb-sort-toggle--disabled", isRecent);
     this.clearRecentBtnEl.toggleClass("fb-hidden", !isRecent);
-    if (!isRecent)
-      this.resetClearRecentConfirm();
+    if (!isRecent) this.resetClearRecentConfirm();
   }
   // ------------------------------------------------------------
   // タブバー
@@ -1745,8 +1694,7 @@ var TemplatePickerModal = class extends import_obsidian8.Modal {
         text: tab.label
       });
       btn.addEventListener("click", () => {
-        if (this.activeTab === tab.id)
-          return;
+        if (this.activeTab === tab.id) return;
         this.activeTab = tab.id;
         void this.handleSetLastTab(tab.id);
         this.renderTabBar(L);
@@ -1782,8 +1730,7 @@ var TemplatePickerModal = class extends import_obsidian8.Modal {
         return;
       }
       const ul = this.listContainer.createEl("ul", { cls: "fb-template-list" });
-      for (const file of filtered)
-        this.renderTemplateButton(ul, file, this.displayName(file.path));
+      for (const file of filtered) this.renderTemplateButton(ul, file, this.displayName(file.path));
       return;
     }
     const tree = buildTemplateTree(this.templateFolderPath, this.allTemplates, this.ascending);
@@ -1801,14 +1748,11 @@ var TemplatePickerModal = class extends import_obsidian8.Modal {
       header.createSpan({ cls: "fb-folder-icon", text: expanded ? "\u{1F4C2}" : "\u{1F4C1}", attr: { "aria-hidden": "true" } });
       header.createSpan({ cls: "fb-folder-name", text: node.name });
       header.addEventListener("click", () => {
-        if (expanded)
-          this.expandedFolders.delete(node.path);
-        else
-          this.expandedFolders.add(node.path);
+        if (expanded) this.expandedFolders.delete(node.path);
+        else this.expandedFolders.add(node.path);
         this.renderList(getLocale(this.locale));
       });
-      if (!expanded)
-        return;
+      if (!expanded) return;
       body = container.createDiv({ cls: "fb-folder-body" });
     }
     for (const child of node.children) {
@@ -1818,8 +1762,7 @@ var TemplatePickerModal = class extends import_obsidian8.Modal {
       const ul = body.createEl("ul", { cls: "fb-template-list" });
       for (const path of node.files) {
         const file = this.templateByPath.get(path);
-        if (file)
-          this.renderTemplateButton(ul, file);
+        if (file) this.renderTemplateButton(ul, file);
       }
     }
   }
@@ -1844,21 +1787,18 @@ var TemplatePickerModal = class extends import_obsidian8.Modal {
       return;
     }
     const ul = this.listContainer.createEl("ul", { cls: "fb-template-list" });
-    for (const entry of filtered)
-      this.renderEntryButton(ul, entry, L);
+    for (const entry of filtered) this.renderEntryButton(ul, entry, L);
   }
   // ------------------------------------------------------------
   // 検索フィルター（共通）
   // ------------------------------------------------------------
   filterFiles(files) {
-    if (!this.searchQuery)
-      return files;
+    if (!this.searchQuery) return files;
     const q = this.searchQuery.toLowerCase();
     return files.filter((f) => f.basename.toLowerCase().includes(q));
   }
   filterEntries(entries) {
-    if (!this.searchQuery)
-      return entries;
+    if (!this.searchQuery) return entries;
     const q = this.searchQuery.toLowerCase();
     return entries.filter((e) => this.displayName(e.path).toLowerCase().includes(q));
   }
@@ -1911,8 +1851,7 @@ var TemplatePickerModal = class extends import_obsidian8.Modal {
     } else {
       btn.addEventListener("click", () => {
         const file = this.app.vault.getFileByPath(entry.path);
-        if (file instanceof import_obsidian8.TFile)
-          this.selectTemplate(file);
+        if (file instanceof import_obsidian8.TFile) this.selectTemplate(file);
       });
     }
     const favBtn = row.createEl("button", {
@@ -1992,20 +1931,17 @@ function containsForbiddenBracket(value) {
 }
 function stateHasForbiddenBracket(type, state) {
   const scalarValues = [state.label, state.description];
-  if (hasPlaceholderOption(type))
-    scalarValues.push(state.placeholder);
+  if (hasPlaceholderOption(type)) scalarValues.push(state.placeholder);
   if (type !== "checkbox" && type !== "multilist") {
     scalarValues.push(state.default);
   }
   if (type === "number") {
     scalarValues.push(state.min, state.max);
   }
-  if (scalarValues.some((v) => containsForbiddenBracket(v)))
-    return true;
+  if (scalarValues.some((v) => containsForbiddenBracket(v))) return true;
   if (type === "select" || type === "multiselect") {
     const items = state.listRaw.split("\n").map((s) => s.trim()).filter((s) => s !== "");
-    if (items.some((item) => containsForbiddenBracket(item)))
-      return true;
+    if (items.some((item) => containsForbiddenBracket(item))) return true;
   }
   return false;
 }
@@ -2014,46 +1950,35 @@ function metaValueHasForbiddenBracket(rawValue) {
 }
 function buildOptions(type, state) {
   const opts = [];
-  if (state.label.trim())
-    opts.push({ key: "label", value: state.label.trim() });
-  if (state.description.trim())
-    opts.push({ key: "description", value: state.description.trim() });
+  if (state.label.trim()) opts.push({ key: "label", value: state.label.trim() });
+  if (state.description.trim()) opts.push({ key: "description", value: state.description.trim() });
   if (hasPlaceholderOption(type) && state.placeholder.trim()) {
     opts.push({ key: "placeholder", value: state.placeholder.trim() });
   }
   if (type === "checkbox") {
-    if (state.checked)
-      opts.push({ key: "default", value: "true" });
+    if (state.checked) opts.push({ key: "default", value: "true" });
   } else if (type === "select" || type === "multiselect") {
     const list = toSemicolonList(state.listRaw);
-    if (list)
-      opts.push({ key: "list", value: list });
-    if (state.default.trim())
-      opts.push({ key: "default", value: state.default.trim() });
+    if (list) opts.push({ key: "list", value: list });
+    if (state.default.trim()) opts.push({ key: "default", value: state.default.trim() });
   } else if (type === "multilist") {
   } else {
-    if (state.default.trim())
-      opts.push({ key: "default", value: state.default.trim() });
+    if (state.default.trim()) opts.push({ key: "default", value: state.default.trim() });
   }
   if (hasRowsOption(type) && state.rows.trim()) {
     opts.push({ key: "rows", value: state.rows.trim() });
   }
   if (type === "number") {
-    if (state.min.trim())
-      opts.push({ key: "min", value: state.min.trim() });
-    if (state.max.trim())
-      opts.push({ key: "max", value: state.max.trim() });
+    if (state.min.trim()) opts.push({ key: "min", value: state.min.trim() });
+    if (state.max.trim()) opts.push({ key: "max", value: state.max.trim() });
   }
-  if (type === "text" && state.folder)
-    opts.push({ key: "folder", value: null });
-  if (state.required)
-    opts.push({ key: "required", value: null });
+  if (type === "text" && state.folder) opts.push({ key: "folder", value: null });
+  if (state.required) opts.push({ key: "required", value: null });
   return opts;
 }
 function buildFieldSyntax(type, state) {
   const key = state.key.trim();
-  if (!key)
-    return "";
+  if (!key) return "";
   const opts = buildOptions(type, state);
   const tokens = [
     type,
@@ -2064,8 +1989,7 @@ function buildFieldSyntax(type, state) {
 }
 function buildVariableExamples(type, state, hints) {
   const key = state.key.trim();
-  if (!key)
-    return [];
+  if (!key) return [];
   const examples = [
     { code: `$${key}$`, hint: hints.default }
   ];
@@ -2081,16 +2005,14 @@ function buildVariableClipboardText(type, state, hints) {
 }
 function buildMetaSyntax(kind, rawValue) {
   const value = rawValue.trim();
-  if (!value)
-    return "";
+  if (!value) return "";
   return `{{meta|${kind}=[${value}]}}`;
 }
 function containsVariableToken(value) {
   return /\$[^$]+\$/.test(value) || /%[^%]+%/.test(value);
 }
 function wrapInFormbuilderBlock(syntax) {
-  if (!syntax)
-    return "";
+  if (!syntax) return "";
   return "```formbuilder\n" + syntax + "\n```";
 }
 
@@ -2119,8 +2041,7 @@ function isCursorInFormbuilderBlock(content, cursorLine) {
       inBlock = false;
       continue;
     }
-    if (inBlock && i === cursorLine)
-      return true;
+    if (inBlock && i === cursorLine) return true;
   }
   return false;
 }
@@ -2164,8 +2085,7 @@ var FieldGeneratorModal = class extends import_obsidian9.Modal {
   /** アクティブなエディタのカーソルが、既存の formbuilder ブロックの中にあるかどうかを判定する。 */
   detectCursorInBlock() {
     const view = this.app.workspace.getActiveViewOfType(import_obsidian9.MarkdownView);
-    if (!view)
-      return false;
+    if (!view) return false;
     const editor = view.editor;
     return isCursorInFormbuilderBlock(editor.getValue(), editor.getCursor().line);
   }
@@ -2352,10 +2272,8 @@ var FieldGeneratorModal = class extends import_obsidian9.Modal {
     input.type = "text";
     input.value = value;
     input.addEventListener("input", () => {
-      if (kind === "folder")
-        this.metaFolderValue = input.value;
-      else
-        this.metaFilenameValue = input.value;
+      if (kind === "folder") this.metaFolderValue = input.value;
+      else this.metaFilenameValue = input.value;
       this.updatePreview();
     });
     const insertRow = card.createDiv({ cls: "fb-gen-var-insert-row" });
@@ -2375,10 +2293,8 @@ var FieldGeneratorModal = class extends import_obsidian9.Modal {
     const end = (_b = input.selectionEnd) != null ? _b : input.value.length;
     const newValue = input.value.slice(0, start) + token + input.value.slice(end);
     input.value = newValue;
-    if (kind === "folder")
-      this.metaFolderValue = newValue;
-    else
-      this.metaFilenameValue = newValue;
+    if (kind === "folder") this.metaFolderValue = newValue;
+    else this.metaFilenameValue = newValue;
     const newPos = start + token.length;
     input.focus();
     input.setSelectionRange(newPos, newPos);
@@ -2391,10 +2307,8 @@ var FieldGeneratorModal = class extends import_obsidian9.Modal {
     const card = container.createDiv({ cls: "fb-field fb-gen-row" });
     const labelRow = card.createDiv({ cls: "fb-label-row" });
     labelRow.createSpan({ cls: "fb-label", text: label });
-    if (required)
-      labelRow.createSpan({ cls: "fb-required-mark", text: "*" });
-    if (hint)
-      card.createDiv({ cls: "fb-desc", text: hint });
+    if (required) labelRow.createSpan({ cls: "fb-required-mark", text: "*" });
+    if (hint) card.createDiv({ cls: "fb-desc", text: hint });
     const input = card.createEl("input", { cls: "fb-input" });
     input.type = "text";
     input.value = value;
@@ -2415,8 +2329,7 @@ var FieldGeneratorModal = class extends import_obsidian9.Modal {
     const card = container.createDiv({ cls: "fb-field fb-gen-row" });
     const labelRow = card.createDiv({ cls: "fb-label-row" });
     labelRow.createSpan({ cls: "fb-label", text: label });
-    if (hint)
-      card.createDiv({ cls: "fb-desc", text: hint });
+    if (hint) card.createDiv({ cls: "fb-desc", text: hint });
     const wrap = card.createDiv({ cls: "fb-toggle-wrap" });
     const toggleLabel = wrap.createEl("label", { cls: "fb-toggle" });
     const input = toggleLabel.createEl("input");
@@ -2447,8 +2360,7 @@ var FieldGeneratorModal = class extends import_obsidian9.Modal {
    */
   renderedSyntax() {
     const raw = this.currentSyntax();
-    if (!raw)
-      return "";
+    if (!raw) return "";
     return this.wrapInBlock ? wrapInFormbuilderBlock(raw) : raw;
   }
   updatePreview() {
@@ -2460,8 +2372,7 @@ var FieldGeneratorModal = class extends import_obsidian9.Modal {
       const keyValid = key !== "" && VALID_KEY.test(key);
       forbiddenBracket = stateHasForbiddenBracket(this.type, this.state);
       enabled = keyValid && !forbiddenBracket;
-      if (this.keyInputEl)
-        this.keyInputEl.toggleClass("fb-error", key !== "" && !keyValid);
+      if (this.keyInputEl) this.keyInputEl.toggleClass("fb-error", key !== "" && !keyValid);
     } else {
       const value = this.mode === "meta-folder" ? this.metaFolderValue : this.metaFilenameValue;
       forbiddenBracket = metaValueHasForbiddenBracket(value);
@@ -2511,8 +2422,7 @@ var FieldGeneratorModal = class extends import_obsidian9.Modal {
       return;
     }
     const value = this.metaFilenameValue.trim();
-    if (value === "")
-      return;
+    if (value === "") return;
     if (!containsVariableToken(value)) {
       const block = this.sideEl.createDiv({ cls: "fb-warning-block" });
       block.createDiv({ cls: "fb-warning", text: L.genMetaFilenameNoVariableWarning });
@@ -2554,8 +2464,7 @@ ${variableText}`, L);
     cancelBtn.addEventListener("click", () => this.close());
   }
   async copyToClipboard(text, L) {
-    if (!text)
-      return;
+    if (!text) return;
     try {
       await navigator.clipboard.writeText(text);
       new import_obsidian9.Notice(L.genCopiedNotice);
@@ -2566,8 +2475,7 @@ ${variableText}`, L);
   }
   handleInsert(L) {
     const raw = this.currentSyntax();
-    if (!raw)
-      return;
+    if (!raw) return;
     const view = this.app.workspace.getActiveViewOfType(import_obsidian9.MarkdownView);
     if (!view) {
       new import_obsidian9.Notice(L.genNoActiveEditor);
@@ -2715,7 +2623,6 @@ function validateMetaKey(key, L, line) {
 
 // src/parser/TemplateParser.ts
 var FORMBUILDER_BLOCK_RE = /^```formbuilder\s*\r?\n([\s\S]*?)\r?\n```/m;
-var FIELD_SYNTAX_RE = /^\{\{([\s\S]*?)\}\}$/;
 var KV_OPTION_RE = /^([a-zA-Z_-]+)=\[([^\]]*)\]$/;
 var FLAG_ONLY_OPTIONS = /* @__PURE__ */ new Set(["required", "folder"]);
 function trimSpaces(s) {
@@ -2727,8 +2634,7 @@ function parseList(raw) {
 var ROWS_OPTION_RE = /^[1-9]\d*$/;
 var NUMERIC_OPTION_RE = /^-?\d+(\.\d+)?$/;
 function parseRows(rawStr, key, lineNum, warnings, L) {
-  if (rawStr == null || rawStr === "")
-    return void 0;
+  if (rawStr == null || rawStr === "") return void 0;
   if (!ROWS_OPTION_RE.test(rawStr)) {
     warnings.push({
       message: formatMessage(L.msgInvalidRows, { value: rawStr, key }),
@@ -2739,8 +2645,7 @@ function parseRows(rawStr, key, lineNum, warnings, L) {
   return parseInt(rawStr, 10);
 }
 function parseNumericOption(rawStr, optionName, key, lineNum, warnings, L) {
-  if (rawStr == null || rawStr === "")
-    return void 0;
+  if (rawStr == null || rawStr === "") return void 0;
   if (!NUMERIC_OPTION_RE.test(rawStr)) {
     warnings.push({
       message: formatMessage(L.msgInvalidNumericOption, { option: optionName, value: rawStr, key }),
@@ -2749,6 +2654,30 @@ function parseNumericOption(rawStr, optionName, key, lineNum, warnings, L) {
     return void 0;
   }
   return Number(rawStr);
+}
+function extractFieldSyntax(line) {
+  const start = line.indexOf("{{");
+  if (start === -1) return null;
+  let i = start + 2;
+  let inBracket = false;
+  while (i < line.length) {
+    const ch = line[i];
+    if (inBracket) {
+      if (ch === "]") inBracket = false;
+      i++;
+      continue;
+    }
+    if (ch === "[") {
+      inBracket = true;
+      i++;
+      continue;
+    }
+    if (ch === "}" && line[i + 1] === "}") {
+      return line.slice(start, i + 2);
+    }
+    i++;
+  }
+  return null;
 }
 function splitTokens(inner) {
   const tokens = [];
@@ -2774,24 +2703,20 @@ function splitTokens(inner) {
 }
 function parseOptionToken(token) {
   const kvMatch = KV_OPTION_RE.exec(token);
-  if (kvMatch)
-    return { key: kvMatch[1], value: kvMatch[2] };
-  if (/^[a-zA-Z_-]+$/.test(token))
-    return { key: token, value: null };
+  if (kvMatch) return { key: kvMatch[1], value: kvMatch[2] };
+  if (/^[a-zA-Z_-]+$/.test(token)) return { key: token, value: null };
   return null;
 }
 function parseMetaLine(tokens, meta, metaKeyLines, errors, warnings, lineNum, L) {
   for (let i = 1; i < tokens.length; i++) {
     const opt = parseOptionToken(tokens[i]);
-    if (!opt)
-      continue;
+    if (!opt) continue;
     const metaWarning = validateMetaKey(opt.key, L, lineNum);
     if (metaWarning) {
       warnings.push(metaWarning);
       continue;
     }
-    if (opt.value === null)
-      continue;
+    if (opt.value === null) continue;
     const firstLine = metaKeyLines.get(opt.key);
     if (firstLine !== void 0) {
       errors.push({
@@ -2801,10 +2726,8 @@ function parseMetaLine(tokens, meta, metaKeyLines, errors, warnings, lineNum, L)
       continue;
     }
     metaKeyLines.set(opt.key, lineNum);
-    if (opt.key === "folder")
-      meta.folder = opt.value;
-    else if (opt.key === "filename")
-      meta.filename = opt.value;
+    if (opt.key === "folder") meta.folder = opt.value;
+    else if (opt.key === "filename") meta.filename = opt.value;
   }
 }
 function parseFieldLine(tokens, errors, warnings, lineNum, L) {
@@ -2909,15 +2832,13 @@ function parseFieldLine(tokens, errors, warnings, lineNum, L) {
       const list = parseList(listRaw);
       const rows = parseRows(optMap.get("rows"), key, lineNum, warnings, L);
       const msField = { type: "multiselect", ...base, list };
-      if (rows !== void 0)
-        msField.rows = rows;
+      if (rows !== void 0) msField.rows = rows;
       return msField;
     }
     case "multilist": {
       const rows = parseRows(optMap.get("rows"), key, lineNum, warnings, L);
       const lf = { type: "multilist", ...base };
-      if (rows !== void 0)
-        lf.rows = rows;
+      if (rows !== void 0) lf.rows = rows;
       return lf;
     }
     default:
@@ -2931,8 +2852,7 @@ function findFormbuilderBlocks(templateContent) {
   let m;
   while ((m = re.exec(templateContent)) !== null) {
     matches.push(m);
-    if (m[0].length === 0)
-      re.lastIndex++;
+    if (m[0].length === 0) re.lastIndex++;
   }
   return matches;
 }
@@ -2959,20 +2879,17 @@ function parseTemplate(templateContent, L) {
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim();
       const lineNum = blockStartLine + i;
-      if (line === "")
-        continue;
+      if (line === "") continue;
       const openCount = ((_a = line.match(/\{\{/g)) != null ? _a : []).length;
       const closeCount = ((_b = line.match(/\}\}/g)) != null ? _b : []).length;
       if (openCount !== closeCount) {
         errors.push({ message: formatMessage(L.msgUnclosedBrace, { line: lineNum }), line: lineNum });
         continue;
       }
-      const syntaxMatch = FIELD_SYNTAX_RE.exec(line);
-      if (!syntaxMatch)
-        continue;
-      const tokens = splitTokens(syntaxMatch[1]);
-      if (tokens.length === 0 || tokens[0] === "")
-        continue;
+      const syntaxText = extractFieldSyntax(line);
+      if (!syntaxText) continue;
+      const tokens = splitTokens(syntaxText.slice(2, -2));
+      if (tokens.length === 0 || tokens[0] === "") continue;
       if (tokens[0] === "meta") {
         parseMetaLine(tokens, meta, metaKeyLines, errors, warnings, lineNum, L);
       } else {
@@ -3076,11 +2993,9 @@ var TemplateStore = class {
   async pushRecent(path) {
     const recent = this.plugin.settings.recentTemplates;
     const existing = recent.indexOf(path);
-    if (existing !== -1)
-      recent.splice(existing, 1);
+    if (existing !== -1) recent.splice(existing, 1);
     recent.unshift(path);
-    if (recent.length > MAX_RECENT)
-      recent.length = MAX_RECENT;
+    if (recent.length > MAX_RECENT) recent.length = MAX_RECENT;
     await this.plugin.saveSettings();
   }
   async removeRecent(path) {
@@ -3093,8 +3008,7 @@ var TemplateStore = class {
   }
   /** 使用履歴をすべて削除する。 */
   async clearRecent() {
-    if (this.plugin.settings.recentTemplates.length === 0)
-      return;
+    if (this.plugin.settings.recentTemplates.length === 0) return;
     this.plugin.settings.recentTemplates.length = 0;
     await this.plugin.saveSettings();
   }
@@ -3105,8 +3019,7 @@ var TemplateStore = class {
     return this.plugin.settings.lastTab;
   }
   async setLastTab(tab) {
-    if (this.plugin.settings.lastTab === tab)
-      return;
+    if (this.plugin.settings.lastTab === tab) return;
     this.plugin.settings.lastTab = tab;
     await this.plugin.saveSettings();
   }
@@ -3127,8 +3040,7 @@ var TemplateStore = class {
       recent[recentIdx] = newPath;
       changed = true;
     }
-    if (changed)
-      await this.plugin.saveSettings();
+    if (changed) await this.plugin.saveSettings();
   }
   // ------------------------------------------------------------
   // 存在チェック（表示用の安全網。PCエクスプローラー等での変更・削除を検知する）

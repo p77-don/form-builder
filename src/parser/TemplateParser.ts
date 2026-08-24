@@ -14,7 +14,6 @@ import {
  * main.ts の存在確認と TemplateParser の解析で共通使用する。
  */
 export const FORMBUILDER_BLOCK_RE = /^```formbuilder\s*\r?\n([\s\S]*?)\r?\n```/m;
-const FIELD_SYNTAX_RE = /^\{\{([\s\S]*?)\}\}$/;
 const KV_OPTION_RE = /^([a-zA-Z_-]+)=\[([^\]]*)\]$/;
 
 // 値を持たないフラグ専用オプション（CodeReview #5）
@@ -82,6 +81,43 @@ function parseNumericOption(
         return undefined;
     }
     return Number(rawStr);
+}
+
+/**
+ * 行の中から {{ ... }} 構文部分だけを取り出す。
+ *
+ * 構文の前後に説明文などが書かれていても（例:
+ * "ファイル名の入力 {{text|file|label=[file]}}"）、構文部分だけを
+ * 正しく抽出できるようにするための処理。
+ *
+ * オプション値 `[...]` の中の `}}` は終端として扱わない（仕様どおり）。
+ * 対応する `}}` が見つからない場合は null を返す
+ * （この場合は openCount/closeCount のチェックで別途エラーになる）。
+ */
+function extractFieldSyntax(line: string): string | null {
+    const start = line.indexOf('{{');
+    if (start === -1) return null;
+
+    let i = start + 2;
+    let inBracket = false;
+    while (i < line.length) {
+        const ch = line[i];
+        if (inBracket) {
+            if (ch === ']') inBracket = false;
+            i++;
+            continue;
+        }
+        if (ch === '[') {
+            inBracket = true;
+            i++;
+            continue;
+        }
+        if (ch === '}' && line[i + 1] === '}') {
+            return line.slice(start, i + 2);
+        }
+        i++;
+    }
+    return null;
 }
 
 function splitTokens(inner: string): string[] {
@@ -345,10 +381,10 @@ export function parseTemplate(templateContent: string, L: Locale): ParseResult {
                 continue;
             }
 
-            const syntaxMatch = FIELD_SYNTAX_RE.exec(line);
-            if (!syntaxMatch) continue;
+            const syntaxText = extractFieldSyntax(line);
+            if (!syntaxText) continue;
 
-            const tokens = splitTokens(syntaxMatch[1]);
+            const tokens = splitTokens(syntaxText.slice(2, -2));
             if (tokens.length === 0 || tokens[0] === '') continue;
 
             if (tokens[0] === 'meta') {

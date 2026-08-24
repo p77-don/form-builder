@@ -137,12 +137,12 @@ A single template can contain more than one ` ```formbuilder ` code block. The c
 
 ````markdown
 ```formbuilder
-{{meta|folder=[folder]}}
+{{meta|folder=[OutputFolder]}}
 {{meta|filename=[%timestamp%]}}
 ```
 
 ```formbuilder
-{{text|title|label=[title]|required}}
+{{text|title|label=[Note title]|required}}
 {{textarea|description}}
 ```
 ````
@@ -453,7 +453,7 @@ The Vault root itself is never offered as a choice (leaving the value empty alre
 
 ```
 {{textarea|description}}
-{{textarea|description|label=[Description]|rows=[8]|placeholder=[Development of Form Builder began in 2026.]}}
+{{textarea|description|label=[Note description]|rows=[8]|placeholder=[Development of Form Builder began in 2026.]}}
 ```
 
 Displays a multi-line text field in the form.
@@ -1234,12 +1234,12 @@ Templates
 
 ````markdown
 ```formbuilder
-{{meta|folder=[folder]}}
+{{meta|folder=[OutputFolder]}}
 {{meta|filename=[%timestamp%]}}
 ```
 
 ```formbuilder
-{{text|title|label=[title]|required}}
+{{text|title|label=[Note title]|required}}
 {{textarea|description}}
 ```
 ````
