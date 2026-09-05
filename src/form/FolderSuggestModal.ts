@@ -32,7 +32,7 @@ export class FolderSuggestModal extends FuzzySuggestModal<TFolder> {
      * 発火させて候補一覧（getSuggestions）を再計算させる必要がある。
      */
     onOpen(): void {
-        super.onOpen();
+        void super.onOpen();
         if (this.initialQuery) {
             this.inputEl.value = this.initialQuery;
             this.inputEl.dispatchEvent(new Event('input'));

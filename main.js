@@ -796,7 +796,7 @@ var FolderSuggestModal = class extends import_obsidian4.FuzzySuggestModal {
    * 発火させて候補一覧（getSuggestions）を再計算させる必要がある。
    */
   onOpen() {
-    super.onOpen();
+    void super.onOpen();
     if (this.initialQuery) {
       this.inputEl.value = this.initialQuery;
       this.inputEl.dispatchEvent(new Event("input"));
